@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export default function PerfilScreen() {
   return (
@@ -26,15 +27,15 @@ export default function PerfilScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FAF0E6", alignItems: "center", paddingTop: 60 },
-  icono: { fontSize: 48 },
-  titulo: { fontSize: 28, fontWeight: "bold", color: "#3D2B1F", marginTop: 8 },
-  sub: { fontSize: 16, color: "#6B4F3A", marginTop: 8 },
-  tarjetaRol: { backgroundColor: "#fff", padding: 20, borderRadius: 16, marginTop: 30, width: "85%" },
-  label: { fontSize: 16, fontWeight: "600", color: "#3D2B1F", marginBottom: 12 },
-  botonRol: { paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, marginBottom: 8, backgroundColor: "#F5EDE6" },
-  botonActivo: { backgroundColor: "#8B4513" },
-  textoRol: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  textoRolInactivo: { color: "#6B4F3A", fontSize: 16 },
-  aviso: { fontSize: 13, color: "#A0897A", marginTop: 20, textAlign: "center", paddingHorizontal: 30 },
+  container: { flex: 1, backgroundColor: colors.background, alignItems: 'center', paddingTop: 60 },
+  icono: { fontSize: fontSize.xxl },
+  titulo: { fontSize: fontSize.xl, fontWeight: 'bold', color: colors.primary, marginTop: spacing.sm },
+  sub: { fontSize: fontSize.md, color: colors.secondary, marginTop: spacing.sm },
+  tarjetaRol: { backgroundColor: colors.cardBackground, padding: 20, borderRadius: borderRadius.lg, marginTop: 30, width: '85%' },
+  label: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary, marginBottom: 12 },
+  botonRol: { paddingVertical: 12, paddingHorizontal: spacing.md, borderRadius: borderRadius.sm, marginBottom: spacing.sm, backgroundColor: colors.accentLight },
+  botonActivo: { backgroundColor: colors.accent },
+  textoRol: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
+  textoRolInactivo: { color: colors.secondary, fontSize: fontSize.md },
+  aviso: { fontSize: fontSize.xs, color: colors.muted, marginTop: 20, textAlign: 'center', paddingHorizontal: 30 },
 });
