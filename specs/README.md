@@ -19,10 +19,11 @@
 |---|------|--------|
 | 001 | AGENTS.md + fundación (theme, types, data mock) | ✅ Completado |
 | 002 | Refactor código (componentes, screens, navegación) | ✅ Completado |
+| 003 | Autenticación con roles (Supabase Auth) | ⏳ Pendiente |
 
 ## Próximos specs propuestos
 
 | # | Spec | Descripción |
 |---|------|-------------|
-| 003 | Pantalla Músicos | Lista de músicos + perfil detalle con datos mock |
-| 004 | Supabase | Conectar base de datos, auth con roles, migraciones |
+| 004 | Perfil músico privado | Bio, Instagram, Spotify, YouTube — solo visible para cafés |
+| 005 | Dashboard café privado | Crear eventos, buscar músicos por perfil |
