@@ -4,14 +4,14 @@
 
 ## Flujo de trabajo
 
-1. Hermes escribe el spec
-2. Victor ejecuta en VS Code terminal:
+1. **Hermes** escribe el spec
+2. **Victor** ejecuta en VS Code terminal:
    ```
    opencode run "Implementa specs/NNN-nombre.md -f specs/NNN-nombre.md"
    ```
-3. OpenCode implementa
-4. Hermes revisa vía SSH
-5. Siguiente spec
+3. **OpenCode** implementa
+4. **Hermes** revisa vía SSH
+5. **Hermes** documenta en Obsidian
 
 ## Lista de specs
 
@@ -19,7 +19,7 @@
 |---|------|--------|
 | 001 | AGENTS.md + fundación (theme, types, data mock) | ✅ Completado |
 | 002 | Refactor código (componentes, screens, navegación) | ✅ Completado |
-| 003 | Autenticación con roles (Supabase Auth) | ⏳ Pendiente |
+| 003 | Autenticación con roles (Supabase Auth) | ✅ Completado |
 
 ## Próximos specs propuestos
 
