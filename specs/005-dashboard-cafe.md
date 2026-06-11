@@ -1,4 +1,4 @@
-# Spec 005: Dashboard café privado
+# Spec 005: Dashboard café privado — ✅ COMPLETADO
 
 ## Objetivo
 Crear el dashboard privado para usuarios con rol "cafe": pueden ver sus eventos, crear nuevos eventos, y explorar los perfiles de músicos disponibles para contactarlos.
@@ -145,15 +145,19 @@ Asegurar que:
 
 ---
 
-## Criterios de aceptación
+## ✅ Criterios de aceptación — cumplidos
 
-- [ ] `cafeId` agregado a tipo `Evento` y a datos mock
-- [ ] Mock de `cafesPropios` creado (simula dueño de café)
-- [ ] `DashboardCafeScreen` existe y muestra "Mis Eventos" filtrados
-- [ ] `CrearEventoScreen` existe con formulario funcional
-- [ ] Botón "+ Nuevo Evento" navega a CrearEventoScreen
-- [ ] Sección "Músicos disponibles" en el Dashboard con navegación a VerMusicoScreen
-- [ ] `CafeStack.tsx` creado con las rutas
-- [ ] Tercer tab muestra "Mi Café" cuando role="cafe" con DashboardCafeScreen
-- [ ] TypeScript compila sin errores (`npx tsc --noEmit`)
-- [ ] Los datos mock mantienen coherencia con spec 004 (mismos músicos, mismos cafés)
+- [x] `cafeId` agregado a tipo `Evento` y a datos mock
+- [x] Mock de `cafesPropios` creado (simula dueño de café)
+- [x] `DashboardCafeScreen` existe y muestra "Mis Eventos" filtrados
+- [x] `CrearEventoScreen` existe con formulario funcional
+- [x] Botón "+ Nuevo Evento" navega a CrearEventoScreen
+- [x] Sección "Músicos disponibles" en el Dashboard con navegación a VerMusicoScreen
+- [x] `CafeStack.tsx` creado con las rutas
+- [x] Tercer tab muestra "Mi Café" cuando role="cafe" con DashboardCafeScreen
+- [x] TypeScript compila sin errores (`npx tsc --noEmit`)
+- [x] Datos mock coherentes con spec 004 (mismos músicos, mismos cafés)
+
+## Nota: pendiente de redefinir con venues
+
+Este spec se implementó con la estructura `cafeId`. Cuando se implemente **spec 006** (sistema de venues), el dashboard deberá migrarse a usar `venueId` en lugar de `cafeId`, y el café se asociará a un `Venue` de tipo `"cafe"`.

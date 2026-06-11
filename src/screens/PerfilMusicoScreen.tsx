@@ -3,12 +3,16 @@ import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ScrollView, Alert, ActivityIndicator,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { musicosMock } from '../data/mock/musicos';
+import { eventos } from '../data/mock/eventos';
 import { PerfilMusico } from '../types';
+import TarjetaEvento from '../components/TarjetaEvento';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export default function PerfilMusicoScreen() {
+  const navigation = useNavigation();
   const { user } = useAuth();
   const [perfil, setPerfil] = useState<PerfilMusico | null>(null);
   const [nombre, setNombre] = useState('');
@@ -35,6 +39,8 @@ export default function PerfilMusicoScreen() {
   const handleGuardar = () => {
     Alert.alert('Guardado', 'Tus cambios se han guardado (mock)');
   };
+
+  const misEventos = user ? eventos.filter((e) => e.createdBy === user.id) : [];
 
   if (!user) {
     return (
@@ -86,17 +92,33 @@ export default function PerfilMusicoScreen() {
           <Text style={styles.textoBoton}>Guardar cambios</Text>
         </TouchableOpacity>
       </View>
+
+      <View style={styles.card}>
+        <Text style={styles.titulo}>Mis Eventos</Text>
+        {misEventos.length === 0 ? (
+          <Text style={styles.vacio}>Aún no tienes eventos. ¡Crea el primero!</Text>
+        ) : (
+          misEventos.map((ev) => <TarjetaEvento key={ev.id} evento={ev} />)
+        )}
+        <TouchableOpacity
+          style={styles.botonNuevo}
+          onPress={() => (navigation as any).navigate('CrearEvento')}
+        >
+          <Text style={styles.textoBoton}>+ Nuevo Evento</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.md },
+  content: { padding: spacing.md, paddingBottom: 100 },
   card: {
     backgroundColor: colors.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
+    marginBottom: spacing.md,
   },
   titulo: {
     fontSize: fontSize.lg,
@@ -129,6 +151,19 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
+  vacio: {
+    fontSize: fontSize.sm,
+    color: colors.muted,
+    fontStyle: 'italic',
+    marginBottom: spacing.sm,
+  },
+  botonNuevo: {
+    backgroundColor: colors.accent,
+    padding: 14,
+    borderRadius: borderRadius.sm,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
   aviso: {
     fontSize: fontSize.md,
     color: colors.muted,

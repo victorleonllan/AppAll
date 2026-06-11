@@ -11,3 +11,7 @@ export const cafesPendientes: Cafe[] = [
   { id: '5', nombre: 'Star cafés', distancia: '1 km' },
   { id: '6', nombre: 'Café Foresta', distancia: '800 m' },
 ];
+
+export const cafesPropios: Cafe[] = [
+  { id: 'cafe-1', nombre: 'Café La Palma', estilo: 'Jazz en vivo', distancia: '', rating: 4.8 },
+];

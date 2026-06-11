@@ -1,12 +1,29 @@
+export interface Venue {
+  id: string;
+  name: string;
+  type: "cafe" | "venue";
+  ownerId?: string;
+  address?: string;
+  description?: string;
+  estilo?: string;
+  rating?: number;
+  lat?: number;
+  lng?: number;
+  distance?: string;
+  image?: string | null;
+}
+
 export interface Evento {
   id: string;
   artista: string;
-  cafe: string;
+  venueId: string;
+  venueName: string;
   fecha: string;
   hora: string;
   genero: string;
   precio: string;
   imagen: string | null;
+  createdBy: string;
 }
 
 export interface Cafe {

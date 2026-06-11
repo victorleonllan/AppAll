@@ -6,8 +6,8 @@ import CarteleraScreen from '../screens/CarteleraScreen';
 import AuthScreen from '../screens/AuthScreen';
 import PerfilMusicoScreen from '../screens/PerfilMusicoScreen';
 import PerfilScreen from '../screens/PerfilScreen';
-import DashboardCafeScreen from '../screens/DashboardCafeScreen';
 import CafesStack from './CafesStack';
+import CafeStack from './CafeStack';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme';
 
@@ -18,7 +18,7 @@ const Tab = createBottomTabNavigator();
 function getThirdTab(session: unknown, role: UserRole) {
   if (!session) return { name: 'AppAll' as const, component: AuthScreen, icon: 'apps' as const };
   if (role === 'musician') return { name: 'Mi Perfil' as const, component: PerfilMusicoScreen, icon: 'person-circle' as const };
-  if (role === 'cafe') return { name: 'Mi Café' as const, component: DashboardCafeScreen, icon: 'cafe' as const };
+  if (role === 'cafe') return { name: 'Mi Café' as const, component: CafeStack, icon: 'cafe' as const };
   return { name: 'Perfil' as const, component: PerfilScreen, icon: 'person' as const };
 }
 
@@ -62,7 +62,7 @@ export default function AppNavigator() {
           name={thirdTab.name}
           component={thirdTab.component}
           options={{
-            headerShown: thirdTab.name !== 'AppAll',
+            headerShown: thirdTab.name !== 'AppAll' && thirdTab.name !== 'Mi Café',
             title: thirdTab.name,
           }}
         />

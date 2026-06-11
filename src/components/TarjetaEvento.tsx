@@ -14,7 +14,7 @@ export default function TarjetaEvento({ evento, onComprar }: Props) {
         <Text style={styles.artista}>{evento.artista}</Text>
         <Text style={styles.genero}>{evento.genero}</Text>
         <Text style={styles.detalle}>
-          📍 {evento.cafe} · {evento.fecha} · {evento.hora}
+          📍 {evento.venueName} · {evento.fecha} · {evento.hora}
         </Text>
         <Text style={styles.precio}>{evento.precio}</Text>
       </View>
