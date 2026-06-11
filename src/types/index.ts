@@ -23,3 +23,15 @@ export interface Musico {
   genero: string;
   bio: string;
 }
+
+export interface PerfilMusico {
+  id: string;
+  userId: string;
+  nombre: string;
+  genero: string;
+  bio: string;
+  instagram?: string;
+  spotify?: string;
+  youtube?: string;
+  foto?: string | null;
+}

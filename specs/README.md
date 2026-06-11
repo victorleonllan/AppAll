@@ -20,10 +20,11 @@
 | 001 | AGENTS.md + fundación (theme, types, data mock) | ✅ Completado |
 | 002 | Refactor código (componentes, screens, navegación) | ✅ Completado |
 | 003 | Autenticación con roles (Supabase Auth) | ✅ Completado |
+| 004 | Perfil músico privado + Landing de roles | ✅ Completado |
+| 005 | Dashboard café privado (crear eventos, buscar músicos) | ⏳ Pendiente |
 
-## Próximos specs propuestos
+## Notas
 
-| # | Spec | Descripción |
-|---|------|-------------|
-| 004 | Perfil músico privado | Bio, Instagram, Spotify, YouTube — solo visible para cafés |
-| 005 | Dashboard café privado | Crear eventos, buscar músicos por perfil |
+- **004 completado**: OpenCode implementó PerfilMusicoScreen, VerMusicoScreen, CafesStack, mock de músicos. Hermes editó directo el AuthScreen (landing con 3 roles: Público/Músico/Café), RegisterScreen (preselectedRole + Volver), LoginScreen (Volver), y navegación (tercer tab "AppAll" sin sesión).
+- **005 pendiente**: Crear DashboardCafeScreen completo con lista de eventos, crear evento, y músicos disponibles.
+- Siguientes specs planificados: E → A → D → B → C (Onboarding, Detalle evento, Perfil público, Conexión café-músico, Migrar mock a Supabase)

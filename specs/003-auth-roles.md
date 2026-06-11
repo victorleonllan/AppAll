@@ -93,3 +93,26 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_da_mxDi-gYK91IQEQ1QjOQ_fRp44Rl-
 - [x] App.tsx envuelto en AuthProvider
 - [x] La app compila sin errores
 - [ ] Pendiente: probar registro de usuario y verificar en Supabase Dashboard
+
+---
+
+## 📝 Apéndice: Fix de almacenamiento (sesión 10 Jun 2026)
+
+### Problema
+Al ejecutar `npx expo start`, el Metro bundler lanzaba:
+```
+[AsyncStorageError: Native module is null, cannot access legacy storage]
+```
+
+### Causa
+`@react-native-async-storage/async-storage` es un módulo nativo que no funciona en Expo Web. Victor no tiene Xcode ni Expo Go, solo Expo Web.
+
+### Solución
+1. Instalar `expo-secure-store` (`npx expo install expo-secure-store`)
+2. Reemplazar `src/lib/supabase.ts`: usar `localStorage` en web y `expo-secure-store` en native
+3. Eliminar `@react-native-async-storage/async-storage` del proyecto
+
+### Resultado
+- ✅ TypeScript compila sin errores
+- ✅ Sin dependencias nativas rotas
+- ✅ Compatible con Expo Web

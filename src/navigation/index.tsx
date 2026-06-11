@@ -3,15 +3,27 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, View } from 'react-native';
 import CarteleraScreen from '../screens/CarteleraScreen';
-import CafesScreen from '../screens/CafesScreen';
 import AuthScreen from '../screens/AuthScreen';
+import PerfilMusicoScreen from '../screens/PerfilMusicoScreen';
+import PerfilScreen from '../screens/PerfilScreen';
+import DashboardCafeScreen from '../screens/DashboardCafeScreen';
+import CafesStack from './CafesStack';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme';
 
+type UserRole = 'public' | 'musician' | 'cafe' | null;
+
 const Tab = createBottomTabNavigator();
 
+function getThirdTab(session: unknown, role: UserRole) {
+  if (!session) return { name: 'AppAll' as const, component: AuthScreen, icon: 'apps' as const };
+  if (role === 'musician') return { name: 'Mi Perfil' as const, component: PerfilMusicoScreen, icon: 'person-circle' as const };
+  if (role === 'cafe') return { name: 'Mi Café' as const, component: DashboardCafeScreen, icon: 'cafe' as const };
+  return { name: 'Perfil' as const, component: PerfilScreen, icon: 'person' as const };
+}
+
 export default function AppNavigator() {
-  const { session, loading } = useAuth();
+  const { session, role, loading } = useAuth();
 
   if (loading) {
     return (
@@ -21,6 +33,8 @@ export default function AppNavigator() {
     );
   }
 
+  const thirdTab = getThirdTab(session, role);
+
   return (
     <NavigationContainer>
       <Tab.Navigator
@@ -29,7 +43,7 @@ export default function AppNavigator() {
             let iconName: keyof typeof Ionicons.glyphMap = 'musical-notes';
             if (route.name === 'Cartelera') iconName = 'musical-notes';
             else if (route.name === 'Cafés') iconName = 'cafe';
-            else iconName = session ? 'person-circle' : 'log-in';
+            else iconName = thirdTab.icon;
             return <Ionicons name={iconName} size={size} color={color} />;
           },
           tabBarActiveTintColor: colors.accent,
@@ -39,10 +53,18 @@ export default function AppNavigator() {
         })}
       >
         <Tab.Screen name="Cartelera" component={CarteleraScreen} />
-        <Tab.Screen name="Cafés" component={CafesScreen} />
         <Tab.Screen
-          name={session ? 'Perfil' : 'Ingresar'}
-          component={AuthScreen}
+          name="Cafés"
+          component={CafesStack}
+          options={{ headerShown: false }}
+        />
+        <Tab.Screen
+          name={thirdTab.name}
+          component={thirdTab.component}
+          options={{
+            headerShown: thirdTab.name !== 'AppAll',
+            title: thirdTab.name,
+          }}
         />
       </Tab.Navigator>
     </NavigationContainer>
