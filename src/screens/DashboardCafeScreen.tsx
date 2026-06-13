@@ -2,8 +2,8 @@ import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
-import { eventos } from '../data/mock/eventos';
-import { cafes } from '../data/mock/venues';
+import { useVenues } from '../context/VenuesContext';
+import { useEventos } from '../context/EventosContext';
 import { musicosMock } from '../data/mock/musicos';
 import TarjetaEvento from '../components/TarjetaEvento';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
@@ -14,6 +14,8 @@ type NavigationProp = NativeStackNavigationProp<CafeStackParamList, 'Dashboard'>
 export default function DashboardCafeScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { user } = useAuth();
+  const { cafes } = useVenues();
+  const { eventos } = useEventos();
 
   const miVenue = user ? cafes.find((v) => v.ownerId === user.id) : null;
   const misEventos = user

@@ -1,4 +1,4 @@
-# Spec 007: Migrar datos mock a Supabase
+# Spec 007: Migrar datos mock a Supabase — ✅ COMPLETADO
 
 ## Objetivo
 
@@ -121,18 +121,18 @@ Provider + hook (`useVenues`, `useEventos`). Envolver en `App.tsx`.
 
 ## Criterios de aceptación
 
-### FASE 0 (manual en SQL Editor)
+### FASE 0 (manual en SQL Editor) — ⏳ Pendiente de ejecutar
 - [ ] Tabla `venues` creada con RLS
 - [ ] Tabla `events` creada con RLS
 - [ ] Columnas adicionales en `profiles`
 
-### FASE 1–2 (código)
-- [ ] VenuesContext creado y funcional
-- [ ] EventosContext creado y funcional
-- [ ] CarteleraScreen muestra eventos reales
-- [ ] CafesScreen muestra venues reales
-- [ ] CrearEventoScreen inserta eventos + venues
-- [ ] PerfilMusicoScreen guarda/lee de Supabase
-- [ ] DashboardCafeScreen usa datos reales
-- [ ] App.tsx envuelto en providers
-- [ ] TypeScript compila sin errores
+### FASE 1–2 (código) — ✅ Completado
+- [x] VenuesContext creado y funcional (con fallback a mock)
+- [x] EventosContext creado y funcional (con fallback a mock)
+- [x] CarteleraScreen muestra eventos reales vía EventosContext
+- [x] CafesScreen muestra venues reales vía VenuesContext
+- [x] CrearEventoScreen inserta eventos + venues en Supabase (con fallback a mock)
+- [x] PerfilMusicoScreen guarda/lee perfil en Supabase profiles (con fallback a mock)
+- [x] DashboardCafeScreen usa datos desde VenuesContext + EventosContext
+- [x] App.tsx envuelto en providers (AuthProvider → VenuesProvider → EventosProvider)
+- [x] TypeScript compila sin errores

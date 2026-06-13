@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, ScrollView, Alert, FlatList,
+  StyleSheet, ScrollView, Alert, ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Venue, Evento } from '../types';
-import { allVenues } from '../data/mock/venues';
-import { eventos } from '../data/mock/eventos';
+import { Venue } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { useVenues } from '../context/VenuesContext';
+import { useEventos } from '../context/EventosContext';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export default function CrearEventoScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
+  const { allVenues, createVenue } = useVenues();
+  const { createEvento } = useEventos();
   const [artista, setArtista] = useState('');
   const [venueQuery, setVenueQuery] = useState('');
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
@@ -21,6 +23,7 @@ export default function CrearEventoScreen() {
   const [hora, setHora] = useState('');
   const [genero, setGenero] = useState('');
   const [precio, setPrecio] = useState('');
+  const [publicando, setPublicando] = useState(false);
 
   useEffect(() => {
     if (venueQuery.length > 0 && !selectedVenue) {
@@ -31,7 +34,7 @@ export default function CrearEventoScreen() {
     } else {
       setSuggestions([]);
     }
-  }, [venueQuery, selectedVenue]);
+  }, [venueQuery, selectedVenue, allVenues]);
 
   const handleSelectVenue = (venue: Venue) => {
     setSelectedVenue(venue);
@@ -39,44 +42,50 @@ export default function CrearEventoScreen() {
     setSuggestions([]);
   };
 
-  const handleAgregarNuevoVenue = () => {
-    const nuevoVenue: Venue = {
-      id: `venue-new-${Date.now()}`,
+  const handleAgregarNuevoVenue = async () => {
+    const nuevoVenue = await createVenue({
       name: venueQuery,
       type: "venue",
-    };
-    (allVenues as Venue[]).push(nuevoVenue);
+    });
     handleSelectVenue(nuevoVenue);
   };
 
-  const handlePublicar = () => {
+  const handlePublicar = async () => {
     if (!artista.trim() || !fecha.trim() || !hora.trim()) {
       Alert.alert('Faltan campos', 'Completa al menos artista, fecha y hora');
       return;
     }
-    const venue = selectedVenue ?? { id: `venue-new-${Date.now()}`, name: venueQuery, type: "venue" as const };
-    if (!selectedVenue) {
-      const nuevoVenue: Venue = { id: venue.id, name: venue.name, type: "venue" };
-      (allVenues as Venue[]).push(nuevoVenue);
+    if (!user) {
+      Alert.alert('Error', 'Debes iniciar sesión para publicar');
+      return;
     }
-    const nuevoEvento: Evento = {
-      id: `event-${Date.now()}`,
-      artista,
-      venueId: venue.id,
-      venueName: venue.name,
-      fecha,
-      hora,
-      genero,
-      precio,
-      imagen: null,
-      createdBy: user?.id ?? "unknown",
-    };
-    (eventos as Evento[]).push(nuevoEvento);
-    Alert.alert(
-      'Evento publicado',
-      `"${artista}" en ${venue.name} el ${fecha}`,
-      [{ text: "OK", onPress: () => navigation.goBack() }]
-    );
+    setPublicando(true);
+    try {
+      let venue = selectedVenue;
+      if (!venue) {
+        venue = await createVenue({ name: venueQuery || "Sin nombre", type: "venue" });
+      }
+      await createEvento({
+        artista,
+        venueId: venue.id,
+        venueName: venue.name,
+        fecha,
+        hora,
+        genero,
+        precio,
+        imagen: null,
+        createdBy: user.id,
+      });
+      Alert.alert(
+        'Evento publicado',
+        `"${artista}" en ${venue.name} el ${fecha}`,
+        [{ text: "OK", onPress: () => navigation.goBack() }]
+      );
+    } catch {
+      Alert.alert('Error', 'No se pudo publicar el evento');
+    } finally {
+      setPublicando(false);
+    }
   };
 
   return (
@@ -167,8 +176,16 @@ export default function CrearEventoScreen() {
           placeholderTextColor={colors.muted}
         />
 
-        <TouchableOpacity style={styles.boton} onPress={handlePublicar}>
-          <Text style={styles.textoBoton}>Publicar evento</Text>
+        <TouchableOpacity
+          style={[styles.boton, publicando && styles.botonDesactivado]}
+          onPress={handlePublicar}
+          disabled={publicando}
+        >
+          {publicando ? (
+            <ActivityIndicator color={colors.white} />
+          ) : (
+            <Text style={styles.textoBoton}>Publicar evento</Text>
+          )}
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -242,6 +259,9 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     marginTop: spacing.lg,
+  },
+  botonDesactivado: {
+    opacity: 0.6,
   },
   textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
 });

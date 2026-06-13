@@ -2,7 +2,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, View } from 'react-native';
-import CarteleraScreen from '../screens/CarteleraScreen';
+import CarteleraStack from './CarteleraStack';
 import AuthScreen from '../screens/AuthScreen';
 import PerfilMusicoScreen from '../screens/PerfilMusicoScreen';
 import PerfilScreen from '../screens/PerfilScreen';
@@ -52,7 +52,11 @@ export default function AppNavigator() {
           headerTintColor: colors.white,
         })}
       >
-        <Tab.Screen name="Cartelera" component={CarteleraScreen} />
+        <Tab.Screen
+          name="Cartelera"
+          component={CarteleraStack}
+          options={{ headerShown: false }}
+        />
         <Tab.Screen
           name="Cafés"
           component={CafesStack}

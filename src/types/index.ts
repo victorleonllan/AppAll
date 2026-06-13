@@ -24,6 +24,20 @@ export interface Evento {
   precio: string;
   imagen: string | null;
   createdBy: string;
+  monto?: number;
+}
+
+export type TicketStatus = 'pending' | 'completed' | 'refunded';
+
+export interface Ticket {
+  id: string;
+  eventoId: string;
+  userId: string;
+  status: TicketStatus;
+  preferenceId: string;
+  paymentId?: string;
+  monto: number;
+  createdAt: string;
 }
 
 export interface Cafe {
@@ -45,7 +59,7 @@ export interface PerfilMusico {
   id: string;
   userId: string;
   nombre: string;
-  genero: string;
+  tipoProyecto: string;
   bio: string;
   instagram?: string;
   spotify?: string;

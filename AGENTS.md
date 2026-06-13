@@ -1,16 +1,18 @@
 # AppAll — Guía de Arquitectura
 
 > Proyecto: AppAll — plataforma triple que conecta público + músicos + cafés en Santiago.
-> Stack: React Native + Expo SDK 56 + Supabase (futuro)
+> Stack: React Native + Expo SDK 56 + Supabase
 > AI Agents: Esta guía es el punto de entrada para cualquier IA que trabaje en el proyecto.
 
 ## 📁 Estructura de directorios
 
 ```
 src/
-├── components/     → Componentes UI reutilizables (nombres en español: TarjetaEvento, etc.)
+├── components/     → Componentes UI reutilizables (TarjetaEvento, etc.)
+├── context/        → Providers: AuthContext, VenuesContext, EventosContext
 ├── data/
-│   └── mock/       → Datos mock y constantes (mockEventos.ts, mockCafes.ts)
+│   └── mock/       → Datos mock y constantes (fallback cuando Supabase no está configurado)
+├── lib/            → Supabase client
 ├── navigation/     → Configuración de navegación (tabs, stacks)
 ├── screens/        → Pantallas de la app (Cartelera, Cafes, Perfil...)
 ├── theme/          → Tokens de diseño: colores, spacing, borderRadius
@@ -35,10 +37,10 @@ Colores del branding:
 1. **ESPAÑOL**: Nombres de componentes, archivos, variables y comentarios en español
 2. **Importaciones relativas**: Usar `../` desde el archivo
 3. **Estilos**: Usar `StyleSheet.create()` con theme tokens, NO estilos inline
-4. **Datos mock**: En `src/data/mock/`, NO inline en screens
-5. **Tipos**: TODAS las interfaces en `src/types/index.ts`
+4. **Data flow**: Screens usan hooks (`useVenues()`, `useEventos()`, `useAuth()`). Los providers intentan Supabase primero, fallback a mock si no hay conexión.
+5. **Tipos**: TODAS las interfaces en `src/types/index.ts`. Los providers mapean snake_case (DB) a camelCase (frontend).
 6. **Componentes**: Un archivo por componente, export default
-7. **Pantallas**: Cada screen recibe sus datos por import, no los define internamente
+7. **Pantallas**: Cada screen recibe sus datos por hooks, no importa mock directamente
 8. **NO modificar AGENTS.md sin spec explícito**
 
 ## 📋 Specs

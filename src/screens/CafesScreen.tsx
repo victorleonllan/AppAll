@@ -4,10 +4,10 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { allVenues } from '../data/mock/venues';
-import { eventos } from '../data/mock/eventos';
 import { musicosMock } from '../data/mock/musicos';
 import { useAuth } from '../context/AuthContext';
+import { useVenues } from '../context/VenuesContext';
+import { useEventos } from '../context/EventosContext';
 import { colors, spacing, fontSize, borderRadius } from '../theme';
 import { CafesStackParamList } from '../navigation/CafesStack';
 
@@ -18,15 +18,16 @@ const generos = [...new Set(musicosMock.map((m) => m.genero))];
 export default function CafesScreen() {
   const { session } = useAuth();
   const navigation = useNavigation<NavigationProp>();
+  const { cafes: locales, otherVenues } = useVenues();
+  const { eventos } = useEventos();
   const [generoSeleccionado, setGeneroSeleccionado] = useState<string | null>(null);
 
   const musicosFiltrados = generoSeleccionado
     ? musicosMock.filter((m) => m.genero === generoSeleccionado)
     : [];
 
-  const locales = allVenues.filter((v) => v.type === "cafe");
-  const otrosVenuesConEventos = allVenues.filter(
-    (v) => v.type === "venue" && eventos.some((e) => e.venueId === v.id)
+  const otrosVenuesConEventos = otherVenues.filter(
+    (v) => eventos.some((e) => e.venueId === v.id)
   );
 
   return (

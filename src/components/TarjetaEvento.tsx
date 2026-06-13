@@ -4,11 +4,12 @@ import { colors, spacing, borderRadius } from '../theme';
 
 interface Props {
   evento: Evento;
+  onPress?: () => void;
   onComprar?: () => void;
 }
 
-export default function TarjetaEvento({ evento, onComprar }: Props) {
-  return (
+export default function TarjetaEvento({ evento, onPress, onComprar }: Props) {
+  const contenido = (
     <View style={styles.tarjeta}>
       <View style={{ flex: 1 }}>
         <Text style={styles.artista}>{evento.artista}</Text>
@@ -24,6 +25,14 @@ export default function TarjetaEvento({ evento, onComprar }: Props) {
         </TouchableOpacity>
       )}
     </View>
+  );
+
+  return onPress ? (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+      {contenido}
+    </TouchableOpacity>
+  ) : (
+    contenido
   );
 }
 

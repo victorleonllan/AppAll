@@ -4,9 +4,10 @@ import {
   StyleSheet, ScrollView, Alert, ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { useEventos } from '../context/EventosContext';
 import { musicosMock } from '../data/mock/musicos';
-import { eventos } from '../data/mock/eventos';
 import { PerfilMusico } from '../types';
 import TarjetaEvento from '../components/TarjetaEvento';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
@@ -14,6 +15,7 @@ import { colors, spacing, borderRadius, fontSize } from '../theme';
 export default function PerfilMusicoScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
+  const { eventos } = useEventos();
   const [perfil, setPerfil] = useState<PerfilMusico | null>(null);
   const [nombre, setNombre] = useState('');
   const [genero, setGenero] = useState('');
@@ -21,23 +23,71 @@ export default function PerfilMusicoScreen() {
   const [instagram, setInstagram] = useState('');
   const [spotify, setSpotify] = useState('');
   const [youtube, setYoutube] = useState('');
+  const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
     if (!user) return;
-    const encontrado = musicosMock.find((m) => m.userId === user.id);
-    if (encontrado) {
-      setPerfil(encontrado);
-      setNombre(encontrado.nombre);
-      setGenero(encontrado.genero);
-      setBio(encontrado.bio);
-      setInstagram(encontrado.instagram ?? '');
-      setSpotify(encontrado.spotify ?? '');
-      setYoutube(encontrado.youtube ?? '');
-    }
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        if (!error && data) {
+          setPerfil({
+            id: data.id,
+            userId: data.id,
+            nombre: data.nombre ?? '',
+            genero: data.genero ?? '',
+            bio: data.bio ?? '',
+            instagram: data.instagram ?? '',
+            spotify: data.spotify ?? '',
+            youtube: data.youtube ?? '',
+            foto: data.foto ?? null,
+          });
+          setNombre(data.nombre ?? '');
+          setGenero(data.genero ?? '');
+          setBio(data.bio ?? '');
+          setInstagram(data.instagram ?? '');
+          setSpotify(data.spotify ?? '');
+          setYoutube(data.youtube ?? '');
+          return;
+        }
+      } catch {}
+      const encontrado = musicosMock.find((m) => m.userId === user.id);
+      if (encontrado) {
+        setPerfil(encontrado);
+        setNombre(encontrado.nombre);
+        setGenero(encontrado.genero);
+        setBio(encontrado.bio);
+        setInstagram(encontrado.instagram ?? '');
+        setSpotify(encontrado.spotify ?? '');
+        setYoutube(encontrado.youtube ?? '');
+      }
+    })();
   }, [user]);
 
-  const handleGuardar = () => {
-    Alert.alert('Guardado', 'Tus cambios se han guardado (mock)');
+  const handleGuardar = async () => {
+    if (!user) return;
+    setGuardando(true);
+    try {
+      const { error } = await supabase.from('profiles').upsert({
+        id: user.id,
+        nombre,
+        genero,
+        bio,
+        instagram,
+        spotify,
+        youtube,
+      });
+      if (error) throw error;
+      Alert.alert('Guardado', 'Perfil actualizado en Supabase');
+    } catch {
+      Alert.alert('Guardado', 'Tus cambios se han guardado (mock)');
+    } finally {
+      setGuardando(false);
+    }
   };
 
   const misEventos = user ? eventos.filter((e) => e.createdBy === user.id) : [];
@@ -88,8 +138,16 @@ export default function PerfilMusicoScreen() {
         <Text style={styles.label}>YouTube</Text>
         <TextInput style={styles.input} value={youtube} onChangeText={setYoutube} />
 
-        <TouchableOpacity style={styles.boton} onPress={handleGuardar}>
-          <Text style={styles.textoBoton}>Guardar cambios</Text>
+        <TouchableOpacity
+          style={[styles.boton, guardando && styles.botonDesactivado]}
+          onPress={handleGuardar}
+          disabled={guardando}
+        >
+          {guardando ? (
+            <ActivityIndicator color={colors.white} />
+          ) : (
+            <Text style={styles.textoBoton}>Guardar cambios</Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -149,6 +207,9 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     marginTop: spacing.lg,
+  },
+  botonDesactivado: {
+    opacity: 0.6,
   },
   textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
   vacio: {
