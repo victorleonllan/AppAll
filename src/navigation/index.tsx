@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, View } from 'react-native';
 import CarteleraStack from './CarteleraStack';
 import AuthScreen from '../screens/AuthScreen';
-import PerfilMusicoScreen from '../screens/PerfilMusicoScreen';
+import MusicoStack from './MusicoStack';
 import PerfilScreen from '../screens/PerfilScreen';
 import CafesStack from './CafesStack';
 import CafeStack from './CafeStack';
@@ -17,7 +17,7 @@ const Tab = createBottomTabNavigator();
 
 function getThirdTab(session: unknown, role: UserRole) {
   if (!session) return { name: 'AppAll' as const, component: AuthScreen, icon: 'apps' as const };
-  if (role === 'musician') return { name: 'Mi Perfil' as const, component: PerfilMusicoScreen, icon: 'person-circle' as const };
+  if (role === 'musician') return { name: 'Mi Perfil' as const, component: MusicoStack, icon: 'person-circle' as const };
   if (role === 'cafe') return { name: 'Mi Café' as const, component: CafeStack, icon: 'cafe' as const };
   return { name: 'Perfil' as const, component: PerfilScreen, icon: 'person' as const };
 }
@@ -66,7 +66,7 @@ export default function AppNavigator() {
           name={thirdTab.name}
           component={thirdTab.component}
           options={{
-            headerShown: thirdTab.name !== 'AppAll' && thirdTab.name !== 'Mi Café',
+            headerShown: thirdTab.name === 'AppAll' ? false : thirdTab.name === 'Mi Café' ? false : thirdTab.name === 'Mi Perfil' ? false : true,
             title: thirdTab.name,
           }}
         />
