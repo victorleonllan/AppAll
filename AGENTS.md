@@ -1,7 +1,7 @@
 # AppAll — Guía de Arquitectura
 
 > Proyecto: AppAll — plataforma triple que conecta público + músicos + cafés en Santiago.
-> Stack: React Native + Expo SDK 56 + Supabase
+> Stack: React Native + Expo SDK 56 + Supabase + **Mercado Pago Checkout Pro**
 > AI Agents: Esta guía es el punto de entrada para cualquier IA que trabaje en el proyecto.
 
 ## 📁 Estructura de directorios
