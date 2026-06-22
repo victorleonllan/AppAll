@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useEventos } from '../context/EventosContext';
 import { CarteleraStackParamList } from '../navigation/CarteleraStack';
+import { supabase } from '../lib/supabase';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 type ConfirmacionRoute = RouteProp<CarteleraStackParamList, 'ConfirmacionCompra'>;
@@ -14,7 +15,7 @@ const config: Record<string, { icon: keyof typeof Ionicons.glyphMap; color: stri
   success: {
     icon: 'checkmark-circle',
     color: colors.success,
-    titulo: '¡Compra exitosa!',
+    titulo: 'Compra exitosa!',
     mensaje: 'Tu entrada ha sido confirmada. Te esperamos en el evento.',
   },
   failure: {
@@ -27,25 +28,55 @@ const config: Record<string, { icon: keyof typeof Ionicons.glyphMap; color: stri
     icon: 'time',
     color: '#F57F17',
     titulo: 'Pago pendiente',
-    mensaje: 'El pago está siendo procesado. Te notificaremos cuando se confirme.',
+    mensaje: 'El pago esta siendo procesado. La pantalla se actualizara automaticamente cuando se confirme.',
   },
 };
 
 export default function ConfirmacionCompraScreen() {
   const route = useRoute<ConfirmacionRoute>();
   const navigation = useNavigation<NavProp>();
-  const { eventos, tickets } = useEventos();
+  const { eventos } = useEventos();
 
-  const { eventoId, status } = route.params;
+  const { eventoId, ticketId, status } = route.params;
+  const [actualStatus, setActualStatus] = useState(status);
   const evento = eventos.find((e) => e.id === eventoId);
-  const cfg = config[status] ?? config.failure;
+  const cfg = config[actualStatus] ?? config.failure;
 
+  // Polling: verificar cada 3s si el ticket cambio de pending a completed/refunded
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.getParent()?.goBack();
-    }, 8000);
-    return () => clearTimeout(timer);
-  }, [navigation]);
+    if (status !== 'pending' || !ticketId) return;
+
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from('tickets')
+        .select('status')
+        .eq('id', ticketId)
+        .single();
+
+      if (data && data.status !== 'pending') {
+        setActualStatus(data.status as 'success' | 'failure' | 'pending');
+        clearInterval(interval);
+      }
+    }, 3000);
+
+    // Parar polling despues de 30s
+    const timeout = setTimeout(() => clearInterval(interval), 30000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [status, ticketId]);
+
+  // Auto-redireccion despues de exito
+  useEffect(() => {
+    if (actualStatus === 'success') {
+      const timer = setTimeout(() => {
+        navigation.getParent()?.goBack();
+      }, 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [actualStatus, navigation]);
 
   const irACartelera = () => {
     navigation.navigate('CarteleraList');
@@ -63,6 +94,12 @@ export default function ConfirmacionCompraScreen() {
           <Text style={styles.eventoDetalle}>
             {evento.venueName} · {evento.fecha} · {evento.hora}
           </Text>
+        </View>
+      )}
+
+      {actualStatus === 'pending' && (
+        <View style={styles.pollingIndicator}>
+          <Text style={styles.pollingText}>Verificando pago...</Text>
         </View>
       )}
 
@@ -111,6 +148,18 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.muted,
     marginTop: spacing.xs,
+  },
+  pollingIndicator: {
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: '#FFF3E0',
+    borderRadius: borderRadius.sm,
+  },
+  pollingText: {
+    fontSize: fontSize.sm,
+    color: '#F57F17',
+    fontWeight: '500',
   },
   boton: {
     backgroundColor: colors.accent,
