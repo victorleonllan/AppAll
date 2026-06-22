@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  Alert, TextInput, Platform,
+  Alert, TextInput,
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,14 +17,14 @@ type NavProp = NativeStackNavigationProp<CarteleraStackParamList, 'DetalleEvento
 export default function DetalleEventoScreen() {
   const route = useRoute<DetalleRoute>();
   const navigation = useNavigation<NavProp>();
-  const { user, signInOtp, verifyOtp } = useAuth();
+  const { user, signInOtp } = useAuth();
   const { eventos } = useEventos();
 
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
-  const [step, setStep] = useState<'idle' | 'email' | 'otp' | 'comprando'>('idle');
+  const [step, setStep] = useState<'idle' | 'email' | 'enviado' | 'comprando'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailEnviado, setEmailEnviado] = useState('');
 
   const evento = eventos.find((e) => e.id === route.params.eventoId);
 
@@ -38,9 +38,18 @@ export default function DetalleEventoScreen() {
 
   const monto = evento.monto ?? 0;
 
-  // ──────────────────── FLUJO: email + OTP + compra ────────────────────
+  // Auto-compra: si volvemos del magic link con una compra pendiente
+  useEffect(() => {
+    const pendingId = typeof window !== 'undefined' ? localStorage.getItem('pending_ticket') : null;
+    if (pendingId === evento.id && user) {
+      localStorage.removeItem('pending_ticket');
+      handleComprarLogueado();
+    }
+  }, [user, evento.id]);
 
-  const handleEnviarOtp = async () => {
+  // ────────────── FLUJO: email → magic link ──────────────
+
+  const handleEnviarLink = async () => {
     if (!email.trim() || !email.includes('@')) {
       setErrorMsg('Ingresa un email válido');
       return;
@@ -52,80 +61,16 @@ export default function DetalleEventoScreen() {
     if (err) {
       setErrorMsg(err);
     } else {
-      setStep('otp');
-    }
-  };
-
-  const handleVerificarOtp = async () => {
-    if (!otp.trim()) {
-      setErrorMsg('Ingresa el código de 6 dígitos');
-      return;
-    }
-    setErrorMsg('');
-    setLoading(true);
-    const err = await verifyOtp(email.trim(), otp.trim());
-    setLoading(false);
-    if (err) {
-      setErrorMsg(err);
-    } else {
-      // Usuario autenticado → proceder a comprar
-      setStep('comprando');
-      await procesarCompra();
-    }
-  };
-
-  const procesarCompra = async () => {
-    // Obtener sesión actualizada después de autenticación OTP
-    const { data: { session } } = await supabase.auth.getSession();
-    const currentUser = session?.user;
-    if (!currentUser) {
-      Alert.alert('Error', 'No se pudo autenticar. Intenta de nuevo.');
-      setStep('idle');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/create-preference`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({
-            evento_id: evento.id,
-            user_id: currentUser.id,
-            cantidad: 1,
-          }),
-        }
-      );
-
-      if (!res.ok) throw new Error('Error al crear preferencia');
-
-      const data = await res.json();
-
-      const checkoutUrl = data.sandbox_init_point || data.init_point;
+      // Guardar en localStorage para auto-compra al volver del magic link
       if (typeof window !== 'undefined') {
-        window.open(checkoutUrl, '_blank');
+        localStorage.setItem('pending_ticket', evento.id);
       }
-
-      navigation.replace('ConfirmacionCompra', {
-        eventoId: evento.id,
-        ticketId: data.ticket_id,
-        status: 'pending',
-      });
-    } catch (err) {
-      console.error('Error al comprar:', err);
-      Alert.alert('Error', 'No se pudo procesar la compra');
-      setStep('idle');
-    } finally {
-      setLoading(false);
+      setEmailEnviado(email.trim());
+      setStep('enviado');
     }
   };
 
-  // ──────────────────── FLUJO: usuario ya logueado ────────────────────
+  // ────────────── FLUJO: usuario logueado ──────────────
 
   const handleComprarLogueado = async () => {
     if (monto <= 0) {
@@ -133,6 +78,7 @@ export default function DetalleEventoScreen() {
       return;
     }
 
+    setStep('comprando');
     setLoading(true);
     try {
       const res = await fetch(
@@ -168,21 +114,22 @@ export default function DetalleEventoScreen() {
     } catch (err) {
       console.error('Error al comprar:', err);
       Alert.alert('Error', 'No se pudo procesar la compra');
+      setStep('idle');
     } finally {
       setLoading(false);
     }
   };
 
-  // ──────────────────── FORMULARIO OTP ────────────────────
+  // ────────────── FORMULARIO EMAIL ──────────────
 
-  const renderFormularioOtp = () => (
+  const renderFormularioEmail = () => (
     <View style={styles.overlay}>
       <View style={styles.card}>
         {step === 'email' && (
           <>
             <Text style={styles.modalTitulo}>Para comprar tu entrada</Text>
             <Text style={styles.modalSubtitulo}>
-              Ingresa tu email para recibir un código de verificación
+              Ingresa tu correo electrónico. Te enviaremos un enlace mágico para continuar.
             </Text>
             <TextInput
               style={styles.input}
@@ -196,43 +143,36 @@ export default function DetalleEventoScreen() {
             {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
             <TouchableOpacity
               style={[styles.boton, loading && styles.botonDesactivado]}
-              onPress={handleEnviarOtp}
+              onPress={handleEnviarLink}
               disabled={loading}
             >
               <Text style={styles.textoBoton}>
-                {loading ? 'Enviando...' : 'Enviar código'}
+                {loading ? 'Enviando...' : 'Enviar enlace'}
               </Text>
             </TouchableOpacity>
           </>
         )}
 
-        {step === 'otp' && (
+        {step === 'enviado' && (
           <>
-            <Text style={styles.modalTitulo}>Código de verificación</Text>
+            <Text style={styles.modalTitulo}>Enlace enviado ✅</Text>
             <Text style={styles.modalSubtitulo}>
-              Revisa tu bandeja de entrada en <Text style={styles.emailResaltado}>{email}</Text> y escribe el código de 6 dígitos
+              Revisa <Text style={styles.emailResaltado}>{emailEnviado}</Text>. Te llegó un enlace mágico para iniciar sesión.
             </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="123456"
-              placeholderTextColor={colors.muted}
-              keyboardType="number-pad"
-              maxLength={6}
-              value={otp}
-              onChangeText={(t) => { setOtp(t); setErrorMsg(''); }}
-            />
-            {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
-            <TouchableOpacity
-              style={[styles.boton, loading && styles.botonDesactivado]}
-              onPress={handleVerificarOtp}
-              disabled={loading}
-            >
-              <Text style={styles.textoBoton}>
-                {loading ? 'Verificando...' : 'Verificar y comprar'}
+            <View style={styles.instruccionesBox}>
+              <Text style={styles.instruccionesTitulo}>Pasos:</Text>
+              <Text style={styles.instruccionesTexto}>
+                1. Abre tu correo{'\n'}
+                2. Haz click en el enlace mágico{'\n'}
+                3. Vuelve a esta pantalla{'\n'}
+                4. Presiona "Comprar entrada" de nuevo
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setStep('email')}>
-              <Text style={styles.linkText}>Cambiar email</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.boton}
+              onPress={() => setStep('idle')}
+            >
+              <Text style={styles.textoBoton}>Cerrar</Text>
             </TouchableOpacity>
           </>
         )}
@@ -244,7 +184,17 @@ export default function DetalleEventoScreen() {
     </View>
   );
 
-  // ──────────────────── RENDER PRINCIPAL ────────────────────
+  // ────────────── BOTON PRINCIPAL ──────────────
+
+  const handleBotonComprar = () => {
+    if (user) {
+      handleComprarLogueado();
+    } else {
+      setStep('email');
+    }
+  };
+
+  // ────────────── RENDER ──────────────
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -274,17 +224,11 @@ export default function DetalleEventoScreen() {
 
         <TouchableOpacity
           style={[styles.botonComprar, (!monto) && styles.botonDesactivado]}
-          onPress={() => {
-            if (user) {
-              handleComprarLogueado();
-            } else {
-              setStep('email');
-            }
-          }}
-          disabled={!monto || loading}
+          onPress={handleBotonComprar}
+          disabled={!monto || step === 'comprando'}
         >
           <Text style={styles.textoBotonComprar}>
-            {loading
+            {step === 'comprando'
               ? 'Procesando...'
               : monto > 0
                 ? `Comprar entrada — ${evento.precio}`
@@ -293,13 +237,12 @@ export default function DetalleEventoScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Modal OTP superpuesto */}
-      {(step === 'email' || step === 'otp' || step === 'comprando') && renderFormularioOtp()}
+      {(step === 'email' || step === 'enviado' || step === 'comprando') && renderFormularioEmail()}
     </ScrollView>
   );
 }
 
-// ──────────────────── ESTILOS ────────────────────
+// ────────────── ESTILOS ──────────────
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
@@ -377,7 +320,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.md,
   },
-  // los estilos del modal reusan .card
   modalTitulo: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
@@ -421,10 +363,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: fontSize.md,
   },
-  linkText: {
-    color: colors.accent,
-    textAlign: 'center',
-    marginTop: spacing.md,
+  instruccionesBox: {
+    backgroundColor: colors.accentLight,
+    borderRadius: borderRadius.sm,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  instruccionesTitulo: {
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: spacing.xs,
+  },
+  instruccionesTexto: {
     fontSize: fontSize.sm,
+    color: colors.secondary,
+    lineHeight: 22,
   },
 });

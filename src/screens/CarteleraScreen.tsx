@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEventos } from '../context/EventosContext';
+import { useAuth } from '../context/AuthContext';
 import TarjetaEvento from '../components/TarjetaEvento';
 import { CarteleraStackParamList } from '../navigation/CarteleraStack';
 import { colors, spacing, fontSize } from '../theme';
@@ -11,6 +13,16 @@ type NavigationProp = NativeStackNavigationProp<CarteleraStackParamList, 'Cartel
 export default function CarteleraScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { eventos, loading } = useEventos();
+  const { user } = useAuth();
+
+  // Auto-navegar al evento si hay una compra pendiente del magic link
+  useEffect(() => {
+    const pendingId = typeof window !== 'undefined' ? localStorage.getItem('pending_ticket') : null;
+    if (pendingId && user) {
+      // No borramos localStorage todavia — lo borra DetalleEvento al comprar
+      navigation.navigate('DetalleEvento', { eventoId: pendingId });
+    }
+  }, [user, navigation]);
 
   if (loading) {
     return (
@@ -22,7 +34,7 @@ export default function CarteleraScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.titulo}>📅 Próximos eventos</Text>
+      <Text style={styles.titulo}>Proximos eventos</Text>
       <FlatList
         data={eventos}
         keyExtractor={(item) => item.id}
