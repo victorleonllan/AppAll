@@ -1,40 +1,51 @@
 # Specs — AppAll
 
-> Bitacora de desarrollo. Cada spec es una tarea ejecutable.
-
 ## Roadmap Beta 1.0 — Venta de Entradas
-
-**Contexto (actualizado 21 Jun 2026):** Flujo de compra de entradas COMPLETO con Mercado Pago Checkout Pro real. El publico compra sin registrarse con contrasena — solo email + codigo OTP de 6 digitos.
 
 | # | Spec | Estado |
 |---|------|--------|
-| 001-008 | Fundacion, Auth, Perfiles, Eventos, Venues, Mock a Supabase | Completado |
-| **009** | **Tickets + MP Checkout Pro real** | **Completado** |
+| 001-008 | Fundacion, Auth, Perfiles, Eventos, Venues, Mock | Completado |
+| 009 | Tickets + MP Checkout Pro real | Completado |
 | 010 | Dashboard ventas musico | Pendiente |
 | 011 | Sembrar datos de prueba | Pendiente |
 | 012 | Fix navegacion crear evento | Completado |
+| 013 | Fix Magic Link Auth + auto-compra | Completado |
 
-## Spec 009 — Resumen final
+## Spec 013 — Fix Magic Link Auth + auto-compra
 
-| Fase | Que se hizo | Archivos tocados |
-|------|------------|-----------------|
-| **0** | SQL migration: tabla tickets + columna monto en events | Supabase SQL Editor |
-| **1** | Edge Function create-preference deployada (v1) | supabase/functions/create-preference/index.ts |
-| **2** | Edge Function webhook-mp deployada (v1) + secret MERCADOPAGO_ACCESS_TOKEN | supabase/functions/webhook-mp/index.ts |
-| **3** | Frontend: DetalleEventoScreen + ConfirmacionCompraScreen + AuthContext | src/screens/DetalleEventoScreen.tsx, src/screens/ConfirmacionCompraScreen.tsx, src/context/AuthContext.tsx |
+**Problema:** Magic link no detectaba sesion al volver. Solucion: `detectSessionInUrl: true`.
+**Auto-compra:** localStorage con `pending_ticket` + navegacion automatica al evento.
 
-## Edge Functions activas
+Archivos tocados:
+- `src/lib/supabase.ts` — detectSessionInUrl false → true
+- `src/context/AuthContext.tsx` — emailRedirectTo: window.location.origin
+- `src/screens/DetalleEventoScreen.tsx` — localStorage + auto-compra
+- `src/screens/CarteleraScreen.tsx` — auto-navegacion
+
+Mas detalle en `013-fix-magic-link-auth.md`.
+
+## Edge Functions
 
 | Function | URL |
 |---------|-----|
 | create-preference | /functions/v1/create-preference |
 | webhook-mp | /functions/v1/webhook-mp |
 
-## Estado del proyecto (21 Jun 2026)
+## Flujo de compra completo
 
-- Supabase proyecto: xluinfihjjtxkglihxqz
+1. Usuario ve evento > toca "Comprar entrada"
+2. Si no esta logueado > formulario de email
+3. Magic link enviado + evento guardado en localStorage
+4. Click en el link > Supabase procesa > redirect a la app
+5. App detecta sesion (detectSessionInUrl: true)
+6. Cartelera navega al evento (pending_ticket)
+7. DetalleEvento auto-compra
+8. Se abre MP Checkout Pro
+9. Confirmacion con polling cada 3s
+
+## Proyecto
+
+- Supabase: xluinfihjjtxkglihxqz
 - Tablas: venues, events, profiles, tickets
-- Edge Functions: create-preference, webhook-mp (ambas activas)
-- Auth publico: OTP por email (sin contrasena) con role=public
-- MP: Checkout Pro con app JamCafe (credenciales de prueba)
-- Pendiente: dashboard ventas (010), sembrar datos (011)
+- MP: Checkout Pro (app JamCafe, credenciales prueba)
+- Pendiente: Spec 010 (dashboard ventas), Spec 011 (sembrar datos)
