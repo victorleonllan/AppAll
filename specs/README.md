@@ -10,6 +10,8 @@
 | 011 | Sembrar datos de prueba | Pendiente |
 | 012 | Fix navegacion crear evento | Completado |
 | 013 | Fix Magic Link Auth + auto-compra | Completado |
+| 014 | Deploy Edge Functions MP + Secrets | Pendiente |
+| 015 | Webhook MP + Prueba End-to-End | Pendiente |
 
 ## Spec 013 — Fix Magic Link Auth + auto-compra
 
