@@ -23,7 +23,7 @@ serve(async (req) => {
     // Info del evento
     const { data: evento, error } = await supabase
       .from('events')
-      .select('*, venues(*)')
+      .select('*')
       .eq('id', evento_id)
       .single();
 
@@ -35,7 +35,7 @@ serve(async (req) => {
     const preference = {
       items: [{
         id: evento.id,
-        title: `Entrada: ${evento.nombre} - ${evento.venues?.nombre || ''}`,
+        title: `Entrada: ${evento.artist_name} - ${evento.venue_name}`,
         quantity: cantidad,
         unit_price: evento.monto,
         currency_id: 'CLP',
