@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEventos } from '../context/EventosContext';
@@ -17,11 +18,20 @@ export default function CarteleraScreen() {
 
   // Auto-navegar al evento si hay una compra pendiente del magic link
   useEffect(() => {
-    const pendingId = typeof window !== 'undefined' ? localStorage.getItem('pending_ticket') : null;
-    if (pendingId && user) {
-      // No borramos localStorage todavia — lo borra DetalleEvento al comprar
-      navigation.navigate('DetalleEvento', { eventoId: pendingId });
-    }
+    const getPending = async () => {
+      try {
+        let pendingId: string | null = null;
+        if (Platform.OS === 'web') {
+          pendingId = localStorage.getItem('pending_ticket');
+        } else {
+          pendingId = await AsyncStorage.getItem('pending_ticket');
+        }
+        if (pendingId && user) {
+          navigation.navigate('DetalleEvento', { eventoId: pendingId });
+        }
+      } catch {}
+    };
+    getPending();
   }, [user, navigation]);
 
   if (loading) {
