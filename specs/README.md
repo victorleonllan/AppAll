@@ -13,8 +13,9 @@
 | 014 | Deploy Edge Functions MP + Secrets | Completado |
 | 015 | Webhook MP + Prueba End-to-End | Completado |
 | 016 | Fix estado de tickets en dashboard de ventas | Completado |
+| 017 | Hardening auto-compra tras migrar a AsyncStorage | Completado (falta probar en nativo) |
 
-## Progreso: 16/16 specs completados. ✅ Beta lista para pruebas end-to-end.
+## Progreso: 17/17 specs completados. ✅ Beta lista para pruebas end-to-end.
 
 ## Spec 013 — Fix Magic Link Auth + auto-compra
 

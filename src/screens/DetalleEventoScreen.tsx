@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -28,6 +28,9 @@ export default function DetalleEventoScreen() {
   const [loading, setLoading] = useState(false);
   const [emailEnviado, setEmailEnviado] = useState('');
 
+  // Candado de la auto-compra — ver comentario en el efecto de abajo
+  const autoCompraIniciada = useRef(false);
+
   const evento = eventos.find((e) => e.id === route.params.eventoId);
 
   if (!evento) {
@@ -50,15 +53,21 @@ export default function DetalleEventoScreen() {
         } else {
           pendingId = await AsyncStorage.getItem('pending_ticket');
         }
-        if (pendingId === evento.id && user) {
-          if (Platform.OS === 'web') {
-            localStorage.removeItem('pending_ticket');
-          } else {
-            await AsyncStorage.removeItem('pending_ticket');
-          }
-          handleComprarLogueado();
+        // En nativo el await de arriba abre un hueco donde dos ejecuciones del
+        // efecto pueden solaparse y comprar dos veces. El chequeo del candado y
+        // su marcado van juntos, sin await en medio, para cerrarlo.
+        if (pendingId !== evento.id || !user || autoCompraIniciada.current) return;
+        autoCompraIniciada.current = true;
+
+        if (Platform.OS === 'web') {
+          localStorage.removeItem('pending_ticket');
+        } else {
+          await AsyncStorage.removeItem('pending_ticket');
         }
-      } catch {}
+        handleComprarLogueado();
+      } catch (e) {
+        console.error('[DetalleEvento] auto-compra: no se pudo leer pending_ticket:', e);
+      }
     };
     checkPending();
   }, [user, evento.id]);

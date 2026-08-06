@@ -29,7 +29,9 @@ export default function CarteleraScreen() {
         if (pendingId && user) {
           navigation.navigate('DetalleEvento', { eventoId: pendingId });
         }
-      } catch {}
+      } catch (e) {
+        console.error('[Cartelera] no se pudo leer pending_ticket:', e);
+      }
     };
     getPending();
   }, [user, navigation]);
