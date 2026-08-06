@@ -1,11 +1,13 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PerfilMusicoScreen from '../screens/PerfilMusicoScreen';
 import CrearEventoScreen from '../screens/CrearEventoScreen';
+import VentasMusicoScreen from '../screens/VentasMusicoScreen';
 import { colors, fontSize } from '../theme';
 
 export type MusicoStackParamList = {
   PerfilMusico: undefined;
   CrearEvento: undefined;
+  VentasMusico: undefined;
 };
 
 const Stack = createNativeStackNavigator<MusicoStackParamList>();
@@ -28,6 +30,11 @@ export default function MusicoStack() {
         name="CrearEvento"
         component={CrearEventoScreen}
         options={{ title: 'Nuevo Evento' }}
+      />
+      <Stack.Screen
+        name="VentasMusico"
+        component={VentasMusicoScreen}
+        options={{ title: 'Mis Ventas' }}
       />
     </Stack.Navigator>
   );

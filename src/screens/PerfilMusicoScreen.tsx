@@ -160,6 +160,12 @@ export default function PerfilMusicoScreen() {
         )}
         <TouchableOpacity
           style={styles.botonNuevo}
+          onPress={() => (navigation as any).navigate('VentasMusico')}
+        >
+          <Text style={styles.textoBoton}>📊 Mis Ventas</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.botonNuevo}
           onPress={() => (navigation as any).navigate('CrearEvento')}
         >
           <Text style={styles.textoBoton}>+ Nuevo Evento</Text>
