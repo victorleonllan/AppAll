@@ -6,10 +6,11 @@ import {
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
+import type { TicketStatus } from '../types';
 
 type Ticket = {
   id: string;
-  status: string;
+  status: TicketStatus;
   monto: number;
   cantidad: number;
   created_at: string;
@@ -83,9 +84,9 @@ export default function VentasMusicoScreen() {
 
   // Totales
   const todosTickets = eventos.flatMap((e) => e.tickets);
-  const ticketsPaid = todosTickets.filter((t) => t.status === 'paid');
-  const totalEntradas = ticketsPaid.reduce((sum, t) => sum + t.cantidad, 0);
-  const totalMonto = ticketsPaid.reduce((sum, t) => sum + t.monto, 0);
+  const ticketsPagados = todosTickets.filter((t) => t.status === 'completed');
+  const totalEntradas = ticketsPagados.reduce((sum, t) => sum + t.cantidad, 0);
+  const totalMonto = ticketsPagados.reduce((sum, t) => sum + t.monto, 0);
   const eventosActivos = eventos.length;
 
   if (loading) {
@@ -128,9 +129,9 @@ export default function VentasMusicoScreen() {
       ) : (
         eventos.map((ev) => {
           const evTickets = ev.tickets;
-          const evPaid = evTickets.filter((t) => t.status === 'paid');
-          const evMonto = evPaid.reduce((sum, t) => sum + t.monto, 0);
-          const evCantidad = evPaid.reduce((sum, t) => sum + t.cantidad, 0);
+          const evPagados = evTickets.filter((t) => t.status === 'completed');
+          const evMonto = evPagados.reduce((sum, t) => sum + t.monto, 0);
+          const evCantidad = evPagados.reduce((sum, t) => sum + t.cantidad, 0);
           const isOpen = expandido === ev.id;
 
           return (
