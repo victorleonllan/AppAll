@@ -16,7 +16,7 @@ type UserRole = 'public' | 'musician' | 'cafe' | null;
 const Tab = createBottomTabNavigator();
 
 function getThirdTab(session: unknown, role: UserRole) {
-  if (!session) return { name: 'AppAll' as const, component: AuthScreen, icon: 'apps' as const };
+  if (!session) return { name: 'Sonópolis' as const, component: AuthScreen, icon: 'apps' as const };
   if (role === 'musician') return { name: 'Mi Perfil' as const, component: MusicoStack, icon: 'person-circle' as const };
   if (role === 'cafe') return { name: 'Mi Café' as const, component: CafeStack, icon: 'cafe' as const };
   return { name: 'Perfil' as const, component: PerfilScreen, icon: 'person' as const };
@@ -66,7 +66,7 @@ export default function AppNavigator() {
           name={thirdTab.name}
           component={thirdTab.component}
           options={{
-            headerShown: thirdTab.name === 'AppAll' ? false : thirdTab.name === 'Mi Café' ? false : thirdTab.name === 'Mi Perfil' ? false : true,
+            headerShown: thirdTab.name === 'Sonópolis' ? false : thirdTab.name === 'Mi Café' ? false : thirdTab.name === 'Mi Perfil' ? false : true,
             title: thirdTab.name,
           }}
         />

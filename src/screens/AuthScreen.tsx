@@ -35,7 +35,7 @@ export default function AuthScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.icon}>🎶</Text>
-      <Text style={styles.title}>¡Bienvenido a AppAll!</Text>
+      <Text style={styles.title}>¡Bienvenido a Sonópolis!</Text>
       <Text style={styles.subtitle}>
         Conectamos público, músicos y cafés en Santiago.
       </Text>

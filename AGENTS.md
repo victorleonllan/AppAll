@@ -1,6 +1,6 @@
-# AppAll — Guía de Arquitectura
+# Sonópolis — Guía de Arquitectura
 
-> Proyecto: AppAll — plataforma triple que conecta público + músicos + cafés en Santiago.
+> Proyecto: Sonópolis — plataforma triple que conecta público + músicos + cafés en Santiago.
 > Stack: React Native + Expo SDK 56 + Supabase + **Mercado Pago Checkout Pro**
 > AI Agents: Esta guía es el punto de entrada para cualquier IA que trabaje en el proyecto.
 
