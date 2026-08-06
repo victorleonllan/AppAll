@@ -17,16 +17,16 @@
 
 ## Spec 013 — Fix Magic Link Auth + auto-compra
 
-**Problema:** Magic link no detectaba sesion al volver. Solucion: .
-**Auto-compra:** localStorage con  + navegacion automatica al evento.
+**Problema:** Magic link no detectaba sesion al volver. Solucion: `detectSessionInUrl: true`.
+**Auto-compra:** localStorage con `pending_ticket` + navegacion automatica al evento.
 
 Archivos tocados:
--  — detectSessionInUrl false → true
--  — emailRedirectTo: window.location.origin
--  — localStorage + auto-compra
--  — auto-navegacion
+- `src/lib/supabase.ts` — detectSessionInUrl false → true
+- `src/context/AuthContext.tsx` — emailRedirectTo: window.location.origin
+- `src/screens/DetalleEventoScreen.tsx` — localStorage + auto-compra
+- `src/screens/CarteleraScreen.tsx` — auto-navegacion
 
-Mas detalle en .
+Mas detalle en `specs/013-fix-magic-link-auth.md`.
 
 ## Edge Functions
 
@@ -47,9 +47,21 @@ Mas detalle en .
 8. Se abre MP Checkout Pro
 9. Confirmacion con polling cada 3s
 
+## Estados de ticket (convencion — NO improvisar)
+
+Fuente de verdad: `TicketStatus` en `src/types/index.ts`.
+
+| Estado | Quien lo escribe |
+|--------|------------------|
+| `pending` | `create-preference` al crear el ticket |
+| `completed` | `webhook-mp` cuando MP confirma el pago |
+| `refunded` | (reservado, sin uso todavia) |
+
+⚠️ **`'paid'` NO es un estado de ticket.** En `webhook-mp/index.ts` aparece `order.order_status === 'paid'`, pero ese campo es **de Mercado Pago**. Confundirlos rompio el dashboard de ventas del spec 010.
+
 ## Proyecto
 
 - Supabase: xluinfihjjtxkglihxqz
 - Tablas: venues, events, profiles, tickets
 - MP: Checkout Pro (app Sonópolis, credenciales de prueba)
-- ✅ Todos los specs completados. Beta lista para pruebas.
+- ✅ Todos los specs completados. Beta lista para pruebas end-to-end en runtime.

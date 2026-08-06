@@ -19,7 +19,7 @@ Crear una pantalla "Mis Ventas" dentro del stack del músico (MusicoStack) que m
 - `id` (uuid)
 - `evento_id` (uuid, FK a events)
 - `user_id` (uuid, FK a profiles)
-- `status` (text: paid, pending, cancelled)
+- `status` (text: **pending, completed, refunded** — ver `TicketStatus` en `src/types/index.ts`)
 - `preference_id` (text)
 - `payment_id` (text, nullable)
 - `monto` (integer)
@@ -69,8 +69,10 @@ ORDER BY e.fecha DESC, t.created_at DESC;
 
 ### 3. Query
 - `supabase.from('tickets').select('*, events!inner(*)').eq('events.created_by', user.id)`
-- Filtro por `status = 'paid'` para totales de ventas reales
-- También mostrar `pending` y `cancelled` como info
+- Filtro por `status = 'completed'` para totales de ventas reales — es el valor que escribe `webhook-mp` al confirmar el pago
+- También mostrar `pending` y `refunded` como info
+
+> ⚠️ **Ojo con `'paid'`**: en `supabase/functions/webhook-mp/index.ts` aparece `order.order_status === 'paid'`, pero ese es un campo **de Mercado Pago**, no el estado del ticket. El ticket pasa de `'pending'` a `'completed'`.
 
 ### 4. UI
 - Cards de resumen con números grandes
@@ -88,11 +90,18 @@ ORDER BY e.fecha DESC, t.created_at DESC;
 
 ## Criterios de aceptación
 
-- [ ] El músico ve un resumen con total de entradas vendidas y monto acumulado
-- [ ] El músico ve cada evento con cantidad de tickets y estado
-- [ ] El músico puede expandir un evento y ver los tickets individuales
-- [ ] Solo se muestran los eventos creados por el músico logueado
-- [ ] Funciona en web y móvil (React Native + Expo)
-- [ ] Usa el theme existente (colors, spacing, fontSize)
+- [x] El músico ve un resumen con total de entradas vendidas y monto acumulado
+- [x] El músico ve cada evento con cantidad de tickets y estado
+- [x] El músico puede expandir un evento y ver los tickets individuales
+- [x] Solo se muestran los eventos creados por el músico logueado (`.eq('created_by', user.id)`)
+- [ ] Funciona en web y móvil (React Native + Expo) — *sin verificar en runtime todavía*
+- [x] Usa el theme existente (colors, spacing, fontSize)
 
-## Estado: Pendiente
+## Historial
+
+| Fecha | Cambio |
+|-------|--------|
+| 6 ago 2026 | Implementado — `VentasMusicoScreen.tsx` + route en `MusicoStack` + botón en `PerfilMusicoScreen` (commit `4cf3f48`) |
+| 6 ago 2026 | **Fix**: el filtro usaba `status === 'paid'`, valor que ningún ticket alcanza nunca → todos los totales daban 0. Corregido a `'completed'`. El spec documentaba mal los estados; también corregido arriba. `Ticket.status` ahora se tipa con `TicketStatus` para que TS atrape esto a futuro. |
+
+## Estado: Completado (pendiente prueba en runtime)
