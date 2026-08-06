@@ -6,14 +6,14 @@
 |---|------|--------|
 | 001-008 | Fundacion, Auth, Perfiles, Eventos, Venues, Mock | Completado |
 | 009 | Tickets + MP Checkout Pro real | Completado |
-| 010 | Dashboard ventas musico | **Pendiente (único que falta)** |
+| 010 | Dashboard ventas musico | Completado |
 | 011 | Sembrar datos de prueba | Completado (vía spec 013) |
 | 012 | Fix navegacion crear evento | Completado |
 | 013 | Fix Magic Link Auth + auto-compra | Completado |
 | 014 | Deploy Edge Functions MP + Secrets | Completado |
 | 015 | Webhook MP + Prueba End-to-End | Completado |
 
-## Progreso: 14/15 specs completados. Falta spec 010.
+## Progreso: 15/15 specs completados. ✅ Beta lista para pruebas end-to-end.
 
 ## Spec 013 — Fix Magic Link Auth + auto-compra
 
@@ -52,4 +52,4 @@ Mas detalle en .
 - Supabase: xluinfihjjtxkglihxqz
 - Tablas: venues, events, profiles, tickets
 - MP: Checkout Pro (app Sonópolis, credenciales de prueba)
-- Pendiente: Spec 010 (dashboard ventas músico)
+- ✅ Todos los specs completados. Beta lista para pruebas.
