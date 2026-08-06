@@ -1,4 +1,4 @@
-# Specs — AppAll
+# Specs — Sonópolis
 
 ## Roadmap Beta 1.0 — Venta de Entradas
 
@@ -6,25 +6,27 @@
 |---|------|--------|
 | 001-008 | Fundacion, Auth, Perfiles, Eventos, Venues, Mock | Completado |
 | 009 | Tickets + MP Checkout Pro real | Completado |
-| 010 | Dashboard ventas musico | Pendiente |
-| 011 | Sembrar datos de prueba | Pendiente |
+| 010 | Dashboard ventas musico | **Pendiente (único que falta)** |
+| 011 | Sembrar datos de prueba | Completado (vía spec 013) |
 | 012 | Fix navegacion crear evento | Completado |
 | 013 | Fix Magic Link Auth + auto-compra | Completado |
-| 014 | Deploy Edge Functions MP + Secrets | Pendiente |
-| 015 | Webhook MP + Prueba End-to-End | Pendiente |
+| 014 | Deploy Edge Functions MP + Secrets | Completado |
+| 015 | Webhook MP + Prueba End-to-End | Completado |
+
+## Progreso: 14/15 specs completados. Falta spec 010.
 
 ## Spec 013 — Fix Magic Link Auth + auto-compra
 
-**Problema:** Magic link no detectaba sesion al volver. Solucion: `detectSessionInUrl: true`.
-**Auto-compra:** localStorage con `pending_ticket` + navegacion automatica al evento.
+**Problema:** Magic link no detectaba sesion al volver. Solucion: .
+**Auto-compra:** localStorage con  + navegacion automatica al evento.
 
 Archivos tocados:
-- `src/lib/supabase.ts` — detectSessionInUrl false → true
-- `src/context/AuthContext.tsx` — emailRedirectTo: window.location.origin
-- `src/screens/DetalleEventoScreen.tsx` — localStorage + auto-compra
-- `src/screens/CarteleraScreen.tsx` — auto-navegacion
+-  — detectSessionInUrl false → true
+-  — emailRedirectTo: window.location.origin
+-  — localStorage + auto-compra
+-  — auto-navegacion
 
-Mas detalle en `013-fix-magic-link-auth.md`.
+Mas detalle en .
 
 ## Edge Functions
 
@@ -49,5 +51,5 @@ Mas detalle en `013-fix-magic-link-auth.md`.
 
 - Supabase: xluinfihjjtxkglihxqz
 - Tablas: venues, events, profiles, tickets
-- MP: Checkout Pro (app JamCafe, credenciales prueba)
-- Pendiente: Spec 010 (dashboard ventas), Spec 011 (sembrar datos)
+- MP: Checkout Pro (app Sonópolis, credenciales de prueba)
+- Pendiente: Spec 010 (dashboard ventas músico)
