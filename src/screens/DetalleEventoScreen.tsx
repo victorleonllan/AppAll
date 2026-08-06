@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
   Alert, TextInput,
@@ -40,11 +42,25 @@ export default function DetalleEventoScreen() {
 
   // Auto-compra: si volvemos del magic link con una compra pendiente
   useEffect(() => {
-    const pendingId = typeof window !== 'undefined' ? localStorage.getItem('pending_ticket') : null;
-    if (pendingId === evento.id && user) {
-      localStorage.removeItem('pending_ticket');
-      handleComprarLogueado();
-    }
+    const checkPending = async () => {
+      try {
+        let pendingId: string | null = null;
+        if (Platform.OS === 'web') {
+          pendingId = localStorage.getItem('pending_ticket');
+        } else {
+          pendingId = await AsyncStorage.getItem('pending_ticket');
+        }
+        if (pendingId === evento.id && user) {
+          if (Platform.OS === 'web') {
+            localStorage.removeItem('pending_ticket');
+          } else {
+            await AsyncStorage.removeItem('pending_ticket');
+          }
+          handleComprarLogueado();
+        }
+      } catch {}
+    };
+    checkPending();
   }, [user, evento.id]);
 
   // ────────────── FLUJO: email → magic link ──────────────
@@ -61,9 +77,11 @@ export default function DetalleEventoScreen() {
     if (err) {
       setErrorMsg(err);
     } else {
-      // Guardar en localStorage para auto-compra al volver del magic link
-      if (typeof window !== 'undefined') {
+      // Guardar para auto-compra al volver del magic link
+      if (Platform.OS === 'web') {
         localStorage.setItem('pending_ticket', evento.id);
+      } else {
+        await AsyncStorage.setItem('pending_ticket', evento.id);
       }
       setEmailEnviado(email.trim());
       setStep('enviado');
