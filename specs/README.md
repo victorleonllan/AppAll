@@ -12,8 +12,9 @@
 | 013 | Fix Magic Link Auth + auto-compra | Completado |
 | 014 | Deploy Edge Functions MP + Secrets | Completado |
 | 015 | Webhook MP + Prueba End-to-End | Completado |
+| 016 | Fix estado de tickets en dashboard de ventas | Completado |
 
-## Progreso: 15/15 specs completados. ✅ Beta lista para pruebas end-to-end.
+## Progreso: 16/16 specs completados. ✅ Beta lista para pruebas end-to-end.
 
 ## Spec 013 — Fix Magic Link Auth + auto-compra
 
