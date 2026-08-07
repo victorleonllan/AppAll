@@ -18,7 +18,7 @@ const Tab = createBottomTabNavigator();
 function getThirdTab(session: unknown, role: UserRole) {
   if (!session) return { name: 'Sonópolis' as const, component: AuthScreen, icon: 'apps' as const };
   if (role === 'musician') return { name: 'Mi Perfil' as const, component: MusicoStack, icon: 'person-circle' as const };
-  if (role === 'cafe') return { name: 'Mi Café' as const, component: CafeStack, icon: 'cafe' as const };
+  if (role === 'cafe') return { name: 'Mi Local' as const, component: CafeStack, icon: 'cafe' as const };
   return { name: 'Perfil' as const, component: PerfilScreen, icon: 'person' as const };
 }
 
@@ -42,7 +42,7 @@ export default function AppNavigator() {
           tabBarIcon: ({ color, size }) => {
             let iconName: keyof typeof Ionicons.glyphMap = 'musical-notes';
             if (route.name === 'Cartelera') iconName = 'musical-notes';
-            else if (route.name === 'Cafés') iconName = 'cafe';
+            else if (route.name === 'Locales') iconName = 'location';
             else iconName = thirdTab.icon;
             return <Ionicons name={iconName} size={size} color={color} />;
           },
@@ -58,7 +58,7 @@ export default function AppNavigator() {
           options={{ headerShown: false }}
         />
         <Tab.Screen
-          name="Cafés"
+          name="Locales"
           component={CafesStack}
           options={{ headerShown: false }}
         />
@@ -66,7 +66,7 @@ export default function AppNavigator() {
           name={thirdTab.name}
           component={thirdTab.component}
           options={{
-            headerShown: thirdTab.name === 'Sonópolis' ? false : thirdTab.name === 'Mi Café' ? false : thirdTab.name === 'Mi Perfil' ? false : true,
+            headerShown: thirdTab.name === 'Sonópolis' ? false : thirdTab.name === 'Mi Local' ? false : thirdTab.name === 'Mi Perfil' ? false : true,
             title: thirdTab.name,
           }}
         />

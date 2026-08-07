@@ -17,11 +17,11 @@ export default function PerfilScreen() {
           <Text style={styles.textoRolInactivo}>🎸 Músico</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.botonRol}>
-          <Text style={styles.textoRolInactivo}>☕ Dueño de café</Text>
+          <Text style={styles.textoRolInactivo}>📍 Dueño de local</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.aviso}>Si eres músico o café, podrás gestionar tu perfil después.</Text>
+      <Text style={styles.aviso}>Si eres músico o local, podrás gestionar tu perfil después.</Text>
     </View>
   );
 }

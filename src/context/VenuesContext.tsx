@@ -97,8 +97,10 @@ export function VenuesProvider({ children }: { children: ReactNode }) {
     return newVenue;
   }, [useMock]);
 
+  // Filtro por exclusión: tras el spec 018 ya no existe el type 'venue',
+  // así que comparar contra él dejaría otherVenues permanentemente vacío.
   const cafes = allVenues.filter((v) => v.type === 'cafe');
-  const otherVenues = allVenues.filter((v) => v.type === 'venue');
+  const otherVenues = allVenues.filter((v) => v.type !== 'cafe');
 
   return (
     <VenuesContext.Provider value={{ cafes, otherVenues, allVenues, loading, refresh, createVenue }}>

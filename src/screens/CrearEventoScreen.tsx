@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Venue } from '../types';
+import { venueEmoji } from '../lib/venues';
 import { useAuth } from '../context/AuthContext';
 import { useVenues } from '../context/VenuesContext';
 import { useEventos } from '../context/EventosContext';
@@ -43,9 +44,11 @@ export default function CrearEventoScreen() {
   };
 
   const handleAgregarNuevoVenue = async () => {
+    // 'sala' es el default neutro tras el spec 018 (ya no existe el type genérico
+     // 'venue'). Deuda: el músico debería poder elegir el tipo al crear el local.
     const nuevoVenue = await createVenue({
       name: venueQuery,
-      type: "venue",
+      type: "sala",
     });
     handleSelectVenue(nuevoVenue);
   };
@@ -63,7 +66,7 @@ export default function CrearEventoScreen() {
     try {
       let venue = selectedVenue;
       if (!venue) {
-        venue = await createVenue({ name: venueQuery || "Sin nombre", type: "venue" });
+        venue = await createVenue({ name: venueQuery || "Sin nombre", type: "sala" });
       }
       await createEvento({
         artista,
@@ -119,7 +122,7 @@ export default function CrearEventoScreen() {
                 onPress={() => handleSelectVenue(v)}
               >
                 <Text style={styles.suggestionText}>
-                  {v.type === "cafe" ? "☕ " : "🎪 "} {v.name}
+                  {venueEmoji(v.type)} {v.name}
                 </Text>
                 <Text style={styles.suggestionSub}>{v.address}</Text>
               </TouchableOpacity>
@@ -136,7 +139,7 @@ export default function CrearEventoScreen() {
         )}
         {selectedVenue && (
           <Text style={styles.selectedVenue}>
-            ✅ {selectedVenue.type === "cafe" ? "☕" : "🎪"} {selectedVenue.name}
+            ✅ {venueEmoji(selectedVenue.type)} {selectedVenue.name}
           </Text>
         )}
 

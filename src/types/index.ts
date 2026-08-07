@@ -1,7 +1,9 @@
+export type VenueType = "cafe" | "bar" | "sala" | "centro_cultural";
+
 export interface Venue {
   id: string;
   name: string;
-  type: "cafe" | "venue";
+  type: VenueType;
   ownerId?: string;
   address?: string;
   description?: string;
@@ -27,7 +29,7 @@ export interface Evento {
   monto?: number;
 }
 
-export type TicketStatus = 'pending' | 'completed' | 'refunded';
+export type TicketStatus = 'pending' | 'completed' | 'refunded' | 'cancelled';
 
 export interface Ticket {
   id: string;
@@ -40,13 +42,6 @@ export interface Ticket {
   createdAt: string;
 }
 
-export interface Cafe {
-  id: string;
-  nombre: string;
-  estilo?: string;
-  distancia: string;
-  rating?: number;
-}
 
 export interface Musico {
   id: string;

@@ -37,14 +37,14 @@ export const otrosVenues: Venue[] = [
   {
     id: "venue-other-1",
     name: "Teatro Municipal",
-    type: "venue",
+    type: "sala",
     address: "Agustinas 789",
     distance: "4 km",
   },
   {
     id: "venue-other-2",
     name: "Bar El Cantar",
-    type: "venue",
+    type: "bar",
     address: "Manuel Montt 345",
     distance: "1 km",
   },
