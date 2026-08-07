@@ -24,7 +24,7 @@ export default function VerMusicoScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.card}>
         <Text style={styles.nombre}>{musico.nombre}</Text>
-        <Text style={styles.genero}>{musico.genero}</Text>
+        <Text style={styles.genero}>{musico.tipoProyecto}</Text>
 
         <View style={styles.separador} />
 

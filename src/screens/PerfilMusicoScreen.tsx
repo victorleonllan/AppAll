@@ -39,7 +39,7 @@ export default function PerfilMusicoScreen() {
             id: data.id,
             userId: data.id,
             nombre: data.nombre ?? '',
-            genero: data.genero ?? '',
+            tipoProyecto: data.tipo_proyecto ?? '',
             bio: data.bio ?? '',
             instagram: data.instagram ?? '',
             spotify: data.spotify ?? '',
@@ -47,7 +47,7 @@ export default function PerfilMusicoScreen() {
             foto: data.foto ?? null,
           });
           setNombre(data.nombre ?? '');
-          setGenero(data.genero ?? '');
+          setGenero(data.tipo_proyecto ?? '');
           setBio(data.bio ?? '');
           setInstagram(data.instagram ?? '');
           setSpotify(data.spotify ?? '');
@@ -59,7 +59,7 @@ export default function PerfilMusicoScreen() {
       if (encontrado) {
         setPerfil(encontrado);
         setNombre(encontrado.nombre);
-        setGenero(encontrado.genero);
+        setGenero(encontrado.tipoProyecto);
         setBio(encontrado.bio);
         setInstagram(encontrado.instagram ?? '');
         setSpotify(encontrado.spotify ?? '');
@@ -72,10 +72,14 @@ export default function PerfilMusicoScreen() {
     if (!user) return;
     setGuardando(true);
     try {
+      // `role` es NOT NULL: si el perfil no existiera, un upsert sin él
+      // sería un INSERT que viola la restricción (spec 019).
+      // `genero` en la app se persiste como `tipo_proyecto` en la base.
       const { error } = await supabase.from('profiles').upsert({
         id: user.id,
+        role: 'musician',
         nombre,
-        genero,
+        tipo_proyecto: genero,
         bio,
         instagram,
         spotify,
