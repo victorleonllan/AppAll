@@ -91,7 +91,7 @@ export default function RegisterScreen({
           <Text
             style={[styles.textoRol, role === "cafe" && styles.textoRolActivo]}
           >
-            ☕ Dueño de café
+            📍 Dueño de local
           </Text>
         </TouchableOpacity>
       </View>

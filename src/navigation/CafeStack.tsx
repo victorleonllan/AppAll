@@ -21,7 +21,7 @@ export default function CafeStack() {
         headerTitleStyle: { fontSize: fontSize.lg },
       }}
     >
-      <Stack.Screen name="Dashboard" component={DashboardCafeScreen} options={{ title: 'Mi Café' }} />
+      <Stack.Screen name="Dashboard" component={DashboardCafeScreen} options={{ title: 'Mi Local' }} />
       <Stack.Screen name="CrearEvento" component={CrearEventoScreen} options={{ title: 'Nuevo Evento' }} />
       <Stack.Screen name="VerMusico" component={VerMusicoScreen} options={{ title: 'Músico' }} />
     </Stack.Navigator>

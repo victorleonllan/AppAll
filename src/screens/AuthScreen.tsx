@@ -37,7 +37,7 @@ export default function AuthScreen() {
       <Text style={styles.icon}>🎶</Text>
       <Text style={styles.title}>¡Bienvenido a Sonópolis!</Text>
       <Text style={styles.subtitle}>
-        Conectamos público, músicos y cafés en Santiago.
+        Conectamos público, músicos y locales en Santiago.
       </Text>
 
       <View style={styles.card}>
@@ -45,7 +45,7 @@ export default function AuthScreen() {
         <View style={styles.cardBody}>
           <Text style={styles.cardTitle}>Público</Text>
           <Text style={styles.cardDesc}>
-            Descubre músicos y eventos en vivo en los mejores cafés
+            Descubre músicos y eventos en vivo en los mejores locales
           </Text>
         </View>
       </View>
@@ -73,10 +73,10 @@ export default function AuthScreen() {
           setView("register");
         }}
       >
-        <Text style={styles.cardIcon}>☕</Text>
+        <Text style={styles.cardIcon}>📍</Text>
         <View style={styles.cardBody}>
           <Text style={[styles.cardTitle, styles.cardTitleAction]}>
-            Dueño de café
+            Dueño de local
           </Text>
           <Text style={styles.cardDesc}>
             Llena tu sala con talento en vivo

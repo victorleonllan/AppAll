@@ -14,10 +14,12 @@ type NavigationProp = NativeStackNavigationProp<CafeStackParamList, 'Dashboard'>
 export default function DashboardCafeScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { user } = useAuth();
-  const { cafes } = useVenues();
+  const { allVenues } = useVenues();
   const { eventos } = useEventos();
 
-  const miVenue = user ? cafes.find((v) => v.ownerId === user.id) : null;
+  // Busca entre todos los locales, no solo los de type 'cafe': tras el spec 018
+  // el dueño puede tener un bar, una sala o un centro cultural.
+  const miVenue = user ? allVenues.find((v) => v.ownerId === user.id) : null;
   const misEventos = user
     ? eventos.filter((e) => e.createdBy === user.id)
     : [];
@@ -31,7 +33,7 @@ export default function DashboardCafeScreen() {
       ListHeaderComponent={
         <View>
           <Text style={styles.bienvenida}>
-            ☕ Bienvenido, {miVenue?.name ?? "Café"}
+            📍 Bienvenido, {miVenue?.name ?? "Local"}
           </Text>
           {miVenue?.address && (
             <Text style={styles.direccion}>📍 {miVenue.address}</Text>
@@ -64,7 +66,7 @@ export default function DashboardCafeScreen() {
             >
               <View style={{ flex: 1 }}>
                 <Text style={styles.nombreMusico}>{musico.nombre}</Text>
-                <Text style={styles.generoMusico}>{musico.genero}</Text>
+                <Text style={styles.generoMusico}>{musico.tipoProyecto}</Text>
               </View>
               <View style={styles.botonPerfil}>
                 <Text style={styles.textoBotonPerfil}>Ver perfil</Text>

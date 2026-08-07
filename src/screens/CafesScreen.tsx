@@ -7,28 +7,25 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { musicosMock } from '../data/mock/musicos';
 import { useAuth } from '../context/AuthContext';
 import { useVenues } from '../context/VenuesContext';
-import { useEventos } from '../context/EventosContext';
 import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { venueEmoji, venueLabel } from '../lib/venues';
 import { CafesStackParamList } from '../navigation/CafesStack';
 
 type NavigationProp = NativeStackNavigationProp<CafesStackParamList, 'CafesList'>;
 
-const generos = [...new Set(musicosMock.map((m) => m.genero))];
+const generos = [...new Set(musicosMock.map((m) => m.tipoProyecto))];
 
 export default function CafesScreen() {
   const { session } = useAuth();
   const navigation = useNavigation<NavigationProp>();
-  const { cafes: locales, otherVenues } = useVenues();
-  const { eventos } = useEventos();
+  // Un solo listado de locales (spec 018): la separación café / "otros" venía de
+  // usar `type` como si fuera un tier de asociación, que nunca fue.
+  const { allVenues: locales } = useVenues();
   const [generoSeleccionado, setGeneroSeleccionado] = useState<string | null>(null);
 
   const musicosFiltrados = generoSeleccionado
-    ? musicosMock.filter((m) => m.genero === generoSeleccionado)
+    ? musicosMock.filter((m) => m.tipoProyecto === generoSeleccionado)
     : [];
-
-  const otrosVenuesConEventos = otherVenues.filter(
-    (v) => eventos.some((e) => e.venueId === v.id)
-  );
 
   return (
     <ScrollView style={styles.container}>
@@ -36,7 +33,7 @@ export default function CafesScreen() {
         <Text style={styles.tituloBuscar}>🎸 Buscar músicos por género</Text>
 
         {!session ? (
-          <Text style={styles.aviso}>Inicia sesión como café para contactar músicos</Text>
+          <Text style={styles.aviso}>Inicia sesión como local para contactar músicos</Text>
         ) : null}
 
         <ScrollView
@@ -76,38 +73,27 @@ export default function CafesScreen() {
                 onPress={() => navigation.navigate('VerMusico', { musicoId: musico.id })}
               >
                 <Text style={styles.nombreMusico}>{musico.nombre}</Text>
-                <Text style={styles.generoMusico}>{musico.genero}</Text>
+                <Text style={styles.generoMusico}>{musico.tipoProyecto}</Text>
               </TouchableOpacity>
             ))}
           </View>
         )}
       </View>
 
-      <Text style={styles.titulo}>☕ Cafés</Text>
+      <Text style={styles.titulo}>📍 Locales</Text>
       {locales.map((venue) => (
         <View key={venue.id} style={styles.tarjetaVenue}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.nombreVenue}>{venue.name}</Text>
+            <Text style={styles.nombreVenue}>
+              {venueEmoji(venue.type)} {venue.name}
+            </Text>
+            <Text style={styles.infoVenue}>{venueLabel(venue.type)}</Text>
             {venue.estilo && <Text style={styles.infoVenue}>🎵 {venue.estilo}</Text>}
             <Text style={styles.infoVenue}>📍 {venue.address ?? venue.distance}</Text>
             {venue.rating && <Text style={styles.infoVenue}>⭐ {venue.rating}</Text>}
           </View>
         </View>
       ))}
-
-      {otrosVenuesConEventos.length > 0 && (
-        <>
-          <Text style={styles.titulo}>🎪 Eventos en otros locales</Text>
-          {otrosVenuesConEventos.map((venue) => (
-            <View key={venue.id} style={styles.tarjetaVenue}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.nombreVenue}>{venue.name}</Text>
-                <Text style={styles.infoVenue}>📍 {venue.address ?? venue.distance}</Text>
-              </View>
-            </View>
-          ))}
-        </>
-      )}
     </ScrollView>
   );
 }
