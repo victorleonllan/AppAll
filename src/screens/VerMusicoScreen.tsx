@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet, Linking, ScrollView } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { musicosMock } from '../data/mock/musicos';
+import { TIPO_PROYECTO_LABEL } from '../lib/profiles';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 type ParamList = {
@@ -24,11 +25,42 @@ export default function VerMusicoScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.card}>
         <Text style={styles.nombre}>{musico.nombre}</Text>
-        <Text style={styles.genero}>{musico.tipoProyecto}</Text>
+        <Text style={styles.genero}>
+          {[musico.tipoProyecto ? TIPO_PROYECTO_LABEL[musico.tipoProyecto] : null, musico.ciudad]
+            .filter(Boolean)
+            .join(' · ')}
+        </Text>
 
         <View style={styles.separador} />
 
         <Text style={styles.bio}>{musico.bio}</Text>
+
+        {/* Spec 030: los datos con los que un local decide contratar.
+            `!!x` en vez de `x` en cada gate: con 0 (p.ej. "0 integrantes")
+            `x && <Text>` deja pasar el 0 y React lo renderiza como texto "0". */}
+        {!!(musico.integrantes || musico.duracionShow || musico.generos?.length) && (
+          <View style={styles.datosFila}>
+            {!!musico.integrantes && (
+              <Text style={styles.dato}>👥 {musico.integrantes} integrante{musico.integrantes === 1 ? '' : 's'}</Text>
+            )}
+            {!!musico.duracionShow && <Text style={styles.dato}>⏱ {musico.duracionShow} min</Text>}
+            {musico.generos && musico.generos.length > 0 && (
+              <Text style={styles.dato}>🎼 {musico.generos.join(', ')}</Text>
+            )}
+          </View>
+        )}
+
+        {musico.riderTecnico && (
+          <View style={styles.rider}>
+            <Text style={styles.riderTitulo}>Rider técnico</Text>
+            <Text style={styles.bio}>{musico.riderTecnico}</Text>
+          </View>
+        )}
+
+        <View style={styles.separador} />
+
+        {musico.telefono && <Text style={styles.contacto}>📞 {musico.telefono}</Text>}
+        {musico.emailContacto && <Text style={styles.contacto}>✉️ {musico.emailContacto}</Text>}
 
         {musico.instagram && (
           <TouchableOpacity onPress={() => Linking.openURL(`https://instagram.com/${musico.instagram!.replace('@', '')}`)}>
@@ -45,6 +77,18 @@ export default function VerMusicoScreen() {
         {musico.youtube && (
           <TouchableOpacity onPress={() => Linking.openURL(musico.youtube!)}>
             <Text style={styles.enlace}>📺 YouTube: {musico.youtube}</Text>
+          </TouchableOpacity>
+        )}
+
+        {musico.tiktok && (
+          <TouchableOpacity onPress={() => Linking.openURL(musico.tiktok!)}>
+            <Text style={styles.enlace}>🎬 TikTok: {musico.tiktok}</Text>
+          </TouchableOpacity>
+        )}
+
+        {musico.sitioWeb && (
+          <TouchableOpacity onPress={() => Linking.openURL(musico.sitioWeb!)}>
+            <Text style={styles.enlace}>🌐 {musico.sitioWeb}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -81,6 +125,11 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: spacing.md,
   },
+  datosFila: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginBottom: spacing.md },
+  dato: { fontSize: fontSize.sm, color: colors.secondary },
+  rider: { marginBottom: spacing.md },
+  riderTitulo: { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary, marginBottom: spacing.xs },
+  contacto: { fontSize: fontSize.md, color: colors.secondary, marginTop: spacing.xs },
   enlace: {
     fontSize: fontSize.md,
     color: colors.accent,

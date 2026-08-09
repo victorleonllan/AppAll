@@ -1,6 +1,17 @@
 # Spec 030 — Dashboard de banda: perfil completo y panel de gestión
 
-> Estado: **propuesto**. Escrito el 2026-08-08, sin implementar.
+> Estado: **implementado el 2026-08-09**. Migración aplicada a producción
+> (`supabase/migrations/20260809034408_spec_030_perfil_banda.sql`, confirmada en
+> `supabase migration list`). Falta el cierre de punta a punta: los 5 puntos del
+> Criterio de cierre requieren probar la app con un músico real.
+>
+> ⚠️ Al aplicar apareció una causa raíz que este spec no tenía: la migración baseline
+> (`20260608000000`) figuraba como no aplicada en el historial remoto pese a estar
+> desplegada, lo que bloqueaba `db push` (`LegacyDbPushMissingRemoteError`). Se resolvió
+> con `supabase migration repair --status applied 20260608000000` — solo corrige el
+> registro de control, no ejecuta DDL. Es la brecha que el spec 024 ya tenía anotada
+> ("la cadena de migraciones nunca se probó de punta a punta"); queda resuelta para
+> este push pero el spec 024 sigue pendiente como tal.
 > Par del spec 031 (dashboard de local). Se pueden trabajar en cualquier orden.
 
 ## Contexto
