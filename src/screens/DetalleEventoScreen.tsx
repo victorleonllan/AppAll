@@ -108,13 +108,20 @@ export default function DetalleEventoScreen() {
     setStep('comprando');
     setLoading(true);
     try {
+      // create-preference identifica al comprador con supabase.auth.getUser().
+      // Con la anon key eso devuelve null y la function corta en 401: hay que
+      // mandar el access_token de la sesión.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Sesión no encontrada');
+
       const res = await fetch(
         `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/create-preference`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
           },
           body: JSON.stringify({
             evento_id: evento.id,
@@ -124,11 +131,16 @@ export default function DetalleEventoScreen() {
         }
       );
 
-      if (!res.ok) throw new Error('Error al crear preferencia');
+      if (!res.ok) {
+        const detalle = await res.text();
+        throw new Error(`create-preference ${res.status}: ${detalle}`);
+      }
 
       const data = await res.json();
 
-      const checkoutUrl = data.sandbox_init_point || data.init_point;
+      // Con credenciales de prueba, init_point ya opera en modo test.
+      // sandbox_init_point es el flujo viejo y no siempre resuelve.
+      const checkoutUrl = data.init_point || data.sandbox_init_point;
       if (typeof window !== 'undefined') {
         window.open(checkoutUrl, '_blank');
       }
