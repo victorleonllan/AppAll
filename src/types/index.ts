@@ -50,14 +50,28 @@ export interface Musico {
   bio: string;
 }
 
+/** Vocabulario cerrado desde el spec 030 (antes era texto libre). */
+export type TipoProyecto = 'solista' | 'duo' | 'banda' | 'dj' | 'colectivo';
+
 export interface PerfilMusico {
   id: string;
   userId: string;
   nombre: string;
-  tipoProyecto: string;
+  tipoProyecto: TipoProyecto | '';
   bio: string;
   instagram?: string;
   spotify?: string;
   youtube?: string;
   foto?: string | null;
+  // Spec 030 — datos con los que un local decide contratar.
+  ciudad?: string;
+  generos?: string[];
+  integrantes?: number;
+  duracionShow?: number;
+  telefono?: string;
+  emailContacto?: string;
+  sitioWeb?: string;
+  tiktok?: string;
+  riderTecnico?: string;
+  updatedAt?: string;
 }

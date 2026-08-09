@@ -248,6 +248,55 @@ formulario nunca se guardó con éxito ni una vez — y no se notó porque las d
 
 Aditivo y de riesgo bajo: no toca el flujo de compra.
 
+### Revisión de código (9-ago-2026), antes de commitear
+
+Corregido:
+
+- **`EditarPerfilBandaScreen`: pérdida de datos si la carga fallaba por causa distinta a
+  "sin fila todavía".** El `catch` era único: red caída, RLS o falta de fila caían al mismo
+  lugar y dejaban el formulario en blanco, listo para guardar. Guardar sobre eso mandaba un
+  upsert con todo en `null` y pisaba el perfil real. Ahora se distingue `PGRST116` (sin fila,
+  formulario en blanco es correcto) de cualquier otro error (bloquea el guardado y pide
+  reintentar).
+- **`integrantes`/`duracionShow` podían mandar `NaN` en silencio.** `parseInt` de un texto no
+  numérico da `NaN`, que `?? null` no atrapa (`NaN` no es nullish) y que
+  `JSON.stringify` serializa como `null` sin avisar — el dato se perdía sin que nadie lo
+  notara. Ahora se valida antes de guardar (rango 1-50 para integrantes, ≥0 para duración) y
+  se avisa con `Alert` en vez de guardar en silencio.
+- **`VerMusicoScreen` renderizaba un "0" suelto.** `campo && <Text>` deja pasar el 0 (React
+  sí lo renderiza); un músico con 0 integrantes o 0 minutos de show mostraría un "0" flotando
+  en la tarjeta. Cambiado a `!!campo &&`.
+- **`PerfilMusicoScreen`: el efecto de ventas dependía de `misEventos.length`, no del
+  contenido.** Borrar un evento y crear otro en la misma sesión deja el mismo largo con IDs
+  distintos; el efecto no volvía a correr y la consulta de tickets quedaba pegada a eventos
+  viejos. Ahora depende de los IDs concatenados, no del tamaño.
+
+Revisado y dejado para después (no bloquea este commit, cada uno es su propio spec):
+
+- **`VerMusicoScreen` nunca lee `profiles` de Supabase**, solo `musicosMock`. Todo lo que un
+  músico guarda en `EditarPerfilBandaScreen` es invisible para el local que lo está viendo —
+  la mitad de escritura del spec 030 quedó cableada, la mitad de lectura que importa (con qué
+  decide un local) no.
+- **Tercera implementación del patrón mock-fallback.** `VenuesContext` y `EventosContext` ya
+  centralizan "Supabase o cae a mock"; `PerfilMusicoScreen.cargarPerfil` es una tercera copia
+  suelta en un componente. El próximo fix a ese patrón hay que aplicarlo tres veces.
+  `EditarPerfilBandaScreen` es camino aparte: hoy correcto (no debe caer a mock nunca, mock no
+  tiene sentido en un formulario de edición), pero vale la pena migrarlo al mismo patrón el
+  día que exista `ProfileContext`.
+- **`TIPOS_PROYECTO` (TS, en `src/lib/profiles.ts`) y el `CHECK` de la migración** son dos
+  listas mantenidas a mano por separado — agregar un tipo de proyecto nuevo exige tocar los
+  dos sin que nada avise si uno queda atrás.
+- **`duracion_show` no tiene `CHECK` en la migración** (a diferencia de `integrantes`,
+  1-50). Ya está aplicada a producción; ampliarla es una migración nueva, no un cambio de
+  código — se valida solo en cliente por ahora (agregado en esta revisión).
+- **`AuthContext` dispara `setSession`/`setUser`/`setRole` en cada `TOKEN_REFRESHED`** (cada
+  ~hora), con una referencia nueva de `user` aunque el id no cambie. Como
+  `PerfilMusicoScreen` engancha su `useFocusEffect` a `cargarPerfil`, que depende de `user`
+  por referencia, cada refresh de token dispara un refetch completo y un flash de spinner de
+  pantalla completa aunque la sesión no cambió. Se soluciona comparando `user?.id` antes de
+  actualizar estado, o memoizando por id en vez de por objeto — cambio a `AuthContext`, que
+  usan todas las pantallas, así que va con su propio spec y pruebas.
+
 ---
 
 ## Spec 031 — Dashboard de local 🔴 escrito, sin implementar
