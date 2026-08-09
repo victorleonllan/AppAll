@@ -4,8 +4,29 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const MERCADOPAGO_ACCESS_TOKEN = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+// Deploy web de Sonópolis. Las back_urls deben ser HTTPS: MP las valida al crear la
+// preferencia y con auto_return activo un scheme nativo hace que la rechace.
+const APP_WEB_URL = Deno.env.get('APP_WEB_URL') ?? 'https://app-all-lemon.vercel.app';
+
+// La app web llama a esta function desde otro origen. Sin esto el navegador
+// bloquea el preflight y la petición nunca sale.
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
+const json = (body: unknown, status: number) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...CORS, 'Content-Type': 'application/json' },
+  });
 
 serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: CORS });
+  }
+
   try {
     const { evento_id, user_id, cantidad } = await req.json();
 
@@ -17,7 +38,7 @@ serve(async (req) => {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || user.id !== user_id) {
-      return new Response('Unauthorized', { status: 401 });
+      return json({ error: 'unauthorized', detail: 'Sesión inválida o user_id no coincide' }, 401);
     }
 
     // Info del evento
@@ -28,7 +49,7 @@ serve(async (req) => {
       .single();
 
     if (error || !evento) {
-      return new Response('Evento no encontrado', { status: 404 });
+      return json({ error: 'evento_no_encontrado', evento_id }, 404);
     }
 
     // Crear preferencia en MP
@@ -42,9 +63,9 @@ serve(async (req) => {
       }],
       payer: { email: user.email },
       back_urls: {
-        success: 'appall://confirmacion?status=success',
-        failure: 'appall://confirmacion?status=failure',
-        pending: 'appall://confirmacion?status=pending',
+        success: `${APP_WEB_URL}/?compra=success`,
+        failure: `${APP_WEB_URL}/?compra=failure`,
+        pending: `${APP_WEB_URL}/?compra=pending`,
       },
       auto_return: 'approved',
       notification_url: `${SUPABASE_URL}/functions/v1/webhook-mp`,
@@ -65,8 +86,9 @@ serve(async (req) => {
 
     if (!mpRes.ok) {
       const errorText = await mpRes.text();
-      console.error('MP API error:', errorText);
-      return new Response('Error al crear preferencia en MP', { status: 502 });
+      console.error('MP API error:', mpRes.status, errorText);
+      // El detalle viaja al cliente: sin esto el próximo fallo vuelve a ser invisible.
+      return json({ error: 'mp_preference_failed', status: mpRes.status, detail: errorText }, 502);
     }
 
     const mpData = await mpRes.json();
@@ -87,20 +109,17 @@ serve(async (req) => {
 
     if (ticketError) {
       console.error('Ticket insert error:', ticketError);
-      return new Response('Error al crear ticket', { status: 500 });
+      return json({ error: 'ticket_insert_failed', detail: ticketError.message }, 500);
     }
 
-    return new Response(
-      JSON.stringify({
-        preference_id: mpData.id,
-        init_point: mpData.init_point,
-        sandbox_init_point: mpData.sandbox_init_point,
-        ticket_id: ticket.id,
-      }),
-      { headers: { 'Content-Type': 'application/json' }, status: 200 }
-    );
+    return json({
+      preference_id: mpData.id,
+      init_point: mpData.init_point,
+      sandbox_init_point: mpData.sandbox_init_point,
+      ticket_id: ticket.id,
+    }, 200);
   } catch (err) {
     console.error('create-preference error:', err);
-    return new Response('Internal error', { status: 500 });
+    return json({ error: 'internal', detail: String(err) }, 500);
   }
 });

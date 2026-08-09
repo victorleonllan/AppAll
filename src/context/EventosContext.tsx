@@ -33,6 +33,17 @@ function mapEventoFromDB(db: any): Evento {
   };
 }
 
+/**
+ * `precio` es texto libre que escribe el músico ("$5.000"); `monto` es el entero
+ * en CLP que Mercado Pago cobra. El formulario solo captura el primero, así que
+ * el segundo se deriva: sin esto `monto` queda NULL y la compra se bloquea con
+ * "Sin precio". Formato chileno: el punto es separador de miles, no decimal.
+ */
+function montoDesdePrecio(precio: string | undefined): number {
+  const digitos = (precio ?? '').replace(/\D/g, '');
+  return digitos ? parseInt(digitos, 10) : 0;
+}
+
 function mapEventoToDB(evento: Omit<Evento, 'id'>): any {
   return {
     artist_name: evento.artista,
@@ -44,7 +55,7 @@ function mapEventoToDB(evento: Omit<Evento, 'id'>): any {
     precio: evento.precio,
     imagen: evento.imagen ?? null,
     created_by: evento.createdBy,
-    monto: evento.monto ?? null,
+    monto: evento.monto ?? montoDesdePrecio(evento.precio),
   };
 }
 

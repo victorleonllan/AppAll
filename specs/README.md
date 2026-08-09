@@ -17,8 +17,28 @@
 | 018 | Taxonomia de venues: de "cafes" a "locales" | Completado |
 | 019 | Backfill de profiles + hardening del trigger | Completado |
 | 020 | Fix de dos agujeros criticos de RLS | Completado |
+| 021 | Cerrar el flujo de compra en web | En curso — sin desplegar del todo |
+| 028 | Correo transaccional por Resend (SMTP + plantillas) | Bloqueado — falta la API key |
+| 029 | Correo de confirmación de compra | Propuesto — depende del 028 y del 021 |
+| 030 | Dashboard de banda: perfil completo y panel | Propuesto |
+| 031 | Dashboard de local: perfil editable, dueño y panel | Propuesto |
 
-## Progreso: 20/20 specs completados. ✅ Beta lista para pruebas end-to-end.
+## Progreso: 20 specs aplicados; 021 y 028 abiertos; 029, 030 y 031 propuestos.
+
+⚠️ **"Aplicado" no significa "verificado".** El flujo de compra nunca se completó
+de punta a punta (0 tickets en la base) y no hay tests. Ver `PENDIENTES.md` para
+el inventario de lo detectado y no corregido, organizado en specs 021-029.
+
+⚠️ **El correo es el camino crítico.** El magic link es el único acceso a la compra,
+así que el **028 va antes que el 021**: con 2 correos/hora no se puede ni depurar.
+Y Resend sin dominio propio solo entrega al dueño de la cuenta, con lo cual **ningún
+tercero puede comprar todavía**. Comprar y verificar el dominio es requisito duro del
+Demo Day (23-sep-2026) y la dependencia de mayor plazo del proyecto.
+
+⚠️ **Ni "verificado" significa "desplegado".** Auditoría del 8-ago-2026: el repo,
+las Edge Functions y el build de Vercel corrían tres versiones distintas. Antes de
+diagnosticar un bug de runtime, confirma qué corre en cada capa — ver `CLAUDE.md`,
+sección *Tres estados que se desincronizan*.
 
 ## Taxonomia de locales (spec 018 — NO improvisar)
 
@@ -105,4 +125,3 @@ Fuente de verdad: `TicketStatus` en `src/types/index.ts`.
 - Supabase: xluinfihjjtxkglihxqz
 - Tablas: venues, events, profiles, tickets
 - MP: Checkout Pro (app Sonópolis, credenciales de prueba)
-- ✅ Todos los specs completados. Beta lista para pruebas end-to-end en runtime.
