@@ -9,22 +9,25 @@ import { useAuth } from '../context/AuthContext';
 import { useVenues } from '../context/VenuesContext';
 import { colors, spacing, fontSize, borderRadius } from '../theme';
 import { venueEmoji, venueLabel } from '../lib/venues';
-import { CafesStackParamList } from '../navigation/CafesStack';
+import { LocalesStackParamList } from '../navigation/LocalesStack';
 
-type NavigationProp = NativeStackNavigationProp<CafesStackParamList, 'CafesList'>;
+type NavigationProp = NativeStackNavigationProp<LocalesStackParamList, 'LocalesList'>;
 
-const generos = [...new Set(musicosMock.map((m) => m.tipoProyecto))];
+// `tipoProyecto` dejó de ser texto libre en el spec 030 (ahora es 'solista'
+// / 'banda' / 'dj' / …, no un género). El filtro pasa a usar `generos`, que
+// es el campo que la etiqueta "por género" siempre quiso decir.
+const generos = [...new Set(musicosMock.flatMap((m) => m.generos ?? []))];
 
-export default function CafesScreen() {
+export default function LocalesScreen() {
   const { session } = useAuth();
   const navigation = useNavigation<NavigationProp>();
-  // Un solo listado de locales (spec 018): la separación café / "otros" venía de
+  // Un solo listado de locales (spec 018): la separación por tipo venía de
   // usar `type` como si fuera un tier de asociación, que nunca fue.
   const { allVenues: locales } = useVenues();
   const [generoSeleccionado, setGeneroSeleccionado] = useState<string | null>(null);
 
   const musicosFiltrados = generoSeleccionado
-    ? musicosMock.filter((m) => m.tipoProyecto === generoSeleccionado)
+    ? musicosMock.filter((m) => m.generos?.includes(generoSeleccionado))
     : [];
 
   return (
@@ -73,7 +76,7 @@ export default function CafesScreen() {
                 onPress={() => navigation.navigate('VerMusico', { musicoId: musico.id })}
               >
                 <Text style={styles.nombreMusico}>{musico.nombre}</Text>
-                <Text style={styles.generoMusico}>{musico.tipoProyecto}</Text>
+                <Text style={styles.generoMusico}>{(musico.generos ?? []).join(', ')}</Text>
               </TouchableOpacity>
             ))}
           </View>

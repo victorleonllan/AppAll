@@ -7,11 +7,11 @@ import { useEventos } from '../context/EventosContext';
 import { musicosMock } from '../data/mock/musicos';
 import TarjetaEvento from '../components/TarjetaEvento';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
-import { CafeStackParamList } from '../navigation/CafeStack';
+import { MiLocalStackParamList } from '../navigation/MiLocalStack';
 
-type NavigationProp = NativeStackNavigationProp<CafeStackParamList, 'Dashboard'>;
+type NavigationProp = NativeStackNavigationProp<MiLocalStackParamList, 'Dashboard'>;
 
-export default function DashboardCafeScreen() {
+export default function DashboardLocalScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { user } = useAuth();
   const { allVenues } = useVenues();
@@ -66,7 +66,7 @@ export default function DashboardCafeScreen() {
             >
               <View style={{ flex: 1 }}>
                 <Text style={styles.nombreMusico}>{musico.nombre}</Text>
-                <Text style={styles.generoMusico}>{musico.tipoProyecto}</Text>
+                <Text style={styles.generoMusico}>{(musico.generos ?? []).join(', ')}</Text>
               </View>
               <View style={styles.botonPerfil}>
                 <Text style={styles.textoBotonPerfil}>Ver perfil</Text>

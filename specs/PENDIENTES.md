@@ -228,9 +228,16 @@ Orden propuesto ahí: unitarios (Jest) → componentes (RNTL) → integración d
 
 ---
 
-## Spec 030 — Dashboard de banda 🟢 escrito, sin implementar
+## Spec 030 — Dashboard de banda 🟢 implementado y desplegado, falta verificar en runtime
 
-**Estado:** spec completo en `030-dashboard-banda.md`.
+**Estado:** código aplicado el 2026-08-09. Migración `20260809034408_spec_030_perfil_banda.sql`
+**aplicada a producción**. Falta el cierre de punta a punta: los 5 puntos del Criterio de
+cierre en `030-dashboard-banda.md` necesitan probar la app con un músico real.
+
+Al aplicar la migración se destapó la brecha que el **024** ya tenía anotada: el baseline
+(`20260608000000`) no figuraba como aplicado en el historial remoto de migraciones y
+bloqueaba `db push`. Se reparó con `migration repair` (solo metadata, sin tocar DDL) — el
+024 sigue abierto como tarea de fondo, esto fue un parche puntual para poder avanzar.
 
 **Por qué:** el perfil del músico son seis campos y no alcanza para que un local decida
 contratar. Faltan integrantes, ciudad, duración del show, rider técnico y contacto directo.
@@ -264,10 +271,26 @@ reduce. Y aporta `venues.aforo`, que es **el dato que le falta al 022** para el 
 
 ---
 
+## Spec 032 — Renombrar "café" a "local" en archivos, símbolos y contrato de contexto 🟢
+
+**Estado:** implementado el 2026-08-09 (`032-renombrar-cafe-a-local.md`). `tsc` limpio.
+Falta verificar en runtime (abrir la app en web y probar las pestañas "Locales"/"Mi Local").
+
+**Por qué:** el spec 018 cambió el lenguaje visible de la UI ("cafés" → "locales") pero dejó
+fuera a propósito el renombrado de archivos y símbolos. Victor notó que persiste "café" en
+títulos de archivo y pidió revisar si además hay código obsoleto.
+
+No hay archivos obsoletos — `CafeStack`/`CafesStack` son dos stacks activos, no duplicados —
+pero sí apareció código muerto puntual: `VenuesContext` calcula `cafes`/`otherVenues` sin que
+ningún componente los consuma.
+
+Puramente de nomenclatura frontend: sin migración, sin dependencias del resto del roadmap.
+Puede implementarse en cualquier momento.
+
+---
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs
 - El dashboard de Vercel tiene `buildCommand: npm run vercel-build` y output `public`, que no coinciden con el proyecto. Es inocuo porque `vercel.json` los sobrescribe, pero confunde a quien edite desde el dashboard
 - `create-preference` usa `currency_id: 'CLP'`. Verificado correcto: la cuenta MP es `site_id: MLC` (Chile)
-- Renombrar archivos y símbolos (`CafesStack`, `DashboardCafeScreen`, `CafesScreen`) quedó fuera del spec 018 a propósito, para mantener el diff legible
-- `VenuesContext` sigue exponiendo `cafes` / `otherVenues` en su contrato, aunque ahora filtren por exclusión

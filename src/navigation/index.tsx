@@ -6,8 +6,8 @@ import CarteleraStack from './CarteleraStack';
 import AuthScreen from '../screens/AuthScreen';
 import MusicoStack from './MusicoStack';
 import PerfilScreen from '../screens/PerfilScreen';
-import CafesStack from './CafesStack';
-import CafeStack from './CafeStack';
+import LocalesStack from './LocalesStack';
+import MiLocalStack from './MiLocalStack';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme';
 
@@ -18,7 +18,7 @@ const Tab = createBottomTabNavigator();
 function getThirdTab(session: unknown, role: UserRole) {
   if (!session) return { name: 'Sonópolis' as const, component: AuthScreen, icon: 'apps' as const };
   if (role === 'musician') return { name: 'Mi Perfil' as const, component: MusicoStack, icon: 'person-circle' as const };
-  if (role === 'cafe') return { name: 'Mi Local' as const, component: CafeStack, icon: 'cafe' as const };
+  if (role === 'cafe') return { name: 'Mi Local' as const, component: MiLocalStack, icon: 'location' as const };
   return { name: 'Perfil' as const, component: PerfilScreen, icon: 'person' as const };
 }
 
@@ -59,7 +59,7 @@ export default function AppNavigator() {
         />
         <Tab.Screen
           name="Locales"
-          component={CafesStack}
+          component={LocalesStack}
           options={{ headerShown: false }}
         />
         <Tab.Screen
