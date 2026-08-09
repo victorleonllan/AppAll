@@ -70,7 +70,7 @@ sistema peor que antes: el repo dice que está resuelto y producción sigue rota
 ### Tres roles, una app
 
 `src/navigation/index.tsx` arma un tab navigator donde **la tercera pestaña cambia según el
-rol**: `musician` → `MusicoStack`, `cafe` → `CafeStack`, `public` → `PerfilScreen`, sin sesión
+rol**: `musician` → `MusicoStack`, `cafe` → `MiLocalStack`, `public` → `PerfilScreen`, sin sesión
 → `AuthScreen`. Los dos primeros tabs (Cartelera, Locales) son públicos.
 
 ⚠️ **El rol de navegación sale de `session.user.user_metadata.role`, no de `profiles.role`.**

@@ -1,16 +1,18 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import CafesScreen from '../screens/CafesScreen';
+import DashboardLocalScreen from '../screens/DashboardLocalScreen';
+import CrearEventoScreen from '../screens/CrearEventoScreen';
 import VerMusicoScreen from '../screens/VerMusicoScreen';
 import { colors, fontSize } from '../theme';
 
-export type CafesStackParamList = {
-  CafesList: undefined;
+export type MiLocalStackParamList = {
+  Dashboard: undefined;
+  CrearEvento: undefined;
   VerMusico: { musicoId: string };
 };
 
-const Stack = createNativeStackNavigator<CafesStackParamList>();
+const Stack = createNativeStackNavigator<MiLocalStackParamList>();
 
-export default function CafesStack() {
+export default function MiLocalStack() {
   return (
     <Stack.Navigator
       screenOptions={{
@@ -19,7 +21,8 @@ export default function CafesStack() {
         headerTitleStyle: { fontSize: fontSize.lg },
       }}
     >
-      <Stack.Screen name="CafesList" component={CafesScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Dashboard" component={DashboardLocalScreen} options={{ title: 'Mi Local' }} />
+      <Stack.Screen name="CrearEvento" component={CrearEventoScreen} options={{ title: 'Nuevo Evento' }} />
       <Stack.Screen name="VerMusico" component={VerMusicoScreen} options={{ title: 'Músico' }} />
     </Stack.Navigator>
   );

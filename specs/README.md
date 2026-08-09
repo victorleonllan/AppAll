@@ -20,10 +20,11 @@
 | 021 | Cerrar el flujo de compra en web | En curso — sin desplegar del todo |
 | 028 | Correo transaccional por Resend (SMTP + plantillas) | Bloqueado — falta la API key |
 | 029 | Correo de confirmación de compra | Propuesto — depende del 028 y del 021 |
-| 030 | Dashboard de banda: perfil completo y panel | Propuesto |
-| 031 | Dashboard de local: perfil editable, dueño y panel | Propuesto |
+| 030 | Dashboard de banda: perfil completo y panel | Implementado y desplegado — falta verificar en runtime |
+| 031 | Dashboard de local: perfil editable, dueño y panel | Implementado (branch `spec-031-dashboard-local`, sin mergear) |
+| 032 | Renombrar "café" a "local" en archivos, símbolos y contrato de contexto | Implementado — falta verificar en runtime |
 
-## Progreso: 20 specs aplicados; 021 y 028 abiertos; 029, 030 y 031 propuestos.
+## Progreso: 20 specs aplicados; 021 y 028 abiertos; 030, 031 y 032 implementados sin verificar en runtime; 029 propuesto.
 
 ⚠️ **"Aplicado" no significa "verificado".** El flujo de compra nunca se completó
 de punta a punta (0 tickets en la base) y no hay tests. Ver `PENDIENTES.md` para
