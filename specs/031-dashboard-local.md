@@ -1,11 +1,17 @@
 # Spec 031 — Dashboard de local: perfil editable, dueño y panel de gestión
 
-> Estado: **propuesto**. Escrito el 2026-08-08, sin implementar.
+> Estado: **implementado en la rama `spec-031-dashboard-local`, sin mergear ni aplicar.**
+> Escrito el 2026-08-08, implementado el mismo día, rebaseado sobre el spec 032 el 2026-08-09.
 > Par del spec 030 (dashboard de banda). Este está **más atrás**: ver "El local no existe".
+>
+> ⚠️ **Nada de esto está verificado en runtime.** Los 6 puntos del criterio de cierre exigen
+> la app corriendo con un usuario `role = 'cafe'`, que **todavía no existe** en la base. Lo
+> único verificado es el typecheck y que la migración no colisiona con el esquema remoto.
 
 ## Contexto
 
-`DashboardCafeScreen` (spec 005) es de **solo lectura**. Muestra `name`, `address` y `estilo`
+`DashboardCafeScreen` (spec 005 — hoy `DashboardLocalScreen`, ver 032) es de **solo lectura**.
+Muestra `name`, `address` y `estilo`
 del local, la lista de eventos propios, un botón de crear evento y una lista de músicos que
 sale de `musicosMock`.
 
@@ -25,7 +31,8 @@ auth.users:  musician(2) · public(1) · sin rol(1)   → cafe: 0
 ```
 
 La tercera pestaña se decide por `session.user.user_metadata.role`. Sin ningún usuario `cafe`,
-**`CafeStack` nunca se montó**. Este dashboard no está "poco avanzado": no ha sido abierto
+**`CafeStack` nunca se montó** (hoy `MiLocalStack`, ver 032). Este dashboard no está
+"poco avanzado": no ha sido abierto
 nunca por nadie. `RegisterScreen` sí ofrece el rol, así que el camino existe — no se recorrió.
 
 **2. Los tres locales tienen `owner_id = NULL`.**
@@ -115,8 +122,9 @@ ALTER TABLE public.venues
 
 ### 3. Pantalla de edición
 
-`EditarLocalScreen`, nueva en `CafeStack` — el equivalente de `EditarPerfilBandaScreen` en el
-030. Es la primera pantalla del proyecto donde se escribe un `venue`.
+`EditarLocalScreen`, nueva en `MiLocalStack` (el ex `CafeStack`, renombrado por el spec 032)
+— el equivalente de `EditarPerfilBandaScreen` en el 030. Es la primera pantalla del proyecto
+donde se escribe un `venue`.
 
 - Selector de `type` con los cuatro valores del spec 018 y sus emojis (`venueEmoji` ya existe
   en `src/lib/venues.ts`)
@@ -171,22 +179,37 @@ ALTER TABLE public.venues
 
 ## Archivos
 
+Los nombres son los **posteriores al spec 032**, que renombró los cuatro archivos de
+"café" a "local" mientras este spec estaba sin mergear. La rama se rebaseó sobre él.
+
 | Archivo | Cambio |
 |---|---|
-| `supabase/migrations/<ts>_spec_031_perfil_local.sql` | nuevo — columnas + CHECK |
+| `supabase/migrations/20260809120000_spec_031_perfil_local.sql` | nuevo — columnas + CHECK |
 | `src/types/index.ts` | `Venue` gana los campos nuevos |
 | `src/context/VenuesContext.tsx` | `ownerId` obligatorio en `createVenue`; el `catch` deja de tragarse el error; `updateVenue` nuevo; `mapVenueToDB`/`FromDB` con los campos nuevos |
-| `src/screens/DashboardCafeScreen.tsx` | dashboard completo, estado vacío, músicos reales |
+| `src/screens/DashboardLocalScreen.tsx` | *(ex `DashboardCafeScreen`)* dashboard completo, estado vacío, músicos reales |
 | `src/screens/EditarLocalScreen.tsx` | nuevo — formulario del local |
-| `src/navigation/CafeStack.tsx` | rutas `EditarLocal` y `Ventas` |
+| `src/navigation/MiLocalStack.tsx` | *(ex `CafeStack`)* rutas `EditarLocal` y `Ventas` |
 | `src/screens/CrearEventoScreen.tsx` | pasa `ownerId` a `createVenue`; desde el rol `cafe` preselecciona el local propio |
-| `src/screens/CafesScreen.tsx` | la ficha pública muestra los campos nuevos |
+| `src/screens/LocalesScreen.tsx` | *(ex `CafesScreen`)* la ficha pública muestra los campos nuevos |
+
+### Dos correcciones que salieron del rebase
+
+**1. El timestamp de la migración cambió de `20260808120000` a `20260809120000`.** La
+migración del spec 030 (`20260809034408`) se aplicó a producción el 9-ago, o sea *después*
+de la fecha que llevaba este archivo. `supabase db push` rechaza un archivo local anterior
+a la última migración remota, así que con el nombre viejo el push fallaba antes de empezar.
+
+**2. El `CHECK` de `aforo` pasó a un bloque `do $$`.** Postgres no acepta
+`add constraint if not exists`: reaplicar la migración abortaba con *"constraint already
+exists"*. En un proyecto sin entorno local —specs 024 y 025 pendientes— eso se descubre
+en producción o no se descubre.
 
 ## Criterio de cierre
 
 Verificado contra la base, no contra el código:
 
-1. Existe un usuario con `role = 'cafe'` que puede iniciar sesión y ver `CafeStack`
+1. Existe un usuario con `role = 'cafe'` que puede iniciar sesión y ver `MiLocalStack`
 2. Ese usuario crea su local desde `EditarLocalScreen` y
    `select owner_id from venues where id = …` devuelve **su uuid**, no NULL
 3. Edita el local y los cambios persisten tras recargar
