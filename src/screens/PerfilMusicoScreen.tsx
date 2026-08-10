@@ -16,7 +16,7 @@ import { colors, spacing, borderRadius, fontSize } from '../theme';
 export default function PerfilMusicoScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
-  const { eventos } = useEventos();
+  const { eventos, misColaboraciones } = useEventos();
   const [perfil, setPerfil] = useState<PerfilMusico | null>(null);
   const [esMock, setEsMock] = useState(false);
   const [cargando, setCargando] = useState(true);
@@ -61,7 +61,14 @@ export default function PerfilMusicoScreen() {
     }, [cargarPerfil])
   );
 
-  const misEventos = user ? eventos.filter((e) => e.createdBy === user.id) : [];
+  // Spec 033 — "mis eventos" ya no es solo "los que creé": incluye los que
+  // administro por ser dueño del local o artista vinculado. createdBy queda
+  // como fallback para cuando la migración todavía no aplicó o el evento es
+  // anterior a ella.
+  const misEventoIds = new Set(misColaboraciones.map((c) => c.eventId));
+  const misEventos = user
+    ? eventos.filter((e) => e.createdBy === user.id || misEventoIds.has(e.id))
+    : [];
   // Clave estable por contenido, no por tamaño: dependían de `.length`, así
   // que borrar un evento y crear otro en la misma sesión dejaba el mismo
   // conteo pero IDs distintos, y el efecto no volvía a correr — la consulta

@@ -338,6 +338,48 @@ Puede implementarse en cualquier momento.
 
 ---
 
+## Spec 033 — Propiedad y colaboradores de evento 🔴 implementado, migración sin desplegar
+
+**Estado:** código completo en `033-propiedad-y-colaboradores-de-evento.md` y aplicado en
+disco el 2026-08-10 (migración + tipos + `EventosContext` + `useEventoPermisos` +
+`EquipoEventoScreen` + botones de gestión en `DetalleEventoScreen` + selector de artista
+en `CrearEventoScreen`). `tsc --noEmit` limpio salvo las Edge Functions Deno (preexistente,
+no tocado). **Falta `supabase db push` a producción — pendiente de confirmación explícita.**
+
+**Por qué:** hoy `events.created_by` es la única noción de dueño, y es dueño para siempre.
+Un músico y el local donde toca no pueden coordinar el mismo evento dentro de la app, y
+borrar un evento con entradas vendidas las destruye en silencio (`tickets` cuelga de
+`events` con `ON DELETE CASCADE`).
+
+**Por qué no se aplicó ya:** es un cambio de esquema grande — tabla nueva
+(`event_collaborators`), 6 funciones `SECURITY DEFINER`, 3 triggers, políticas RLS de
+`events` reemplazadas — y hoy no hay entorno local para probarlo antes (spec 024 sigue
+abierto). Aplicar contra la única base que existe sin poder ensayarlo antes es la clase de
+acción que pide confirmación explícita en el momento, no autorización heredada de una
+sesión anterior.
+
+**Se degrada solo mientras tanto:** el código nuevo no rompe nada si la migración no está
+— `EventosContext` cae a "sin colaboradores" y `useEventoPermisos` cae al modelo viejo
+(`created_by`), con el mismo patrón que `useMock` ya usa para `events` y `venues`.
+
+**Se solapa con el 031** por el lado del co-admin automático del dueño del local: la rama
+que lo agrega (`events_claim_owner_trg`) es código correcto pero no se puede verificar
+hasta que `venues.owner_id` esté poblado — hoy los 3 venues lo tienen `NULL`.
+
+**Se solapa con el 023** en diagnóstico (borrado destructivo, ventas en riesgo) pero no en
+alcance: el 023 gobierna usuarios y locales, este gobierna eventos.
+
+**Deuda que queda a propósito fuera de este spec:** reembolso al cancelar (depende de la
+API de refunds de MP), avisar por correo a compradores de un evento cancelado (depende del
+028/029), invitar por correo a alguien sin cuenta (depende del 028), y un botón "Editar"
+real en `DetalleEventoScreen` — no existe ninguna pantalla de edición de evento en la app
+todavía (`CrearEventoScreen` es solo de alta).
+
+**Antes de desplegar:** revisar el criterio de cierre completo en el spec (9 puntos,
+verificados contra la base) — no se cierra por código escrito.
+
+---
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

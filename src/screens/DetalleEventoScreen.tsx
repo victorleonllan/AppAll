@@ -9,6 +9,7 @@ import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { useEventos } from '../context/EventosContext';
+import { useEventoPermisos } from '../hooks/useEventoPermisos';
 import { supabase } from '../lib/supabase';
 import { CarteleraStackParamList } from '../navigation/CarteleraStack';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
@@ -20,18 +21,20 @@ export default function DetalleEventoScreen() {
   const route = useRoute<DetalleRoute>();
   const navigation = useNavigation<NavProp>();
   const { user, signInOtp } = useAuth();
-  const { eventos } = useEventos();
+  const { eventos, cancelEvento, deleteEvento } = useEventos();
 
   const [email, setEmail] = useState('');
   const [step, setStep] = useState<'idle' | 'email' | 'enviado' | 'comprando'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailEnviado, setEmailEnviado] = useState('');
+  const [gestionando, setGestionando] = useState(false);
 
   // Candado de la auto-compra — ver comentario en el efecto de abajo
   const autoCompraIniciada = useRef(false);
 
   const evento = eventos.find((e) => e.id === route.params.eventoId);
+  const permisos = useEventoPermisos(evento?.id);
 
   if (!evento) {
     return (
@@ -41,7 +44,58 @@ export default function DetalleEventoScreen() {
     );
   }
 
+  const cancelado = evento.status === 'cancelled';
   const monto = evento.monto ?? 0;
+
+  // Spec 033 — cancelar (recuperable) vs. borrar (definitivo, y bloqueado
+  // por el trigger events_block_delete_with_tickets si hay entradas vendidas
+  // o en proceso). El mensaje de error del trigger llega tal cual al Alert.
+  const handleCancelar = () => {
+    Alert.alert(
+      'Cancelar evento',
+      'El evento deja de venderse pero sigue visible como cancelado. No se puede deshacer desde acá.',
+      [
+        { text: 'Volver', style: 'cancel' },
+        {
+          text: 'Cancelar evento', style: 'destructive',
+          onPress: async () => {
+            setGestionando(true);
+            try {
+              await cancelEvento(evento.id);
+            } catch (err: any) {
+              Alert.alert('No se pudo cancelar', err?.message ?? 'Error desconocido');
+            } finally {
+              setGestionando(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleBorrar = () => {
+    Alert.alert(
+      'Borrar evento',
+      'Esta acción es definitiva. Si el evento tiene entradas vendidas o en proceso, la base lo va a rechazar — cancélalo en su lugar.',
+      [
+        { text: 'Volver', style: 'cancel' },
+        {
+          text: 'Borrar', style: 'destructive',
+          onPress: async () => {
+            setGestionando(true);
+            try {
+              await deleteEvento(evento.id);
+              navigation.goBack();
+            } catch (err: any) {
+              Alert.alert('No se pudo borrar', err?.message ?? 'Error desconocido');
+            } finally {
+              setGestionando(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   // Auto-compra: si volvemos del magic link con una compra pendiente
   useEffect(() => {
@@ -226,6 +280,7 @@ export default function DetalleEventoScreen() {
   // ────────────── BOTON PRINCIPAL ──────────────
 
   const handleBotonComprar = () => {
+    if (cancelado) return;
     if (user) {
       handleComprarLogueado();
     } else {
@@ -237,6 +292,12 @@ export default function DetalleEventoScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {cancelado && (
+        <View style={styles.bandaCancelado}>
+          <Text style={styles.bandaCanceladoTexto}>🚫 Este evento fue cancelado</Text>
+        </View>
+      )}
+
       <View style={styles.card}>
         <Text style={styles.artista}>{evento.artista}</Text>
         <Text style={styles.genero}>{evento.genero}</Text>
@@ -262,19 +323,57 @@ export default function DetalleEventoScreen() {
         <Text style={styles.precioValor}>{evento.precio}</Text>
 
         <TouchableOpacity
-          style={[styles.botonComprar, (!monto) && styles.botonDesactivado]}
+          style={[styles.botonComprar, (!monto || cancelado) && styles.botonDesactivado]}
           onPress={handleBotonComprar}
-          disabled={!monto || step === 'comprando'}
+          disabled={!monto || cancelado || step === 'comprando'}
         >
           <Text style={styles.textoBotonComprar}>
-            {step === 'comprando'
-              ? 'Procesando...'
-              : monto > 0
-                ? `Comprar entrada — ${evento.precio}`
-                : 'Evento gratuito'}
+            {cancelado
+              ? 'Evento cancelado'
+              : step === 'comprando'
+                ? 'Procesando...'
+                : monto > 0
+                  ? `Comprar entrada — ${evento.precio}`
+                  : 'Evento gratuito'}
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Spec 033 — panel de gestión, visible solo para el equipo del evento */}
+      {permisos.puedeEditar && (
+        <View style={styles.card}>
+          <Text style={styles.tituloGestion}>Gestión del evento</Text>
+          <Text style={styles.rolActual}>Tu rol: {permisos.rol}</Text>
+          <View style={styles.filaGestion}>
+            {permisos.puedeInvitar && (
+              <TouchableOpacity
+                style={styles.botonGestion}
+                onPress={() => (navigation as any).navigate('EquipoEvento', { eventoId: evento.id })}
+              >
+                <Text style={styles.textoBotonGestion}>👥 Equipo</Text>
+              </TouchableOpacity>
+            )}
+            {permisos.puedeBorrar && !cancelado && (
+              <TouchableOpacity
+                style={styles.botonGestion}
+                onPress={handleCancelar}
+                disabled={gestionando}
+              >
+                <Text style={styles.textoBotonGestion}>🚫 Cancelar</Text>
+              </TouchableOpacity>
+            )}
+            {permisos.puedeBorrar && (
+              <TouchableOpacity
+                style={[styles.botonGestion, styles.botonPeligro]}
+                onPress={handleBorrar}
+                disabled={gestionando}
+              >
+                <Text style={[styles.textoBotonGestion, styles.textoBotonPeligro]}>🗑️ Borrar</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      )}
 
       {(step === 'email' || step === 'enviado' || step === 'comprando') && renderFormularioEmail()}
     </ScrollView>
@@ -351,6 +450,36 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 40,
   },
+  bandaCancelado: {
+    backgroundColor: '#B71C1C',
+    borderRadius: borderRadius.sm,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
+    alignItems: 'center',
+  },
+  bandaCanceladoTexto: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.sm },
+  tituloGestion: {
+    fontSize: fontSize.md,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: 2,
+  },
+  rolActual: {
+    fontSize: fontSize.xs,
+    color: colors.muted,
+    marginBottom: spacing.sm,
+    textTransform: 'capitalize',
+  },
+  filaGestion: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  botonGestion: {
+    backgroundColor: colors.accentLight,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: borderRadius.sm,
+  },
+  textoBotonGestion: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  botonPeligro: { backgroundColor: '#FDECEA' },
+  textoBotonPeligro: { color: '#B71C1C' },
   // Modal
   overlay: {
     position: 'absolute',

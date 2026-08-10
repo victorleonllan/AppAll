@@ -15,13 +15,17 @@ export default function DashboardLocalScreen() {
   const navigation = useNavigation<NavigationProp>();
   const { user } = useAuth();
   const { allVenues } = useVenues();
-  const { eventos } = useEventos();
+  const { eventos, misColaboraciones } = useEventos();
 
   // Busca entre todos los locales, no solo los de type 'cafe': tras el spec 018
   // el dueño puede tener un bar, una sala o un centro cultural.
   const miVenue = user ? allVenues.find((v) => v.ownerId === user.id) : null;
+  // Spec 033 — incluye los eventos creados en el local por un músico: el
+  // dueño entra como admin automático (events_claim_owner_trg) y necesita
+  // verlos acá, no solo los que creó él mismo.
+  const misEventoIds = new Set(misColaboraciones.map((c) => c.eventId));
   const misEventos = user
-    ? eventos.filter((e) => e.createdBy === user.id)
+    ? eventos.filter((e) => e.createdBy === user.id || misEventoIds.has(e.id))
     : [];
 
   return (

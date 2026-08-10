@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { Evento, Ticket, TicketStatus } from '../types';
+import { Evento, EventoStatus, EventRole, Colaborador, Ticket, TicketStatus } from '../types';
 import { eventos as mockEventos } from '../data/mock/eventos';
+import { useAuth } from './AuthContext';
 
 interface EventosState {
   eventos: Evento[];
@@ -9,10 +10,19 @@ interface EventosState {
   refresh: () => Promise<void>;
   createEvento: (evento: Omit<Evento, 'id'>) => Promise<Evento>;
   deleteEvento: (id: string) => Promise<void>;
+  cancelEvento: (id: string, motivo?: string) => Promise<void>;
   tickets: Ticket[];
   createTicket: (eventoId: string, userId: string, monto: number) => Promise<Ticket>;
   getTicketsByUser: (userId: string) => Ticket[];
   updateTicketStatus: (ticketId: string, status: TicketStatus) => Promise<void>;
+  // Spec 033 — equipo del evento (event_collaborators)
+  misColaboraciones: Colaborador[];
+  getColaboradores: (eventoId: string) => Promise<Colaborador[]>;
+  invitarColaborador: (eventoId: string, userId: string, role: EventRole) => Promise<void>;
+  cambiarPermisoBorrado: (eventoId: string, userId: string, canDelete: boolean) => Promise<void>;
+  quitarColaborador: (eventoId: string, userId: string) => Promise<void>;
+  transferirPropiedad: (eventoId: string, nuevoOwnerId: string) => Promise<void>;
+  buscarCandidatos: (query: string) => Promise<{ id: string; nombre: string; role: string }[]>;
 }
 
 const EventosContext = createContext<EventosState>({} as EventosState);
@@ -21,6 +31,7 @@ function mapEventoFromDB(db: any): Evento {
   return {
     id: db.id,
     artista: db.artist_name,
+    artistId: db.artist_id ?? null,
     venueId: db.venue_id,
     venueName: db.venue_name,
     fecha: db.fecha,
@@ -30,6 +41,9 @@ function mapEventoFromDB(db: any): Evento {
     imagen: db.imagen,
     createdBy: db.created_by,
     monto: db.monto ?? undefined,
+    status: (db.status as EventoStatus) ?? 'published',
+    cancelledAt: db.cancelled_at ?? null,
+    cancelReason: db.cancel_reason ?? null,
   };
 }
 
@@ -47,6 +61,7 @@ function montoDesdePrecio(precio: string | undefined): number {
 function mapEventoToDB(evento: Omit<Evento, 'id'>): any {
   return {
     artist_name: evento.artista,
+    artist_id: evento.artistId ?? null,
     venue_id: evento.venueId,
     venue_name: evento.venueName,
     fecha: evento.fecha,
@@ -59,11 +74,30 @@ function mapEventoToDB(evento: Omit<Evento, 'id'>): any {
   };
 }
 
+/** El nombre no es columna de event_collaborators — se completa con un join
+ * manual contra `profiles`. Ver comentario en getColaboradores: tras el spec
+ * 020, profiles solo expone `role='musician'` a terceros, así que el nombre
+ * de un colaborador `role='cafe'` puede llegar vacío para quien no es él mismo. */
+function mapColaboradorFromDB(db: any, nombre?: string): Colaborador {
+  return {
+    eventId: db.event_id,
+    userId: db.user_id,
+    role: db.role as EventRole,
+    canDelete: db.can_delete,
+    source: db.source,
+    invitedBy: db.invited_by ?? null,
+    createdAt: db.created_at,
+    nombre,
+  };
+}
+
 export function EventosProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [eventos, setEventos] = useState<Evento[]>(mockEventos);
   const [loading, setLoading] = useState(true);
   const [useMock, setUseMock] = useState(true);
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [misColaboraciones, setMisColaboraciones] = useState<Colaborador[]>([]);
 
   const loadFromSupabase = useCallback(async () => {
     try {
@@ -91,6 +125,31 @@ export function EventosProvider({ children }: { children: ReactNode }) {
     await loadFromSupabase();
   }, [loadFromSupabase]);
 
+  // Spec 033 — "mis eventos" ya no es solo `createdBy === user.id`: incluye
+  // los eventos donde soy admin/editor (dueño de local, artista vinculado).
+  // Lectura sola; si la tabla todavía no existe (migración sin aplicar) se
+  // degrada a lista vacía, igual que loadFromSupabase se degrada a mock.
+  const cargarMisColaboraciones = useCallback(async () => {
+    if (!user) {
+      setMisColaboraciones([]);
+      return;
+    }
+    try {
+      const { data, error } = await supabase
+        .from('event_collaborators')
+        .select('*')
+        .eq('user_id', user.id);
+      if (error) throw error;
+      setMisColaboraciones((data ?? []).map((r: any) => mapColaboradorFromDB(r)));
+    } catch {
+      setMisColaboraciones([]);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    cargarMisColaboraciones();
+  }, [cargarMisColaboraciones]);
+
   const createEvento = useCallback(async (evento: Omit<Evento, 'id'>): Promise<Evento> => {
     if (!useMock) {
       try {
@@ -102,6 +161,7 @@ export function EventosProvider({ children }: { children: ReactNode }) {
         if (!error && data) {
           const newEvento = mapEventoFromDB(data);
           setEventos((prev) => [...prev, newEvento]);
+          cargarMisColaboraciones(); // events_claim_owner_trg me acaba de agregar como owner
           return newEvento;
         }
       } catch {}
@@ -109,15 +169,45 @@ export function EventosProvider({ children }: { children: ReactNode }) {
     const newEvento: Evento = { ...evento, id: `event-${Date.now()}` };
     setEventos((prev) => [...prev, newEvento]);
     return newEvento;
-  }, [useMock]);
+  }, [useMock, cargarMisColaboraciones]);
 
+  // Spec 033 — antes: `catch {}` vacío + borrado optimista del estado local
+  // pase lo que pase. Si RLS rechazaba el delete (por ejemplo, alguien sin
+  // permiso), el evento desaparecía de la pantalla igual y volvía a aparecer
+  // al recargar — el mismo patrón de "error disfrazado de éxito" que el spec
+  // 030 encontró en PerfilMusicoScreen. Ahora el error se propaga: quien
+  // llama (la pantalla) decide qué mostrar.
   const deleteEvento = useCallback(async (id: string) => {
     if (!useMock) {
-      try {
-        await supabase.from('events').delete().eq('id', id);
-      } catch {}
+      const { error } = await supabase.from('events').delete().eq('id', id);
+      if (error) throw error;
     }
     setEventos((prev) => prev.filter((e) => e.id !== id));
+  }, [useMock]);
+
+  // Cancelar no borra: dispara events_guard_protected_columns_trg, que exige
+  // can_delete_event() aunque el UPDATE en sí lo permita can_edit_event().
+  const cancelEvento = useCallback(async (id: string, motivo?: string) => {
+    if (useMock) {
+      setEventos((prev) => prev.map((e) => (
+        e.id === id
+          ? { ...e, status: 'cancelled', cancelledAt: new Date().toISOString(), cancelReason: motivo ?? null }
+          : e
+      )));
+      return;
+    }
+    const { data, error } = await supabase
+      .from('events')
+      .update({
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        cancel_reason: motivo ?? null,
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    setEventos((prev) => prev.map((e) => (e.id === id ? mapEventoFromDB(data) : e)));
   }, [useMock]);
 
   const createTicket = useCallback(async (eventoId: string, userId: string, monto: number): Promise<Ticket> => {
@@ -144,11 +234,75 @@ export function EventosProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  // ────────────── Spec 033 — equipo del evento ──────────────
+
+  const getColaboradores = useCallback(async (eventoId: string): Promise<Colaborador[]> => {
+    const { data, error } = await supabase
+      .from('event_collaborators')
+      .select('*')
+      .eq('event_id', eventoId);
+    if (error) throw error;
+    const rows = data ?? [];
+    const userIds = rows.map((r: any) => r.user_id);
+    let nombres: Record<string, string> = {};
+    if (userIds.length > 0) {
+      // RLS de profiles (spec 020) solo deja ver role='musician' + la fila propia:
+      // el nombre de un colaborador 'cafe' que no soy yo puede no llegar.
+      const { data: perfiles } = await supabase.from('profiles').select('id, nombre').in('id', userIds);
+      nombres = Object.fromEntries((perfiles ?? []).map((p: any) => [p.id, p.nombre]));
+    }
+    return rows.map((r: any) => mapColaboradorFromDB(r, nombres[r.user_id]));
+  }, []);
+
+  const invitarColaborador = useCallback(async (eventoId: string, userId: string, role: EventRole) => {
+    if (role === 'owner') throw new Error('La propiedad se transfiere, no se asigna por invitación');
+    const { error } = await supabase
+      .from('event_collaborators')
+      .insert({ event_id: eventoId, user_id: userId, role, can_delete: false, source: 'invited', invited_by: user?.id ?? null });
+    if (error) throw error;
+  }, [user]);
+
+  const cambiarPermisoBorrado = useCallback(async (eventoId: string, userId: string, canDelete: boolean) => {
+    const { error } = await supabase
+      .from('event_collaborators')
+      .update({ can_delete: canDelete })
+      .eq('event_id', eventoId)
+      .eq('user_id', userId);
+    if (error) throw error;
+  }, []);
+
+  const quitarColaborador = useCallback(async (eventoId: string, userId: string) => {
+    const { error } = await supabase
+      .from('event_collaborators')
+      .delete()
+      .eq('event_id', eventoId)
+      .eq('user_id', userId);
+    if (error) throw error;
+  }, []);
+
+  const transferirPropiedad = useCallback(async (eventoId: string, nuevoOwnerId: string) => {
+    const { error } = await supabase.rpc('transfer_event_ownership', {
+      p_event: eventoId,
+      p_new_owner: nuevoOwnerId,
+    });
+    if (error) throw error;
+    cargarMisColaboraciones();
+  }, [cargarMisColaboraciones]);
+
+  const buscarCandidatos = useCallback(async (query: string) => {
+    if (!query.trim()) return [];
+    const { data, error } = await supabase.rpc('search_collaborator_candidates', { q: query.trim() });
+    if (error) throw error;
+    return (data ?? []) as { id: string; nombre: string; role: string }[];
+  }, []);
+
   return (
     <EventosContext.Provider
       value={{
-        eventos, loading, refresh, createEvento, deleteEvento,
+        eventos, loading, refresh, createEvento, deleteEvento, cancelEvento,
         tickets, createTicket, getTicketsByUser, updateTicketStatus,
+        misColaboraciones, getColaboradores, invitarColaborador,
+        cambiarPermisoBorrado, quitarColaborador, transferirPropiedad, buscarCandidatos,
       }}
     >
       {children}
