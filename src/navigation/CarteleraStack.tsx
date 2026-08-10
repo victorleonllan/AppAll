@@ -2,12 +2,14 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import CarteleraScreen from '../screens/CarteleraScreen';
 import DetalleEventoScreen from '../screens/DetalleEventoScreen';
 import ConfirmacionCompraScreen from '../screens/ConfirmacionCompraScreen';
+import EquipoEventoScreen from '../screens/EquipoEventoScreen';
 import { colors, fontSize } from '../theme';
 
 export type CarteleraStackParamList = {
   CarteleraList: undefined;
   DetalleEvento: { eventoId: string };
   ConfirmacionCompra: { eventoId: string; ticketId: string; status: 'success' | 'failure' | 'pending' };
+  EquipoEvento: { eventoId: string };
 };
 
 const Stack = createNativeStackNavigator<CarteleraStackParamList>();
@@ -35,6 +37,11 @@ export default function CarteleraStack() {
         name="ConfirmacionCompra"
         component={ConfirmacionCompraScreen}
         options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="EquipoEvento"
+        component={EquipoEventoScreen}
+        options={{ title: 'Equipo del evento' }}
       />
     </Stack.Navigator>
   );

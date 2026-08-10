@@ -15,8 +15,10 @@ export default function CrearEventoScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
   const { allVenues, createVenue } = useVenues();
-  const { createEvento } = useEventos();
+  const { createEvento, buscarCandidatos } = useEventos();
   const [artista, setArtista] = useState('');
+  const [artistaId, setArtistaId] = useState<string | null>(null);
+  const [artistaSuggestions, setArtistaSuggestions] = useState<{ id: string; nombre: string }[]>([]);
   const [venueQuery, setVenueQuery] = useState('');
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [suggestions, setSuggestions] = useState<Venue[]>([]);
@@ -36,6 +38,40 @@ export default function CrearEventoScreen() {
       setSuggestions([]);
     }
   }, [venueQuery, selectedVenue, allVenues]);
+
+  // Spec 033 — vincular a un músico con perfil real (artist_id) es opcional:
+  // al elegirlo, ese músico entra al equipo del evento como colaborador
+  // automático (events_claim_owner_trg). Si no se elige nada, `artista` sigue
+  // siendo texto libre, igual que antes — un local puede anunciar a alguien
+  // que todavía no tiene cuenta en Sonópolis.
+  useEffect(() => {
+    if (artistaId || artista.trim().length < 2) {
+      setArtistaSuggestions([]);
+      return;
+    }
+    let cancelado = false;
+    const timeout = setTimeout(async () => {
+      try {
+        const candidatos = await buscarCandidatos(artista);
+        if (!cancelado) {
+          setArtistaSuggestions(
+            candidatos.filter((c) => c.role === 'musician').map((c) => ({ id: c.id, nombre: c.nombre }))
+          );
+        }
+      } catch {
+        // La función search_collaborator_candidates es del spec 033 — si la
+        // migración todavía no está aplicada, se degrada a sin sugerencias.
+        if (!cancelado) setArtistaSuggestions([]);
+      }
+    }, 300);
+    return () => { cancelado = true; clearTimeout(timeout); };
+  }, [artista, artistaId, buscarCandidatos]);
+
+  const handleSelectArtista = (candidato: { id: string; nombre: string }) => {
+    setArtista(candidato.nombre);
+    setArtistaId(candidato.id);
+    setArtistaSuggestions([]);
+  };
 
   const handleSelectVenue = (venue: Venue) => {
     setSelectedVenue(venue);
@@ -70,6 +106,7 @@ export default function CrearEventoScreen() {
       }
       await createEvento({
         artista,
+        artistId: artistaId,
         venueId: venue.id,
         venueName: venue.name,
         fecha,
@@ -100,10 +137,28 @@ export default function CrearEventoScreen() {
         <TextInput
           style={styles.input}
           value={artista}
-          onChangeText={setArtista}
+          onChangeText={(t) => { setArtista(t); setArtistaId(null); }}
           placeholder="Ej: Juana Fe"
           placeholderTextColor={colors.muted}
         />
+        {artistaSuggestions.length > 0 && (
+          <View style={styles.suggestions}>
+            {artistaSuggestions.map((c) => (
+              <TouchableOpacity
+                key={c.id}
+                style={styles.suggestionItem}
+                onPress={() => handleSelectArtista(c)}
+              >
+                <Text style={styles.suggestionText}>🎤 {c.nombre}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        {artistaId && (
+          <Text style={styles.selectedVenue}>
+            ✅ Vinculado al perfil de {artista} — entrará al equipo del evento
+          </Text>
+        )}
 
         <Text style={styles.label}>Local (venue) *</Text>
         <TextInput
