@@ -21,12 +21,12 @@
 | 028 | Correo transaccional por Resend (SMTP + plantillas) | Bloqueado — falta la API key |
 | 029 | Correo de confirmación de compra | Propuesto — depende del 028 y del 021 |
 | 030 | Dashboard de banda: perfil completo y panel | Implementado y desplegado — falta verificar en runtime |
-| 031 | Dashboard de local: perfil editable, dueño y panel | Implementado (branch `spec-031-dashboard-local`, sin mergear) |
+| 031 | Dashboard de local: perfil editable, dueño y panel | Aplicado (migración + código en `main`, sin verificar en runtime) |
 | 032 | Renombrar "café" a "local" en archivos, símbolos y contrato de contexto | Implementado — falta verificar en runtime |
 | 033 | Propiedad y colaboradores de evento: quién reclama, quién edita, quién borra | Desplegado y mergeado — falta verificar en runtime |
 | 034 | Editar evento (spec aislado, separado a propósito del 033) | Propuesto |
 
-## Progreso: 21 specs aplicados; 021 y 028 abiertos; 030, 031, 032 y 033 implementados sin verificar en runtime completo (033 sí tiene su migración verificada contra producción); 029 y 034 propuestos.
+## Progreso: 22 specs aplicados; 021 y 028 abiertos; 030, 031, 032 y 033 en `main` sin verificar en runtime completo (031 y 033 sí tienen su migración verificada contra producción); 029 y 034 propuestos.
 
 ⚠️ **"Aplicado" no significa "verificado".** El flujo de compra nunca se completó
 de punta a punta (0 tickets en la base) y no hay tests. Ver `PENDIENTES.md` para
