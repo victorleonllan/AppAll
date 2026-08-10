@@ -25,8 +25,9 @@
 | 032 | Renombrar "café" a "local" en archivos, símbolos y contrato de contexto | Implementado — falta verificar en runtime |
 | 033 | Propiedad y colaboradores de evento: quién reclama, quién edita, quién borra | Desplegado y mergeado — falta verificar en runtime |
 | 034 | Editar evento (spec aislado, separado a propósito del 033) | Propuesto |
+| 035 | Fix: login roto por columnas de token NULL en `auth.users` (`musico@prueba.appall`) | Completado — aplicado en producción y migración verificada |
 
-## Progreso: 22 specs aplicados; 021 y 028 abiertos; 030, 031, 032 y 033 en `main` sin verificar en runtime completo (031 y 033 sí tienen su migración verificada contra producción); 029 y 034 propuestos.
+## Progreso: 23 specs aplicados; 021 y 028 abiertos; 030, 031, 032 y 033 en `main` sin verificar en runtime completo (031 y 033 sí tienen su migración verificada contra producción); 029 y 034 propuestos.
 
 ⚠️ **"Aplicado" no significa "verificado".** El flujo de compra nunca se completó
 de punta a punta (0 tickets en la base) y no hay tests. Ver `PENDIENTES.md` para
