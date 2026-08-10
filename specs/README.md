@@ -23,9 +23,9 @@
 | 030 | Dashboard de banda: perfil completo y panel | Implementado y desplegado — falta verificar en runtime |
 | 031 | Dashboard de local: perfil editable, dueño y panel | Implementado (branch `spec-031-dashboard-local`, sin mergear) |
 | 032 | Renombrar "café" a "local" en archivos, símbolos y contrato de contexto | Implementado — falta verificar en runtime |
-| 033 | Propiedad y colaboradores de evento: quién reclama, quién edita, quién borra | Planificado — sin implementar |
+| 033 | Propiedad y colaboradores de evento: quién reclama, quién edita, quién borra | Implementado — migración sin aplicar a producción |
 
-## Progreso: 20 specs aplicados; 021 y 028 abiertos; 030, 031 y 032 implementados sin verificar en runtime; 029 propuesto; 033 planificado.
+## Progreso: 20 specs aplicados; 021 y 028 abiertos; 030, 031 y 032 implementados sin verificar en runtime; 029 propuesto; 033 implementado, migración pendiente de deploy (requiere confirmación explícita — cambio de esquema grande sin entorno local para probar antes, spec 024).
 
 ⚠️ **"Aplicado" no significa "verificado".** El flujo de compra nunca se completó
 de punta a punta (0 tickets en la base) y no hay tests. Ver `PENDIENTES.md` para
