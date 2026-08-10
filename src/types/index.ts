@@ -15,9 +15,14 @@ export interface Venue {
   image?: string | null;
 }
 
+/** Spec 033 — estado del evento. 'draft' solo lo ve el equipo; 'cancelled'
+ * sigue público (quien compró tiene que poder ver que el show se canceló). */
+export type EventoStatus = 'draft' | 'published' | 'cancelled';
+
 export interface Evento {
   id: string;
   artista: string;
+  artistId?: string | null;   // Spec 033 — FK opcional a profiles (role='musician')
   venueId: string;
   venueName: string;
   fecha: string;
@@ -25,8 +30,29 @@ export interface Evento {
   genero: string;
   precio: string;
   imagen: string | null;
-  createdBy: string;
+  createdBy: string;          // Spec 033 — hecho histórico, ya no autoriza nada; ver EventRole
   monto?: number;
+  status?: EventoStatus;      // Spec 033 — default 'published' en DB
+  cancelledAt?: string | null;
+  cancelReason?: string | null;
+}
+
+/** Spec 033 — rol dentro del equipo de un evento (tabla event_collaborators). */
+export type EventRole = 'owner' | 'admin' | 'editor';
+
+/** Spec 033 — por qué alguien está en el equipo de un evento. La UI lo usa
+ * para explicar la fila ("dueño del local") en vez de mostrar un nombre suelto. */
+export type ColaboradorSource = 'claim' | 'venue_owner' | 'artist' | 'invited' | 'backfill';
+
+export interface Colaborador {
+  eventId: string;
+  userId: string;
+  role: EventRole;
+  canDelete: boolean;
+  source: ColaboradorSource;
+  invitedBy?: string | null;
+  createdAt: string;
+  nombre?: string;   // se completa al hacer join con profiles, no viene de la tabla
 }
 
 export type TicketStatus = 'pending' | 'completed' | 'refunded' | 'cancelled';
