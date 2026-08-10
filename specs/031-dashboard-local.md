@@ -1,12 +1,21 @@
 # Spec 031 — Dashboard de local: perfil editable, dueño y panel de gestión
 
-> Estado: **implementado en la rama `spec-031-dashboard-local`, sin mergear ni aplicar.**
-> Escrito el 2026-08-08, implementado el mismo día, rebaseado sobre el spec 032 el 2026-08-09.
-> Par del spec 030 (dashboard de banda). Este está **más atrás**: ver "El local no existe".
+> Estado: **aplicado.** Migración en producción desde el 2026-08-10 (`20260809120000`,
+> commiteada sola a `main` en `15a3523` porque se desplegó antes de mergear el código).
+> Código mergeado a `main` el 2026-08-10 en `78af993`.
+> Escrito el 2026-08-08, implementado el mismo día, rebaseado sobre el 032 el 2026-08-09 y
+> sobre el 033 el 2026-08-10. Par del spec 030 (dashboard de banda).
 >
-> ⚠️ **Nada de esto está verificado en runtime.** Los 6 puntos del criterio de cierre exigen
-> la app corriendo con un usuario `role = 'cafe'`, que **todavía no existe** en la base. Lo
-> único verificado es el typecheck y que la migración no colisiona con el esquema remoto.
+> ⚠️ **Aplicado no es verificado.** Los 6 puntos del criterio de cierre exigen la app
+> corriendo con un usuario `role = 'cafe'`, que **todavía no existe** en la base — los 3
+> venues siguen con `owner_id = null`. Verificado: typecheck en 0, las 12 columnas nuevas
+> existen en producción, y el merge con el 033 no rompió nada. Nada más.
+>
+> 🔴 **Hueco heredado del 033**: `tickets_select_event_owner` sigue filtrando por
+> `events.created_by`, pero el 033 movió la autorización a `event_collaborators`. Un dueño
+> de local que entró como `owner` sin haber creado el evento ve su total de ventas en cero
+> — la consulta no falla, devuelve menos filas. Afecta a la pantalla "Ventas" y al resumen
+> del dashboard, los dos anotados en el código. Corregirlo es reescribir la policy: spec propio.
 
 ## Contexto
 

@@ -299,9 +299,17 @@ Revisado y dejado para después (no bloquea este commit, cada uno es su propio s
 
 ---
 
-## Spec 031 — Dashboard de local 🔴 escrito, sin implementar
+## Spec 031 — Dashboard de local 🟡 aplicado, sin verificar en runtime
 
-**Estado:** spec completo en `031-dashboard-local.md`. **Más atrasado que el 030.**
+**Estado:** migración en producción y código en `main` (`78af993`) desde el 2026-08-10.
+Typecheck en 0. Lo que sigue abierto es la verificación: los 6 puntos del criterio de cierre
+piden un usuario `role = 'cafe'` que todavía no existe, así que **ninguna de las pantallas
+nuevas la ha abierto nadie**. Los tres hechos de abajo siguen siendo ciertos en la base; el
+código que los corrige ya está desplegado, pero sin ejercitar.
+
+Además hereda un hueco del 033: `tickets_select_event_owner` filtra por `events.created_by`,
+que el 033 degradó a dato histórico. Un local que entró como `owner` sin crear el evento ve
+sus ventas en cero. Anotado en `MiLocalStack.tsx` y `DashboardLocalScreen.tsx`. Pide spec propio.
 
 **Por qué:** no existe ninguna pantalla donde el dueño de un local pueda escribir los datos de
 su local. El dashboard es de solo lectura y la lista de músicos sale de `musicosMock`.
@@ -350,8 +358,8 @@ del criterio de cierre).
 
 Al desplegar apareció una brecha no anotada: la migración del **spec 031** estaba aplicada
 en producción sin estar mergeada a `main` (la rama `spec-031-dashboard-local` la desplegó
-sin fusionarse). Se sincronizó el archivo de esa migración a `main` en un commit aparte —
-el código del 031 sigue sin mergear, solo el registro de la migración quedó consistente.
+sin fusionarse). Se sincronizó el archivo de esa migración a `main` en un commit aparte
+(`15a3523`). El código del 031 se mergeó después, ya cerrado el 033, en `78af993`.
 
 **Por qué:** hoy `events.created_by` es la única noción de dueño, y es dueño para siempre.
 Un músico y el local donde toca no pueden coordinar el mismo evento dentro de la app, y
