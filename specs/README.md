@@ -26,8 +26,51 @@
 | 033 | Propiedad y colaboradores de evento: quién reclama, quién edita, quién borra | Desplegado y mergeado — falta verificar en runtime |
 | 034 | Editar evento (spec aislado, separado a propósito del 033) | Propuesto |
 | 035 | Fix: login roto por columnas de token NULL en `auth.users` (`musico@prueba.appall`) | Completado — aplicado en producción y migración verificada |
+| 036 | Entradas individuales: `ticket_items`, folio y token QR | Propuesto |
+| 037 | Emisión de entradas al confirmar el pago | Propuesto |
+| 038 | Quién ve las ventas: de `created_by` a `event_collaborators` | Propuesto |
+| 039 | Dashboard de entradas del evento | Propuesto |
+| 040 | Canje atómico: `redeem_ticket_item(token)` | Propuesto |
+| 041 | Escáner de QR montado en los dos dashboards | Propuesto |
 
-## Progreso: 23 specs aplicados; 021 y 028 abiertos; 030, 031, 032 y 033 en `main` sin verificar en runtime completo (031 y 033 sí tienen su migración verificada contra producción); 029 y 034 propuestos.
+## Progreso: 23 specs aplicados; 021 y 028 abiertos; 030, 031, 032 y 033 en `main` sin verificar en runtime completo (031 y 033 sí tienen su migración verificada contra producción); 029, 034 y 036-041 propuestos.
+
+## Serie 036-041 — flujo de entradas con QR
+
+Un solo pedido de producto ("dashboard de entradas por evento, numeradas, con QR, y lectura
+de QR en los dos dashboards") cortado en seis specs **por capa**, para que se puedan trabajar
+sin pisarse:
+
+```
+036 (ticket_items + emisión SQL) ──┬──▶ 037 (webhook emite)  ──┐
+                                   └──▶ 040 (canje atómico)  ──┤
+038 (RLS ventas por colaborador) ─────────────────────────────┴──▶ 039 (dashboard) ──▶ 041 (escáner)
+```
+
+| Spec | Capa | Archivos que toca |
+|---|---|---|
+| 036 | Datos | `supabase/migrations/` |
+| 037 | Comportamiento | `supabase/functions/webhook-mp/` + migración de backfill |
+| 038 | Datos | `supabase/migrations/` |
+| 039 | Frontend | `src/screens/`, `src/hooks/`, `src/navigation/`, `package.json` |
+| 040 | Comportamiento | `supabase/migrations/` |
+| 041 | Frontend | `src/screens/`, `src/hooks/`, `src/navigation/`, `package.json` |
+
+**Se pueden trabajar en paralelo:** 036 y 038 (migraciones distintas, objetos distintos);
+después 037 y 040 (Edge Function vs. migración).
+
+⚠️ **No se pueden trabajar en paralelo:** 039 y 041 — comparten `MusicoStack.tsx`,
+`MiLocalStack.tsx`, `CarteleraStack.tsx` y `src/types/index.ts`. El **spec 034** escribe esos
+mismos archivos de navegación: es el tercer contendiente por el mismo terreno.
+
+⚠️ **`webhook-mp/index.ts` es del spec 037; `create-preference/index.ts` es del spec 022.**
+El 037 se lleva la guarda de idempotencia que el 022 tenía anotada (punto 2), porque emitir
+entradas la vuelve obligatoria. Ver `PENDIENTES.md`, spec 022.
+
+Los permisos que este flujo necesita **ya están construidos** por el spec 033
+(`event_collaborators`, `can_edit_event()`): el creador entra como `owner` y el segundo admin
+invitado como `admin`. Lo único que faltaba era que la policy de `tickets` los mirara — eso es
+el spec 038.
 
 ⚠️ **"Aplicado" no significa "verificado".** El flujo de compra nunca se completó
 de punta a punta (0 tickets en la base) y no hay tests. Ver `PENDIENTES.md` para
