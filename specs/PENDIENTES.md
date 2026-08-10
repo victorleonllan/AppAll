@@ -22,6 +22,11 @@
                                             │
 030 (dashboard banda)   ─┐                  │
 031 (dashboard local)   ─┴── aforo ─────────┘
+
+── flujo de entradas con QR (2026-08-10) ──────────────────────────
+036 (ticket_items) ──┬──▶ 037 (emisión en webhook) ──┐
+                     └──▶ 040 (canje atómico) ───────┤
+038 (RLS ventas) ────────────────────────────────────┴──▶ 039 (dashboard) ──▶ 041 (escáner)
 ```
 
 **028 pasó a ser el primero.** El magic link es el único camino de compra, y el mailer de
@@ -127,9 +132,14 @@ llamar a MP), `create-preference` no respondía CORS (el navegador bloqueaba la 
 | # | Problema |
 |---|---|
 | 1 | El webhook no valida la firma `x-signature` de MP. Mitigante: no confía en el payload, vuelve a consultar la orden a la API de MP. Riesgo bajo, pero es buena práctica. |
-| 2 | Sin guarda de idempotencia. MP reenvía notificaciones; hoy el `update` es idempotente por casualidad, no por diseño. **Deja de ser inocuo con el 029**: sin guarda, cada reenvío manda otro correo de confirmación al comprador. |
+| 2 | ~~Sin guarda de idempotencia.~~ **Pasó al spec 037** (2026-08-10): emitir entradas en el webhook vuelve la guarda obligatoria, así que se resuelve ahí, con el `SELECT ... FOR UPDATE` de `issue_ticket_items` (spec 036). No volver a tocarlo desde acá. |
 | 3 | `cantidad` llega del body **sin validar**. No hay control de cupo: un `cantidad: 500` crea una preferencia por 500 entradas en un local de 40 lugares. |
 | 4 | No hay límite de aforo por evento en ninguna parte del modelo. |
+
+⚠️ **Reparto de archivos con el spec 037:** lo que queda del 022 (puntos 1, 3 y 4) vive en
+`create-preference/index.ts`; `webhook-mp/index.ts` es del 037. Ese corte es lo que deja
+avanzar los dos sin conflicto. El aforo del punto 4 es además lo que le falta al dashboard de
+entradas (spec 039) para poder mostrar "disponibles" en vez de solo "emitidas".
 
 ---
 
@@ -405,6 +415,46 @@ owner puede corregir una hora o un precio equivocados desde la app — solo por 
 Se separó del 033 a pedido de Victor, aislado a propósito: reusa `can_edit_event()` y
 las policies que el 033 ya dejó (`events_update` con `WITH CHECK` explícito), así que no
 toca la migración ni el modelo de permisos, solo agrega la pantalla y el flujo de UI.
+
+⚠️ Escribe `MusicoStack.tsx`, `MiLocalStack.tsx` y `CarteleraStack.tsx` — los mismos tres
+archivos que los specs 039 y 041. No correr dos de los tres a la vez.
+
+---
+
+## Specs 036-041 — Flujo de entradas con QR 🟡 planificados el 2026-08-10
+
+**El pedido:** dashboard de entradas ligado al evento, entradas numeradas, un QR por entrada,
+accesible por los organizadores (creador + segundo admin), y lectura de QR en el dashboard de
+banda y en el de local.
+
+**Los tres hallazgos que definieron el corte:**
+
+1. **`tickets` es una fila por compra, no por entrada** (columna `cantidad`). Un QR por compra
+   se escanea una vez y deja entrar a tres personas. Hace falta una tabla de entradas
+   individuales — es el spec 036 y es la razón de que esto no sea un spec de frontend.
+2. **Los permisos ya existen.** El spec 033 dejó `event_collaborators`: el creador entra como
+   `owner` y el invitado como `admin`, los dos con `can_edit_event()`. Lo único que faltaba es
+   que la policy de `tickets` los mirara — el hueco que 031 y 033 ya dejaron anotado. Es el
+   spec 038 y es una policy.
+3. **Que dos porteros no se pisen no se arregla en el frontend.** Se arregla con un
+   `UPDATE ... WHERE status='valid'` atómico en la base — spec 040, verificable sin cámara.
+
+| Spec | Capa | Archivos |
+|---|---|---|
+| 036 — `ticket_items`, folio y token QR | Datos | `supabase/migrations/` |
+| 037 — emisión al confirmar el pago | Comportamiento | `supabase/functions/webhook-mp/` |
+| 038 — RLS de ventas por colaborador | Datos | `supabase/migrations/` |
+| 039 — dashboard de entradas del evento | Frontend | `src/screens/`, `src/hooks/`, `src/navigation/` |
+| 040 — canje atómico | Comportamiento | `supabase/migrations/` |
+| 041 — escáner QR en los dos dashboards | Frontend | `src/screens/`, `src/hooks/`, `src/navigation/` |
+
+**Orden:** 038 primero (es una policy y cierra solo el requisito de permisos); 036 en paralelo;
+después 037 y 040 en paralelo; 039 y 041 al final y **en serie**, porque comparten los archivos
+de navegación.
+
+**Dependencias externas a la serie:** el 021 y el 028 siguen siendo el camino crítico —sin una
+compra que llegue a `completed` no hay entrada que emitir ni que escanear—, pero **ninguno
+bloquea implementar**: 036, 038 y 040 se verifican por RPC directa sin pasar por Mercado Pago.
 
 ---
 
