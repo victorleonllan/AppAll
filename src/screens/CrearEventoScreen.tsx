@@ -13,7 +13,7 @@ import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export default function CrearEventoScreen() {
   const navigation = useNavigation();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { allVenues, createVenue } = useVenues();
   const { createEvento, buscarCandidatos } = useEventos();
   const [artista, setArtista] = useState('');
@@ -73,6 +73,18 @@ export default function CrearEventoScreen() {
     setArtistaSuggestions([]);
   };
 
+  // Un local que publica su propio evento no debería tener que buscarse a
+  // sí mismo en la lista — se preselecciona su venue (spec 031).
+  useEffect(() => {
+    if (role === 'cafe' && user && !selectedVenue) {
+      const miVenue = allVenues.find((v) => v.ownerId === user.id);
+      if (miVenue) {
+        setSelectedVenue(miVenue);
+        setVenueQuery(miVenue.name);
+      }
+    }
+  }, [role, user, allVenues, selectedVenue]);
+
   const handleSelectVenue = (venue: Venue) => {
     setSelectedVenue(venue);
     setVenueQuery(venue.name);
@@ -80,13 +92,24 @@ export default function CrearEventoScreen() {
   };
 
   const handleAgregarNuevoVenue = async () => {
-    // 'sala' es el default neutro tras el spec 018 (ya no existe el type genérico
-     // 'venue'). Deuda: el músico debería poder elegir el tipo al crear el local.
-    const nuevoVenue = await createVenue({
-      name: venueQuery,
-      type: "sala",
-    });
-    handleSelectVenue(nuevoVenue);
+    if (!user) {
+      Alert.alert('Error', 'Debes iniciar sesión para crear un local');
+      return;
+    }
+    try {
+      // 'sala' es el default neutro tras el spec 018 (ya no existe el type
+      // genérico 'venue'). Deuda: el músico debería poder elegir el tipo al
+      // crear el local. El local que inventa este venue queda como su dueño
+      // (spec 031) — es mejor que huérfano, que hoy nadie puede editar.
+      const nuevoVenue = await createVenue({
+        name: venueQuery,
+        type: "sala",
+        ownerId: user.id,
+      });
+      handleSelectVenue(nuevoVenue);
+    } catch {
+      Alert.alert('Error', 'No se pudo crear el local');
+    }
   };
 
   const handlePublicar = async () => {
@@ -102,7 +125,7 @@ export default function CrearEventoScreen() {
     try {
       let venue = selectedVenue;
       if (!venue) {
-        venue = await createVenue({ name: venueQuery || "Sin nombre", type: "sala" });
+        venue = await createVenue({ name: venueQuery || "Sin nombre", type: "sala", ownerId: user.id });
       }
       await createEvento({
         artista,

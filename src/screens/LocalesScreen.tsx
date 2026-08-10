@@ -92,8 +92,27 @@ export default function LocalesScreen() {
             </Text>
             <Text style={styles.infoVenue}>{venueLabel(venue.type)}</Text>
             {venue.estilo && <Text style={styles.infoVenue}>🎵 {venue.estilo}</Text>}
-            <Text style={styles.infoVenue}>📍 {venue.address ?? venue.distance}</Text>
-            {venue.rating && <Text style={styles.infoVenue}>⭐ {venue.rating}</Text>}
+            <Text style={styles.infoVenue}>
+              📍 {[venue.address, venue.comuna].filter(Boolean).join(', ') || venue.distance}
+            </Text>
+            {!!venue.aforo && <Text style={styles.infoVenue}>👥 Aforo {venue.aforo}</Text>}
+            {!!venue.horarios && <Text style={styles.infoVenue}>🕒 {venue.horarios}</Text>}
+            {(venue.tieneEscenario || venue.tieneSonido || venue.tieneBackline) && (
+              <Text style={styles.infoVenue}>
+                {[
+                  venue.tieneEscenario ? '🎭 escenario' : null,
+                  venue.tieneSonido ? '🎤 sonido' : null,
+                  venue.tieneBackline ? '🎸 backline' : null,
+                ].filter(Boolean).join(' · ')}
+              </Text>
+            )}
+            {(venue.telefono || venue.instagram || venue.sitioWeb) && (
+              <Text style={styles.infoVenue}>
+                {[venue.telefono, venue.instagram, venue.sitioWeb].filter(Boolean).join(' · ')}
+              </Text>
+            )}
+            {/* `rating` no se muestra: los valores actuales se cargaron a mano
+                y ningún flujo lo escribe — mostrarlo sería engañoso (spec 031). */}
           </View>
         </View>
       ))}

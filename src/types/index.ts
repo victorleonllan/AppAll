@@ -8,6 +8,22 @@ export interface Venue {
   address?: string;
   description?: string;
   estilo?: string;
+  // spec 031 — perfil del local
+  ciudad?: string;
+  comuna?: string;
+  aforo?: number;
+  telefono?: string;
+  emailContacto?: string;
+  instagram?: string;
+  sitioWeb?: string;
+  horarios?: string;
+  tieneEscenario?: boolean;
+  tieneSonido?: boolean;
+  tieneBackline?: boolean;
+  updatedAt?: string;
+  // Ningún flujo escribe `rating` todavía (los 3 valores actuales se cargaron
+  // a mano, no salen de reseñas). Se mantiene en el tipo porque la columna
+  // existe, pero ninguna pantalla debe mostrarlo — ver spec 031.
   rating?: number;
   lat?: number;
   lng?: number;
