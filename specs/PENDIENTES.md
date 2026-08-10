@@ -338,13 +338,20 @@ Puede implementarse en cualquier momento.
 
 ---
 
-## Spec 033 — Propiedad y colaboradores de evento 🔴 implementado, migración sin desplegar
+## Spec 033 — Propiedad y colaboradores de evento 🟢 desplegado, falta verificar en runtime
 
-**Estado:** código completo en `033-propiedad-y-colaboradores-de-evento.md` y aplicado en
-disco el 2026-08-10 (migración + tipos + `EventosContext` + `useEventoPermisos` +
+**Estado:** código completo, mergeado a `main` y migración aplicada a producción el
+2026-08-10 (migración + tipos + `EventosContext` + `useEventoPermisos` +
 `EquipoEventoScreen` + botones de gestión en `DetalleEventoScreen` + selector de artista
 en `CrearEventoScreen`). `tsc --noEmit` limpio salvo las Edge Functions Deno (preexistente,
-no tocado). **Falta `supabase db push` a producción — pendiente de confirmación explícita.**
+no tocado). Verificado contra producción: backfill limpio (1 evento, 1 owner), 0 eventos
+huérfanos. **Falta ejercitar la app con un músico y un local reales** (los otros 8 puntos
+del criterio de cierre).
+
+Al desplegar apareció una brecha no anotada: la migración del **spec 031** estaba aplicada
+en producción sin estar mergeada a `main` (la rama `spec-031-dashboard-local` la desplegó
+sin fusionarse). Se sincronizó el archivo de esa migración a `main` en un commit aparte —
+el código del 031 sigue sin mergear, solo el registro de la migración quedó consistente.
 
 **Por qué:** hoy `events.created_by` es la única noción de dueño, y es dueño para siempre.
 Un músico y el local donde toca no pueden coordinar el mismo evento dentro de la app, y
@@ -371,12 +378,25 @@ alcance: el 023 gobierna usuarios y locales, este gobierna eventos.
 
 **Deuda que queda a propósito fuera de este spec:** reembolso al cancelar (depende de la
 API de refunds de MP), avisar por correo a compradores de un evento cancelado (depende del
-028/029), invitar por correo a alguien sin cuenta (depende del 028), y un botón "Editar"
-real en `DetalleEventoScreen` — no existe ninguna pantalla de edición de evento en la app
-todavía (`CrearEventoScreen` es solo de alta).
+028/029), invitar por correo a alguien sin cuenta (depende del 028), y editar un evento ya
+creado — es el **spec 034**, separado a propósito para no ensanchar el diff de este.
 
-**Antes de desplegar:** revisar el criterio de cierre completo en el spec (9 puntos,
-verificados contra la base) — no se cierra por código escrito.
+**Antes de cerrar:** ejercitar los 9 puntos del criterio de cierre contra producción con
+un músico y un local reales — hoy solo el punto 8 (sin eventos huérfanos) está verificado.
+
+---
+
+## Spec 034 — Editar evento 🟡 propuesto
+
+**Estado:** spec completo en `034-editar-evento.md`. Sin implementar.
+
+**Por qué:** `CrearEventoScreen` es la única pantalla que toca un evento, y solo sabe
+crear. El spec 033 dejó el equipo, el borrado y la cancelación resueltos, pero ni el
+owner puede corregir una hora o un precio equivocados desde la app — solo por API.
+
+Se separó del 033 a pedido de Victor, aislado a propósito: reusa `can_edit_event()` y
+las policies que el 033 ya dejó (`events_update` con `WITH CHECK` explícito), así que no
+toca la migración ni el modelo de permisos, solo agrega la pantalla y el flujo de UI.
 
 ---
 

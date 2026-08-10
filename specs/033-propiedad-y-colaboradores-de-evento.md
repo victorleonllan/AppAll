@@ -1,33 +1,43 @@
 # Spec 033 — Propiedad y colaboradores de evento: quién reclama, quién edita, quién borra
 
-> Estado: **implementado el 2026-08-10, sin desplegar.** Migración escrita en
-> `supabase/migrations/20260810080442_spec_033_propiedad_colaboradores_evento.sql` y
-> código de frontend aplicado (tipos, `EventosContext`, `useEventoPermisos`,
-> `EquipoEventoScreen`, botones de gestión en `DetalleEventoScreen`, selector de
-> artista en `CrearEventoScreen`). `tsc --noEmit` limpio salvo los errores preexistentes
-> de las Edge Functions Deno (no tocadas por este spec).
+> Estado: **implementado, desplegado y mergeado a `main` el 2026-08-10.** Migración
+> `supabase/migrations/20260810080442_spec_033_propiedad_colaboradores_evento.sql`
+> aplicada a producción con `supabase db push` (confirmado por Victor) y código de
+> frontend completo (tipos, `EventosContext`, `useEventoPermisos`, `EquipoEventoScreen`,
+> botones de gestión en `DetalleEventoScreen`, selector de artista en
+> `CrearEventoScreen`). `tsc --noEmit` limpio salvo los errores preexistentes de las
+> Edge Functions Deno (no tocadas por este spec).
 >
-> ⚠️ **La migración NO se aplicó a producción.** Es un cambio de esquema grande (tabla
-> nueva, 6 funciones `SECURITY DEFINER`, 3 triggers, políticas RLS reemplazadas) y hoy
-> no hay entorno local para probarlo primero (spec 024 sigue pendiente). Aplicarla
-> exige `supabase db push` contra la única base que existe — producción — y requiere
-> confirmación explícita de Victor en el momento, no autorización heredada de esta sesión.
-> Hasta entonces, el código nuevo se degrada solo: `EventosContext` cae a "sin
-> colaboradores" y `useEventoPermisos` cae al modelo viejo (`created_by`), igual que ya
-> hace con `useMock` para `events`.
+> ⚠️ **Al hacer `db push` apareció una brecha que este spec no tenía anotada:**
+> `supabase migration list` mostraba `20260809120000` (spec 031) como aplicada en
+> remoto sin archivo local — la rama `spec-031-dashboard-local` la había desplegado
+> a producción sin nunca mergearse a `main`. Se corrigió trayendo el archivo real de
+> esa migración a `main` (commit aparte, "sync: incorporar migración spec 031"), no
+> marcándola `reverted` con `migration repair` — eso habría dejado el historial
+> mintiendo que se deshizo una migración que sí sigue aplicada. Es aditiva sobre
+> `venues` y no toca nada de lo que este spec modifica. El código del spec 031
+> (`EditarLocalScreen`, etc.) sigue sin mergear; solo se sincronizó el registro de
+> la migración.
+>
+> **Verificado contra producción tras el push:** 1 evento existente, 1 fila
+> `event_collaborators` con `role='owner'` (el backfill corrió limpio), 0 eventos
+> huérfanos (criterio de cierre #8).
 >
 > Toca el mismo terreno que el spec 023 (borrado y rol admin) pero con otro alcance:
 > el **023 manda sobre usuarios y locales**, este manda sobre **eventos**. No se pisan.
 
-## Criterio de cierre real (falta todo esto)
+## Lo que falta para el cierre completo
 
-1. `supabase db push` aplicado a producción — con confirmación explícita de Victor
-2. Los 9 puntos del *Criterio de cierre* original (más abajo), verificados contra la base
-3. Falta "Editar" como botón funcional en `DetalleEventoScreen` — hoy el panel de
+1. Los 9 puntos del *Criterio de cierre* (más abajo) — solo el #8 (sin eventos
+   huérfanos) está verificado hasta ahora; el resto necesita ejercitar la app con
+   un músico y un local reales
+2. "Editar" como botón funcional en `DetalleEventoScreen` — hoy el panel de
    gestión tiene Equipo/Cancelar/Borrar porque no existe ninguna pantalla de edición
-   de evento en la app (`CrearEventoScreen` es solo de alta). Construir un editor es
-   trabajo aparte, no bloquea lo demás: cualquier colaborador ya puede seguir editando
-   por API/RLS aunque la UI no lo exponga todavía.
+   de evento en la app (`CrearEventoScreen` es solo de alta). Es el **spec 034**,
+   deliberadamente aislado — ver `034-editar-evento.md`
+3. La rama de co-admin automático del dueño del local (`venue_owner` en
+   `events_claim_owner_trg`) sigue sin poder verificarse: los 3 venues tienen
+   `owner_id = NULL` hasta que el spec 031 se mergee
 
 ## Contexto
 
