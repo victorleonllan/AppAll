@@ -24,7 +24,7 @@
 | 031 | Dashboard de local: perfil editable, dueño y panel | Aplicado (migración + código en `main`, sin verificar en runtime) |
 | 032 | Renombrar "café" a "local" en archivos, símbolos y contrato de contexto | Implementado — falta verificar en runtime |
 | 033 | Propiedad y colaboradores de evento: quién reclama, quién edita, quién borra | Desplegado y mergeado — falta verificar en runtime |
-| 034 | Editar evento (spec aislado, separado a propósito del 033) | Propuesto |
+| 034 | Editar evento (spec aislado, separado a propósito del 033) | Implementado — `tsc` y `expo export --platform web` limpios, falta verificar en runtime |
 | 035 | Fix: login roto por columnas de token NULL en `auth.users` (`musico@prueba.appall`) | Completado — aplicado en producción y migración verificada |
 | 036 | Entradas individuales: `ticket_items`, folio y token QR | Aplicado a producción — criterios 1-5 verificados por RPC, faltan 6-7 (piden sesión autenticada real) |
 | 037 | Emisión de entradas al confirmar el pago | Propuesto |
@@ -33,7 +33,7 @@
 | 040 | Canje atómico: `redeem_ticket_item(token)` | Aplicado a producción — los 8 puntos del criterio de cierre verificados por RPC |
 | 041 | Escáner de QR montado en los dos dashboards | Propuesto |
 
-## Progreso: 26 specs aplicados; 021 y 028 abiertos; 030, 031, 032, 033, 036 y 038 en `main` sin verificar en runtime completo (031, 033, 036, 038 y 040 sí tienen su migración verificada contra producción — 040 con los 8 puntos de su criterio de cierre por RPC); 029, 034, 037, 039 y 041 propuestos.
+## Progreso: 27 specs aplicados; 021 y 028 abiertos; 030, 031, 032, 033, 034, 036 y 038 en `main` sin verificar en runtime completo (031, 033, 036, 038 y 040 sí tienen su migración verificada contra producción — 040 con los 8 puntos de su criterio de cierre por RPC); 029, 037, 039 y 041 propuestos.
 
 ## Serie 036-041 — flujo de entradas con QR
 
@@ -65,8 +65,9 @@ el propio SQL del spec (`RETURNING … INTO` vaciando la fila en el segundo canj
 `specs/040-canje-atomico-de-entradas.md`). **Queda 037** (Edge Function + backfill).
 
 ⚠️ **No se pueden trabajar en paralelo:** 039 y 041 — comparten `MusicoStack.tsx`,
-`MiLocalStack.tsx`, `CarteleraStack.tsx` y `src/types/index.ts`. El **spec 034** escribe esos
-mismos archivos de navegación: es el tercer contendiente por el mismo terreno.
+`MiLocalStack.tsx`, `CarteleraStack.tsx` y `src/types/index.ts`. El **spec 034** ya
+implementado (2026-08-11) escribió esos mismos archivos de navegación (ruta `EditarEvento`
+en las tres stacks) — quien tome 039 o 041 parte de esa versión, no de la anterior.
 
 ⚠️ **`webhook-mp/index.ts` es del spec 037; `create-preference/index.ts` es del spec 022.**
 El 037 se lleva la guarda de idempotencia que el 022 tenía anotada (punto 2), porque emitir
