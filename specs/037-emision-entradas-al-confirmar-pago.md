@@ -1,8 +1,28 @@
 # Spec 037 — Emisión: las entradas nacen cuando Mercado Pago confirma el pago
 
-> Estado: **planificado el 2026-08-10, sin implementar.** Capa de comportamiento del flujo
-> de entradas. Solo toca `supabase/functions/webhook-mp/index.ts` y una migración de
-> backfill: ningún archivo de `src/`, ninguna tabla nueva.
+> Estado: **desplegado a producción el 2026-08-11** (migración
+> `20260811051330_spec_037_backfill_entradas.sql` + `webhook-mp` versión 5). El cambio a
+> `webhook-mp/index.ts` sigue el diseño de este documento con un ajuste: el `UPDATE` de
+> `tickets` en el código real devuelve un arreglo (`.select('id')`, sin `.single()`), no una
+> fila — la emisión itera ese arreglo en vez de asumir una sola fila, porque `.single()`
+> habría introducido un modo de fallo nuevo (error si el `UPDATE` afecta 0 filas) que el
+> código original no tenía.
+>
+> **Verificado:**
+>
+> - Criterio 6 (backfill sobre la base actual): corrió sin error, 0 filas creadas — coincide
+>   con las 0 compras `completed` en producción, confirmado por consulta directa.
+> - Criterio 7 (desplegado = repo): el body de la función vía Management API contiene la
+>   llamada a `issue_ticket_items` y el manejo de `emitErr` tal como quedó en el repo.
+> - La función `issue_ticket_items` que este spec invoca ya tiene sus propios criterios 1-4
+>   verificados por RPC directa (spec 036); este spec no repite esa prueba, solo confirma
+>   que el webhook la llama con los argumentos correctos.
+>
+> **Sin verificar — criterios 1, 2, 3 y 5 de punta a punta**: piden que una notificación real
+> de Mercado Pago llegue al webhook desplegado, lo que depende del spec 021 (flujo de compra
+> cerrado) y el 028 (correo, para no agotar el tope de magic links). Mismo bloqueo que
+> arrastran 036 y 038 — no es un hueco de este spec, es el estado general del proyecto (ver
+> `specs/README.md`).
 
 ## Contexto
 

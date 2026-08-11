@@ -27,13 +27,13 @@
 | 034 | Editar evento (spec aislado, separado a propósito del 033) | Implementado — `tsc` y `expo export --platform web` limpios, falta verificar en runtime |
 | 035 | Fix: login roto por columnas de token NULL en `auth.users` (`musico@prueba.appall`) | Completado — aplicado en producción y migración verificada |
 | 036 | Entradas individuales: `ticket_items`, folio y token QR | Aplicado a producción — criterios 1-5 verificados por RPC, faltan 6-7 (piden sesión autenticada real) |
-| 037 | Emisión de entradas al confirmar el pago | Propuesto |
+| 037 | Emisión de entradas al confirmar el pago | Desplegado — migración de backfill y `webhook-mp` en producción, código confirmado vía Management API. Falta el criterio de punta a punta (depende del 021/028) |
 | 038 | Quién ve las ventas: de `created_by` a `event_collaborators` | Aplicado a producción — falta criterio de cierre (0 tickets, sin segundo colaborador de prueba) |
 | 039 | Dashboard de entradas del evento | Propuesto |
 | 040 | Canje atómico: `redeem_ticket_item(token)` | Aplicado a producción — los 8 puntos del criterio de cierre verificados por RPC |
 | 041 | Escáner de QR montado en los dos dashboards | Propuesto |
 
-## Progreso: 27 specs aplicados; 021 y 028 abiertos; 030, 031, 032, 033, 034, 036 y 038 en `main` sin verificar en runtime completo (031, 033, 036, 038 y 040 sí tienen su migración verificada contra producción — 040 con los 8 puntos de su criterio de cierre por RPC); 029, 037, 039 y 041 propuestos.
+## Progreso: 28 specs aplicados; 021 y 028 abiertos; 030, 031, 032, 033, 034, 036 y 038 en `main` sin verificar en runtime completo (031, 033, 036, 037, 038 y 040 sí tienen su migración y/o deploy verificado contra producción — 040 con los 8 puntos de su criterio de cierre por RPC); 029, 039 y 041 propuestos.
 
 ## Serie 036-041 — flujo de entradas con QR
 
@@ -56,13 +56,16 @@ sin pisarse:
 | 040 | Comportamiento | `supabase/migrations/` |
 | 041 | Frontend | `src/screens/`, `src/hooks/`, `src/navigation/`, `package.json` |
 
-**036, 038 y 040 — hecho (2026-08-10):** dos sesiones de Claude Code distintas trabajaron a
-la vez sobre el mismo working tree (mismo `.git`, mismo disco), se coordinaron por mensaje
-antes de tocar archivos compartidos (`README.md`/`PENDIENTES.md`) y no hubo pisada porque
-son migraciones y objetos distintos, tal como anticipaba esta nota. El 040 verificó sus 8
-criterios de cierre por RPC contra producción y de paso encontró y corrigió un bug real en
-el propio SQL del spec (`RETURNING … INTO` vaciando la fila en el segundo canje — ver
-`specs/040-canje-atomico-de-entradas.md`). **Queda 037** (Edge Function + backfill).
+**036, 037, 038 y 040 — hecho (2026-08-10/11):** dos sesiones de Claude Code distintas
+trabajaron a la vez sobre el mismo working tree (mismo `.git`, mismo disco), se coordinaron
+por mensaje antes de tocar archivos compartidos (`README.md`/`PENDIENTES.md`) y no hubo
+pisada porque cada spec es dueño de sus propios archivos, tal como anticipaba esta nota. El
+040 verificó sus 8 criterios de cierre por RPC contra producción y de paso encontró y
+corrigió un bug real en el propio SQL del spec (`RETURNING … INTO` vaciando la fila en el
+segundo canje — ver `specs/040-canje-atomico-de-entradas.md`). El 037 desplegó el backfill
+(0 filas, esperado) y `webhook-mp` con la llamada a `issue_ticket_items`; confirmado por
+Management API que lo desplegado coincide con el repo. **Queda 039 y 041** (comparten
+archivos de navegación con el 034 ya aplicado — ver la nota de abajo).
 
 ⚠️ **No se pueden trabajar en paralelo:** 039 y 041 — comparten `MusicoStack.tsx`,
 `MiLocalStack.tsx`, `CarteleraStack.tsx` y `src/types/index.ts`. El **spec 034** ya
