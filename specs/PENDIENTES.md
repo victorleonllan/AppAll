@@ -448,9 +448,9 @@ banda y en el de local.
 | 040 — canje atómico | Comportamiento | `supabase/migrations/` |
 | 041 — escáner QR en los dos dashboards | Frontend | `src/screens/`, `src/hooks/`, `src/navigation/` |
 
-**Orden:** 038 primero (es una policy y cierra solo el requisito de permisos); 036 en paralelo;
-después 037 y 040 en paralelo; 039 y 041 al final y **en serie**, porque comparten los archivos
-de navegación.
+**Orden:** 038 primero (es una policy y cierra solo el requisito de permisos); 036 en paralelo —
+**los dos aplicados a producción el 2026-08-10**, ver sus secciones abajo; siguen 037 y 040 en
+paralelo; 039 y 041 al final y **en serie**, porque comparten los archivos de navegación.
 
 **Dependencias externas a la serie:** el 021 y el 028 siguen siendo el camino crítico —sin una
 compra que llegue a `completed` no hay entrada que emitir ni que escanear—, pero **ninguno
@@ -478,6 +478,41 @@ no depende de nada externo — se puede sembrar hoy).
 
 Queda pendiente, del propio spec: borrar el comentario de 12 líneas en `MiLocalStack.tsx`
 que documentaba este hueco — lo hace el spec 039, que ya toca ese archivo.
+
+---
+
+## Spec 036 — `ticket_items`, folio y token QR 🟢 aplicado, criterios 1-5 verificados
+
+**Estado:** migración `20260811013847_spec_036_entradas_individuales.sql` aplicada a
+producción el 2026-08-10. Crea `ticket_items`, `event_folio_counters`,
+`issue_ticket_items()` y el trigger de inmutabilidad, tal como especifica el documento.
+
+**Verificado por RPC directa** (dentro de una transacción con `ROLLBACK`, sin dejar datos
+sintéticos en producción — se insertaron tickets de prueba, se corrieron los criterios y
+se descartó todo en el mismo `BEGIN`):
+
+1. Ticket `completed` con `cantidad=3` → 3 filas, folios 1,2,3, tokens distintos. OK.
+2. Reentrada sobre el mismo ticket → devuelve 0, sigue en 3 filas. OK.
+3. Ticket `pending` → excepción `"solo se emiten entradas de compras completed"`. OK.
+4. Segunda compra del mismo evento (`cantidad=2`) → folios 4,5, continuando 1,2,3 sin
+   huecos ni repetidos. OK.
+5. El trigger de inmutabilidad rechaza un `UPDATE` de `folio` y uno de `evento_id` —
+   probado como `postgres`, que bypasea RLS, así que la guarda no depende solo de la
+   policy. La tabla solo tiene la policy `ti_select`: sin policy de INSERT/UPDATE/DELETE,
+   RLS niega esas operaciones por defecto a `anon`/`authenticated`. OK.
+
+**Faltan los criterios 6 y 7** (el comprador ve sus propias entradas; un `admin` que no
+creó el evento ve todas) — no por código, por lo mismo que bloquea el spec 038: piden una
+sesión autenticada real con `auth.uid()`, no una RPC de superusuario. Se cierran junto con
+el resto de la serie cuando exista una compra real (021/028).
+
+**Hallazgo de infraestructura, no del spec:** `qr_token DEFAULT gen_random_bytes(16)` sin
+calificar fallaba en `supabase db push` (el CLI no reportó el motivo real — solo repetía
+el statement). La causa: `db push` conecta vía el pooler de Supavisor
+(`postgres.<ref>@aws-1-us-west-2.pooler.supabase.com`), y ese rol no trae `extensions` en
+el `search_path` por defecto, a diferencia de una conexión directa. Se resolvió
+calificando `extensions.gen_random_bytes(16)`. Vale para cualquier función de `pgcrypto`
+en migraciones futuras — no es específico de este spec.
 
 ---
 

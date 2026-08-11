@@ -1,8 +1,24 @@
 # Spec 036 — Entradas individuales: `ticket_items`, folio y token QR
 
-> Estado: **planificado el 2026-08-10, sin implementar.** Capa de datos del flujo de
-> entradas. Es el primero de la serie 036-041 y el único que los otros cinco necesitan
-> antes de empezar. Solo toca `supabase/migrations/`: ningún archivo de `src/`.
+> Estado: **aplicado a producción el 2026-08-10** (migración
+> `20260811013847_spec_036_entradas_individuales.sql`). Verificado por RPC directa contra
+> la base, dentro de una transacción con `ROLLBACK` (sin dejar datos sintéticos): los
+> criterios de cierre 1-5 pasan — 3 folios consecutivos con tokens distintos, reentrada
+> silenciosa en 0 sin duplicar filas, ticket `pending` lanza excepción, una segunda compra
+> del mismo evento continúa la numeración sin huecos ni repetidos (1,2,3 → 4,5), y el
+> trigger de inmutabilidad rechaza tanto un `UPDATE` de `folio` como uno de `evento_id`
+> —esto último incluso como `postgres`, que ya bypasea RLS, así que confirma que la
+> guarda no depende solo de la policy—. **Faltan los criterios 6 y 7** (qué ve el
+> comprador vs. el equipo del evento): piden una sesión autenticada real, no una RPC de
+> superusuario; mismo bloqueo de datos que arrastra el spec 038.
+>
+> Un ajuste sobre lo escrito en este documento: `qr_token` quedó calificado como
+> `extensions.gen_random_bytes(16)` en vez de `gen_random_bytes(16)` a secas. La conexión
+> de `supabase db push` pasa por el pooler (Supavisor), cuyo rol no trae el esquema
+> `extensions` en el `search_path` por defecto — sin el prefijo, la migración fallaba en
+> push aunque la misma sentencia corriera bien contra una conexión directa (verificado
+> contra `pg_roles`/`show search_path`). Diagnosticado corriendo el `CREATE TABLE` suelto
+> dentro de un `BEGIN; ... ROLLBACK;` para aislar el statement que fallaba.
 
 ## Contexto
 
