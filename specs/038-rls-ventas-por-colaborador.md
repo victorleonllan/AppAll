@@ -1,8 +1,13 @@
 # Spec 038 — Quién ve las ventas de un evento: de `created_by` a `event_collaborators`
 
-> Estado: **planificado el 2026-08-10, sin implementar.** Migración de una sola policy.
-> Es el spec más chico de la serie 036-041 y el que desbloquea el requisito de Victor de
-> que *"el segundo administrador también pueda"*. Solo toca `supabase/migrations/`.
+> Estado: **aplicado a producción el 2026-08-10** (migración
+> `20260810233000_spec_038_rls_ventas_por_colaborador.sql`). Verificado que la policy
+> quedó como especifica este documento (`tickets_select_event_team` usando
+> `can_edit_event(evento_id)`, `tickets_select_own` y `tickets_insert` intactas). **Falta
+> el criterio de cierre completo**: producción tiene 0 tickets y una sola fila en
+> `event_collaborators`, así que no hay datos para comparar "ve ventas" vs "ve cero" con
+> un caso real. Mismo bloqueo que arrastran 030/031/033 — depende de que el 021/028
+> destraben la primera compra real y de que exista un segundo colaborador de prueba.
 
 ## Contexto — el hueco ya estaba anotado
 

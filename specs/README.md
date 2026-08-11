@@ -28,12 +28,12 @@
 | 035 | Fix: login roto por columnas de token NULL en `auth.users` (`musico@prueba.appall`) | Completado — aplicado en producción y migración verificada |
 | 036 | Entradas individuales: `ticket_items`, folio y token QR | Propuesto |
 | 037 | Emisión de entradas al confirmar el pago | Propuesto |
-| 038 | Quién ve las ventas: de `created_by` a `event_collaborators` | Propuesto |
+| 038 | Quién ve las ventas: de `created_by` a `event_collaborators` | Aplicado a producción — falta criterio de cierre (0 tickets, sin segundo colaborador de prueba) |
 | 039 | Dashboard de entradas del evento | Propuesto |
 | 040 | Canje atómico: `redeem_ticket_item(token)` | Propuesto |
 | 041 | Escáner de QR montado en los dos dashboards | Propuesto |
 
-## Progreso: 23 specs aplicados; 021 y 028 abiertos; 030, 031, 032 y 033 en `main` sin verificar en runtime completo (031 y 033 sí tienen su migración verificada contra producción); 029, 034 y 036-041 propuestos.
+## Progreso: 24 specs aplicados; 021 y 028 abiertos; 030, 031, 032, 033 y 038 en `main` sin verificar en runtime completo (031, 033 y 038 sí tienen su migración verificada contra producción); 029, 034, 036, 037, 039, 040 y 041 propuestos.
 
 ## Serie 036-041 — flujo de entradas con QR
 
