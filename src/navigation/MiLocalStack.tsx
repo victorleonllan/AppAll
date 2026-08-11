@@ -3,6 +3,7 @@ import DashboardLocalScreen from '../screens/DashboardLocalScreen';
 import CrearEventoScreen from '../screens/CrearEventoScreen';
 import VerMusicoScreen from '../screens/VerMusicoScreen';
 import EquipoEventoScreen from '../screens/EquipoEventoScreen';
+import EditarEventoScreen from '../screens/EditarEventoScreen';
 import EditarLocalScreen from '../screens/EditarLocalScreen';
 import VentasMusicoScreen from '../screens/VentasMusicoScreen';
 import { colors, fontSize } from '../theme';
@@ -12,6 +13,7 @@ export type MiLocalStackParamList = {
   CrearEvento: undefined;
   VerMusico: { musicoId: string };
   EquipoEvento: { eventoId: string };
+  EditarEvento: { eventoId: string };
   EditarLocal: undefined;
   Ventas: undefined;
 };
@@ -31,6 +33,7 @@ export default function MiLocalStack() {
       <Stack.Screen name="CrearEvento" component={CrearEventoScreen} options={{ title: 'Nuevo Evento' }} />
       <Stack.Screen name="VerMusico" component={VerMusicoScreen} options={{ title: 'Músico' }} />
       <Stack.Screen name="EquipoEvento" component={EquipoEventoScreen} options={{ title: 'Equipo del evento' }} />
+      <Stack.Screen name="EditarEvento" component={EditarEventoScreen} options={{ title: 'Editar evento' }} />
       <Stack.Screen name="EditarLocal" component={EditarLocalScreen} options={{ title: 'Editar local' }} />
       {/*
         Reutiliza VentasMusicoScreen tal cual (spec 031): la policy

@@ -532,6 +532,28 @@ ni de una sesión HTTP autenticada — `set_config('request.jwt.claims', …)` s
 
 ---
 
+## Spec 034 — Editar evento 🟢 implementado, falta verificar en runtime
+
+**Estado:** `updateEvento` en `EventosContext.tsx`, pantalla nueva `EditarEventoScreen.tsx`,
+botón "✏️ Editar" en `DetalleEventoScreen.tsx` y ruta `EditarEvento` registrada en las tres
+stacks (`CarteleraStack`, `MusicoStack`, `MiLocalStack`). `tsc --noEmit` limpio en `src/` y
+`expo export --platform web` compila sin error. No toca migración: reutiliza
+`events_update`/`can_edit_event()` del spec 033.
+
+**Bug encontrado implementando:** el código de ejemplo del propio spec no recalculaba
+`monto` al cambiar `precio` — mismo bug de "Sin precio" que el spec 021 encontró en la
+creación. Corregido: `monto` solo se recalcula cuando `precio` viene en los cambios (evita
+pisarlo con `0` en un `UPDATE` que edite otro campo). Detalle en
+`specs/034-editar-evento.md`.
+
+**Falta el criterio de cierre en runtime**, mismo bloqueo que 030/031/033/036/038: pide un
+`admin` (no `owner`) editando un evento que no creó, y producción solo tiene un
+`event_collaborators` (el owner automático). Se puede destrabar sembrando un segundo
+colaborador desde `EquipoEventoScreen` — no depende de nada externo, no se hizo en esta
+sesión.
+
+---
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

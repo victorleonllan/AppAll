@@ -9,6 +9,7 @@ interface EventosState {
   loading: boolean;
   refresh: () => Promise<void>;
   createEvento: (evento: Omit<Evento, 'id'>) => Promise<Evento>;
+  updateEvento: (id: string, cambios: Partial<Pick<Evento, 'artista' | 'fecha' | 'hora' | 'genero' | 'precio' | 'imagen'>>) => Promise<void>;
   deleteEvento: (id: string) => Promise<void>;
   cancelEvento: (id: string, motivo?: string) => Promise<void>;
   tickets: Ticket[];
@@ -171,6 +172,47 @@ export function EventosProvider({ children }: { children: ReactNode }) {
     return newEvento;
   }, [useMock, cargarMisColaboraciones]);
 
+  // Spec 034 — cualquiera del equipo (owner/admin/editor) corrige fecha, hora,
+  // género, precio, imagen o el nombre del artista. venueId y artistId no son
+  // parámetros válidos a propósito: cambiarlos reabre la pregunta que
+  // events_claim_owner_trg solo resuelve en el INSERT (¿se re-ejecuta el claim
+  // del equipo? ¿se avisa a quien sale?) — decisión de producto propia, fuera
+  // de este spec.
+  //
+  // El objeto de UPDATE se arma campo por campo en vez del objeto literal que
+  // trae el spec: ese literal manda `precio` sin recalcular `monto` a pesar
+  // de decir en su comentario que sí — el mismo bug de "Sin precio" que el
+  // spec 021 encontró en la creación. Acá se recalcula solo cuando `precio`
+  // viene en `cambios`; de lo contrario `montoDesdePrecio(undefined)` daría 0
+  // y pisaría el monto real en cualquier UPDATE que no toque el precio.
+  const updateEvento = useCallback(async (
+    id: string,
+    cambios: Partial<Pick<Evento, 'artista' | 'fecha' | 'hora' | 'genero' | 'precio' | 'imagen'>>
+  ) => {
+    if (useMock) {
+      setEventos((prev) => prev.map((e) => (e.id === id ? { ...e, ...cambios } : e)));
+      return;
+    }
+    const cambiosDB: Record<string, any> = {};
+    if (cambios.artista !== undefined) cambiosDB.artist_name = cambios.artista;
+    if (cambios.fecha !== undefined) cambiosDB.fecha = cambios.fecha;
+    if (cambios.hora !== undefined) cambiosDB.hora = cambios.hora;
+    if (cambios.genero !== undefined) cambiosDB.genero = cambios.genero;
+    if (cambios.imagen !== undefined) cambiosDB.imagen = cambios.imagen;
+    if (cambios.precio !== undefined) {
+      cambiosDB.precio = cambios.precio;
+      cambiosDB.monto = montoDesdePrecio(cambios.precio);
+    }
+    const { data, error } = await supabase
+      .from('events')
+      .update(cambiosDB)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;   // RLS rechaza sin permiso; el mensaje llega tal cual al Alert
+    setEventos((prev) => prev.map((e) => (e.id === id ? mapEventoFromDB(data) : e)));
+  }, [useMock]);
+
   // Spec 033 — antes: `catch {}` vacío + borrado optimista del estado local
   // pase lo que pase. Si RLS rechazaba el delete (por ejemplo, alguien sin
   // permiso), el evento desaparecía de la pantalla igual y volvía a aparecer
@@ -299,7 +341,7 @@ export function EventosProvider({ children }: { children: ReactNode }) {
   return (
     <EventosContext.Provider
       value={{
-        eventos, loading, refresh, createEvento, deleteEvento, cancelEvento,
+        eventos, loading, refresh, createEvento, updateEvento, deleteEvento, cancelEvento,
         tickets, createTicket, getTicketsByUser, updateTicketStatus,
         misColaboraciones, getColaboradores, invitarColaborador,
         cambiarPermisoBorrado, quitarColaborador, transferirPropiedad, buscarCandidatos,

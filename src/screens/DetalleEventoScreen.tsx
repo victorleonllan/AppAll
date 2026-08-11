@@ -345,6 +345,14 @@ export default function DetalleEventoScreen() {
           <Text style={styles.tituloGestion}>Gestión del evento</Text>
           <Text style={styles.rolActual}>Tu rol: {permisos.rol}</Text>
           <View style={styles.filaGestion}>
+            {/* Spec 034 — cualquier rol del equipo edita, igual que puedeEditar ya
+                gatilla toda esta card; no hace falta otro chequeo de permiso acá. */}
+            <TouchableOpacity
+              style={styles.botonGestion}
+              onPress={() => (navigation as any).navigate('EditarEvento', { eventoId: evento.id })}
+            >
+              <Text style={styles.textoBotonGestion}>✏️ Editar</Text>
+            </TouchableOpacity>
             {permisos.puedeInvitar && (
               <TouchableOpacity
                 style={styles.botonGestion}
