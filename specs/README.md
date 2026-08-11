@@ -29,11 +29,11 @@
 | 036 | Entradas individuales: `ticket_items`, folio y token QR | Aplicado a producción — criterios 1-5 verificados por RPC, faltan 6-7 (piden sesión autenticada real) |
 | 037 | Emisión de entradas al confirmar el pago | Desplegado — migración de backfill y `webhook-mp` en producción, código confirmado vía Management API. Falta el criterio de punta a punta (depende del 021/028) |
 | 038 | Quién ve las ventas: de `created_by` a `event_collaborators` | Aplicado a producción — falta criterio de cierre (0 tickets, sin segundo colaborador de prueba) |
-| 039 | Dashboard de entradas del evento | Propuesto |
+| 039 | Dashboard de entradas del evento | Implementado — `tsc` y `expo export --platform web` limpios, falta verificar en runtime |
 | 040 | Canje atómico: `redeem_ticket_item(token)` | Aplicado a producción — los 8 puntos del criterio de cierre verificados por RPC |
 | 041 | Escáner de QR montado en los dos dashboards | Propuesto |
 
-## Progreso: 28 specs aplicados; 021 y 028 abiertos; 030, 031, 032, 033, 034, 036 y 038 en `main` sin verificar en runtime completo (031, 033, 036, 037, 038 y 040 sí tienen su migración y/o deploy verificado contra producción — 040 con los 8 puntos de su criterio de cierre por RPC); 029, 039 y 041 propuestos.
+## Progreso: 29 specs aplicados; 021 y 028 abiertos; 030, 031, 032, 033, 034, 036, 038 y 039 en `main` sin verificar en runtime completo (031, 033, 036, 037, 038 y 040 sí tienen su migración y/o deploy verificado contra producción — 040 con los 8 puntos de su criterio de cierre por RPC); 029 y 041 propuestos.
 
 ## Serie 036-041 — flujo de entradas con QR
 
@@ -56,7 +56,7 @@ sin pisarse:
 | 040 | Comportamiento | `supabase/migrations/` |
 | 041 | Frontend | `src/screens/`, `src/hooks/`, `src/navigation/`, `package.json` |
 
-**036, 037, 038 y 040 — hecho (2026-08-10/11):** dos sesiones de Claude Code distintas
+**036, 037, 038, 039 y 040 — hecho (2026-08-10/11):** dos sesiones de Claude Code distintas
 trabajaron a la vez sobre el mismo working tree (mismo `.git`, mismo disco), se coordinaron
 por mensaje antes de tocar archivos compartidos (`README.md`/`PENDIENTES.md`) y no hubo
 pisada porque cada spec es dueño de sus propios archivos, tal como anticipaba esta nota. El
@@ -64,13 +64,16 @@ pisada porque cada spec es dueño de sus propios archivos, tal como anticipaba e
 corrigió un bug real en el propio SQL del spec (`RETURNING … INTO` vaciando la fila en el
 segundo canje — ver `specs/040-canje-atomico-de-entradas.md`). El 037 desplegó el backfill
 (0 filas, esperado) y `webhook-mp` con la llamada a `issue_ticket_items`; confirmado por
-Management API que lo desplegado coincide con el repo. **Queda 039 y 041** (comparten
-archivos de navegación con el 034 ya aplicado — ver la nota de abajo).
+Management API que lo desplegado coincide con el repo. El 039 agregó
+`react-native-qrcode-svg`/`react-native-svg`, `EntradasEventoScreen`, `useEntradasEvento` y
+borró el comentario de 12 líneas de `MiLocalStack.tsx` que documentaba el hueco del 038 —
+`tsc` y `expo export --platform web` limpios, sin verificar en runtime (037 recién
+desplegado, 0 tickets en producción). **Queda 041** (comparte archivos de navegación con el
+034 y el 039, ya aplicados — parte de esa versión).
 
-⚠️ **No se pueden trabajar en paralelo:** 039 y 041 — comparten `MusicoStack.tsx`,
-`MiLocalStack.tsx`, `CarteleraStack.tsx` y `src/types/index.ts`. El **spec 034** ya
-implementado (2026-08-11) escribió esos mismos archivos de navegación (ruta `EditarEvento`
-en las tres stacks) — quien tome 039 o 041 parte de esa versión, no de la anterior.
+⚠️ **041 no se puede trabajar junto con 039** si ambos están en curso a la vez — comparten
+`MusicoStack.tsx`, `MiLocalStack.tsx`, `CarteleraStack.tsx` y `src/types/index.ts`. Como el
+039 ya está aplicado, esto ya no aplica: quien tome el 041 parte de esa versión.
 
 ⚠️ **`webhook-mp/index.ts` es del spec 037; `create-preference/index.ts` es del spec 022.**
 El 037 se lleva la guarda de idempotencia que el 022 tenía anotada (punto 2), porque emitir

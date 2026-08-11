@@ -576,6 +576,28 @@ sesión.
 
 ---
 
+## Spec 039 — Dashboard de entradas del evento 🟢 implementado, falta verificar en runtime
+
+**Estado:** `react-native-qrcode-svg` + `react-native-svg` instaladas, `useEntradasEvento`
+(hook nuevo, no en `EventosContext` — mismo criterio que `useEventoPermisos` del 033),
+`EntradasEventoScreen` (contadores, lista de `ticket_items` por folio, QR por entrada,
+bloque de compras sin emitir), botón "🎟️ Entradas" en `DetalleEventoScreen`, y
+`CrearEventoScreen` navega al dashboard del evento recién publicado. Ruta `EntradasEvento`
+registrada en las tres stacks. `tsc --noEmit` limpio en `src/`, `expo export --platform web`
+compila (1.6MB → 1.7MB por las dos libs nuevas).
+
+Se borró el comentario de 12 líneas de `MiLocalStack.tsx` que documentaba el hueco del 038
+(tal como el 038 dejó anotado que le tocaba a este spec) y se reemplazó por una nota corta
+y vigente.
+
+**Falta el criterio de cierre en runtime**, mismo bloqueo que 030/031/033/034/038: producción
+tiene 0 tickets (el 037 recién se desplegó, sin una compra real de punta a punta que lo
+ejercite) y un solo `event_collaborators`. El render visual del QR en un navegador real
+tampoco se verificó — solo se confirmó que el bundle compila con `react-native-svg`. Detalle
+completo en `specs/039-dashboard-entradas-evento.md`.
+
+---
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

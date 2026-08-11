@@ -4,6 +4,7 @@ import DetalleEventoScreen from '../screens/DetalleEventoScreen';
 import ConfirmacionCompraScreen from '../screens/ConfirmacionCompraScreen';
 import EquipoEventoScreen from '../screens/EquipoEventoScreen';
 import EditarEventoScreen from '../screens/EditarEventoScreen';
+import EntradasEventoScreen from '../screens/EntradasEventoScreen';
 import { colors, fontSize } from '../theme';
 
 export type CarteleraStackParamList = {
@@ -12,6 +13,7 @@ export type CarteleraStackParamList = {
   ConfirmacionCompra: { eventoId: string; ticketId: string; status: 'success' | 'failure' | 'pending' };
   EquipoEvento: { eventoId: string };
   EditarEvento: { eventoId: string };
+  EntradasEvento: { eventoId: string };
 };
 
 const Stack = createNativeStackNavigator<CarteleraStackParamList>();
@@ -49,6 +51,11 @@ export default function CarteleraStack() {
         name="EditarEvento"
         component={EditarEventoScreen}
         options={{ title: 'Editar evento' }}
+      />
+      <Stack.Screen
+        name="EntradasEvento"
+        component={EntradasEventoScreen}
+        options={{ title: 'Entradas' }}
       />
     </Stack.Navigator>
   );

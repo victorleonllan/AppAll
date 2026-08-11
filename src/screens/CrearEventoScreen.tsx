@@ -127,7 +127,7 @@ export default function CrearEventoScreen() {
       if (!venue) {
         venue = await createVenue({ name: venueQuery || "Sin nombre", type: "sala", ownerId: user.id });
       }
-      await createEvento({
+      const nuevo = await createEvento({
         artista,
         artistId: artistaId,
         venueId: venue.id,
@@ -139,10 +139,14 @@ export default function CrearEventoScreen() {
         imagen: null,
         createdBy: user.id,
       });
+      // Spec 039 — "que se inicie después de crear el evento": un evento recién
+      // publicado tiene 0 entradas, y eso es justo lo que hay que mostrar — le
+      // dice al organizador que el dashboard existe y dónde encontrarlo después.
       Alert.alert(
         'Evento publicado',
         `"${artista}" en ${venue.name} el ${fecha}`,
-        [{ text: "OK", onPress: () => navigation.goBack() }]
+        [{ text: "Ver entradas", onPress: () =>
+            (navigation as any).navigate('EntradasEvento', { eventoId: nuevo.id }) }]
       );
     } catch {
       Alert.alert('Error', 'No se pudo publicar el evento');

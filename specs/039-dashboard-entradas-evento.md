@@ -1,8 +1,11 @@
 # Spec 039 — Dashboard de entradas del evento
 
-> Estado: **planificado el 2026-08-10, sin implementar.** Capa de frontend, solo lectura:
-> muestra lo que los specs 036-038 dejan en la base y no escribe nada. El canje es del 040
-> y el escáner del 041.
+> Estado: **implementado el 2026-08-11.** Capa de frontend, solo lectura: muestra lo que
+> los specs 036-038 dejan en la base y no escribe nada. `tsc --noEmit` limpio en `src/` y
+> `expo export --platform web` compila sin error. **Falta verificar en runtime**: producción
+> tiene 0 tickets (037 recién desplegado) y un solo `event_collaborators`, así que los
+> puntos del criterio de cierre que piden datos reales o un segundo colaborador quedan
+> pendientes — ver *Verificación* al final.
 
 ## Qué pidió Victor y qué falta de verdad
 
@@ -197,6 +200,37 @@ El 038 no lo borra a propósito: son dos specs que si no, escriben el mismo arch
    como "sin pagar" — distinguibles a simple vista
 7. `npx tsc --noEmit 2>&1 | grep -v "supabase/functions"` limpio
 8. El QR se ve y se lee **en web y en nativo** (es el motivo de elegir `react-native-svg`)
+
+## Verificación (2026-08-11)
+
+Hecho:
+
+- `tsc --noEmit` limpio en `src/`
+- `expo export --platform web` compila (bundle sube de 1.6MB a 1.7MB por
+  `react-native-qrcode-svg` + `react-native-svg`, sin error de bundling)
+- `useEntradasEvento` separa `ticket_items` (la lista) de `tickets` sin items (el bloque de
+  "en camino"/"sin pagar"), sin `catch {}` silencioso — el error llega a la pantalla
+- Se borró el comentario de 12 líneas de `MiLocalStack.tsx` que documentaba el hueco del
+  038 y se reemplazó por una nota corta y vigente
+
+Sin verificar en runtime — de los 8 puntos del criterio de cierre:
+
+1. **Publicar lleva al dashboard con contadores en 0** — cableado (`CrearEventoScreen` navega
+   con el `id` que devuelve `createEvento`), no ejercitado contra la app corriendo
+2. **3 entradas tras una compra confirmada** — depende de una compra real (021/028) o de
+   sembrar `ticket_items` a mano; no se hizo en esta sesión
+3. **El QR escaneado devuelve el token en texto plano** — necesita una cámara real, spec 041
+4. **Un `admin` invitado ve lo mismo que el `owner`** — mismo bloqueo que 030/031/033/034/038:
+   producción solo tiene el owner automático del evento sembrado
+5. **Quien no es del equipo no ve la pantalla** — verificado por lectura de código
+   (`useEventoPermisos(eventoId).puedeEditar` gatea el render); RLS es la defensa real y ya
+   está probada por 036/038
+6. **`completed` sin items vs. `pending` se distinguen** — lógica escrita y typada
+   (`estado: 'pagada_sin_emitir' | 'sin_pagar'`), no ejercitada con datos reales
+7. **`tsc --noEmit` limpio** — verificado arriba
+8. **El QR se ve y se lee en web y en nativo** — el bundle de web compila con
+   `react-native-svg`; no se abrió un navegador para confirmar el render visual ni se probó
+   en nativo
 
 ## Fuera de alcance
 
