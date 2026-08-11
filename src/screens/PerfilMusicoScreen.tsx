@@ -215,6 +215,14 @@ export default function PerfilMusicoScreen() {
             <Text style={styles.textoBotonSecundario}>✏️ Editar perfil</Text>
           </TouchableOpacity>
         </View>
+        {/* Spec 041 — sin evento en los params: la pantalla pide cuál antes de
+            abrir la cámara. Es la misma pantalla que monta el dashboard de local. */}
+        <TouchableOpacity
+          style={styles.botonEscaner}
+          onPress={() => (navigation as any).navigate('Escaner')}
+        >
+          <Text style={styles.textoBotonSecundario}>📷 Escanear entradas</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.card}>
@@ -288,6 +296,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   textoBotonSecundario: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  botonEscaner: {
+    backgroundColor: colors.accentLight,
+    padding: 14,
+    borderRadius: borderRadius.sm,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
   boton: {
     backgroundColor: colors.accent,
     padding: 14,

@@ -421,7 +421,7 @@ archivos que los specs 039 y 041. No correr dos de los tres a la vez.
 
 ---
 
-## Specs 036-041 — Flujo de entradas con QR 🟡 planificados el 2026-08-10
+## Specs 036-041 — Flujo de entradas con QR 🟢 los seis implementados al 2026-08-11
 
 **El pedido:** dashboard de entradas ligado al evento, entradas numeradas, un QR por entrada,
 accesible por los organizadores (creador + segundo admin), y lectura de QR en el dashboard de
@@ -451,10 +451,18 @@ banda y en el de local.
 **Orden:** 038 primero (es una policy y cierra solo el requisito de permisos); 036 en paralelo —
 **los dos aplicados a producción el 2026-08-10**, ver sus secciones abajo; siguen 037 y 040 en
 paralelo; 039 y 041 al final y **en serie**, porque comparten los archivos de navegación.
+**Los seis quedaron escritos y aplicados entre el 10 y el 11 de agosto**, cada uno con su
+sección abajo.
 
 **Dependencias externas a la serie:** el 021 y el 028 siguen siendo el camino crítico —sin una
 compra que llegue a `completed` no hay entrada que emitir ni que escanear—, pero **ninguno
 bloquea implementar**: 036, 038 y 040 se verifican por RPC directa sin pasar por Mercado Pago.
+
+⚠️ **Y ahora que los seis están implementados, ese camino crítico es lo único que queda.** Las
+seis secciones de abajo terminan en la misma frase —"falta verificar en runtime"— y todas por
+la misma causa: **producción tiene 0 tickets**. No es seis deudas, es una: una compra real de
+punta a punta cierra los criterios pendientes de 036, 037, 038, 039 y 041 a la vez. El
+prerequisito sigue siendo el 028 (Resend), y detrás de él el dominio propio.
 
 ---
 
@@ -595,6 +603,35 @@ tiene 0 tickets (el 037 recién se desplegó, sin una compra real de punta a pun
 ejercite) y un solo `event_collaborators`. El render visual del QR en un navegador real
 tampoco se verificó — solo se confirmó que el bundle compila con `react-native-svg`. Detalle
 completo en `specs/039-dashboard-entradas-evento.md`.
+
+---
+
+## Spec 041 — Escáner de QR en los dos dashboards 🟢 implementado, falta la puerta
+
+**Estado:** `expo-camera` instalada y declarada como plugin en `app.json` con su
+`cameraPermission` (iOS exige `NSCameraUsageDescription`); `useCanjeEntrada` (hook nuevo) y
+`EscanerQRScreen` (pantalla nueva); ruta `Escaner` registrada en las tres stacks con el mismo
+nombre; botón "📷 Escanear entradas" en `EntradasEventoScreen` (con el evento fijado) y en
+`PerfilMusicoScreen` / `DashboardLocalScreen` (sin evento — lo pide la pantalla).
+`tsc --noEmit` limpio en `src/`; `expo export --platform web` compila (1.7MB → 1.8MB).
+
+**Con esto cierra la serie 036-041 en código.** Los seis specs están escritos y aplicados; lo
+que queda de todos ellos es la misma deuda, y es una sola: **nunca hubo una compra real**.
+
+**La decisión de diseño que no estaba en el spec:** el escáner llama a `peek_ticket_item`
+antes de `redeem_ticket_item`. El token no dice de qué evento es —eso lo sabe la base—, y la
+alternativa barata (precargar los tokens del evento y comparar en el cliente) rechazaría como
+"de otro evento" una entrada comprada durante el show. Cuesta dos RPC en el caso bueno y una
+sola en todos los rechazos. Efecto secundario que vale por sí solo: un escaneo accidental no
+quema una entrada, porque `peek` no escribe. Las otras tres desviaciones (4 s en pantalla para
+los rechazos, el resultado `folio_no_existe` de la entrada manual, y dónde quedó el botón)
+están en `specs/041-escaner-qr-en-dashboards.md`, sección *Verificación*.
+
+**Lo que falta es la puerta**, y son 7 de los 9 puntos del criterio de cierre. El que importa
+más es el 4 — **dos teléfonos escaneando el mismo QR a la vez** —, que es a la vez el criterio
+que cierra "que no se pisen entre sí" y el único que la verificación del spec 040 no pudo
+hacer de forma estrictamente simultánea (el CLI de `supabase` se cuelga con dos procesos en
+paralelo). Necesita HTTPS: no se prueba en `localhost` ni con el dev server por IP de red.
 
 ---
 

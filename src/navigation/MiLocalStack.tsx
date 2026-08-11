@@ -5,6 +5,7 @@ import VerMusicoScreen from '../screens/VerMusicoScreen';
 import EquipoEventoScreen from '../screens/EquipoEventoScreen';
 import EditarEventoScreen from '../screens/EditarEventoScreen';
 import EntradasEventoScreen from '../screens/EntradasEventoScreen';
+import EscanerQRScreen from '../screens/EscanerQRScreen';
 import EditarLocalScreen from '../screens/EditarLocalScreen';
 import VentasMusicoScreen from '../screens/VentasMusicoScreen';
 import { colors, fontSize } from '../theme';
@@ -16,6 +17,7 @@ export type MiLocalStackParamList = {
   EquipoEvento: { eventoId: string };
   EditarEvento: { eventoId: string };
   EntradasEvento: { eventoId: string };
+  Escaner: { eventoId?: string } | undefined;
   EditarLocal: undefined;
   Ventas: undefined;
 };
@@ -37,6 +39,11 @@ export default function MiLocalStack() {
       <Stack.Screen name="EquipoEvento" component={EquipoEventoScreen} options={{ title: 'Equipo del evento' }} />
       <Stack.Screen name="EditarEvento" component={EditarEventoScreen} options={{ title: 'Editar evento' }} />
       <Stack.Screen name="EntradasEvento" component={EntradasEventoScreen} options={{ title: 'Entradas' }} />
+      {/* Spec 041 — el mismo archivo que monta MusicoStack, con el mismo nombre
+          de ruta: DetalleEventoScreen navega a 'Escaner' sin saber en qué stack
+          está. Un componente por rol sería el mismo código dos veces, con la
+          misma autorización delegada a can_edit_event(). */}
+      <Stack.Screen name="Escaner" component={EscanerQRScreen} options={{ title: 'Escanear entradas' }} />
       <Stack.Screen name="EditarLocal" component={EditarLocalScreen} options={{ title: 'Editar local' }} />
       {/* Reutiliza VentasMusicoScreen tal cual (spec 031): el componente muestra
           "las ventas que RLS me deja ver", sin lógica propia de rol — así que
