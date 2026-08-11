@@ -87,6 +87,10 @@ export default function AuthScreen() {
       <Text style={styles.footer}>
         Puedes explorar la cartelera sin crear cuenta.
       </Text>
+
+      <TouchableOpacity onPress={() => setView("login")}>
+        <Text style={styles.loginLink}>¿Ya tienes cuenta? Inicia sesión</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -145,5 +149,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: spacing.lg,
     fontStyle: "italic",
+  },
+  loginLink: {
+    color: colors.accent,
+    fontSize: fontSize.sm,
+    fontWeight: "600",
+    textAlign: "center",
+    marginTop: spacing.md,
   },
 });
