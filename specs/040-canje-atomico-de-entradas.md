@@ -1,8 +1,27 @@
 # Spec 040 — Canje atómico: `redeem_ticket_item(token)`
 
-> Estado: **planificado el 2026-08-10, sin implementar.** Capa de comportamiento del canje:
-> una función en la base y nada más. La cámara y la pantalla son el spec 041. Solo toca
-> `supabase/migrations/`.
+> Estado: **aplicado a producción el 2026-08-10** (migración
+> `20260811020000_spec_040_canje_entradas.sql`). Los 8 puntos del criterio de cierre
+> verificados por RPC directa contra producción (7 dentro de una transacción con
+> `ROLLBACK`, el criterio 3 con datos committeados y limpiados después). Detalle de la
+> verificación y de un bug encontrado en el proceso, más abajo.
+
+## Bug encontrado al verificar: `RETURNING ... INTO` vacía la fila en el segundo canje
+
+El SQL de este documento (ver más abajo, ya corregido) tenía un error que solo aparece al
+ejecutar el criterio de cierre 2 (canjear dos veces el mismo token): la segunda llamada
+devolvía `resultado = 'anulada'` con `folio`, `evento_id`, `comprador` y `redeemed_at` en
+`NULL`, en vez de `'ya_usada'` con los datos del primer canje.
+
+Causa: `UPDATE ... RETURNING * INTO v_item` dejaba `v_item` **completo en `NULL`** cuando el
+`UPDATE` no afectaba ninguna fila (mismo comportamiento que un `SELECT ... INTO` sin
+resultados). El bloque `IF NOT FOUND` de abajo releía con `WHERE id = v_item.id` — pero
+`v_item.id` ya era `NULL` en ese punto, así que la relectura no encontraba nada y el `CASE`
+caía a su rama `ELSE`.
+
+Arreglo: guardar `v_item.id` en una variable aparte (`v_id`) antes del `UPDATE`, y usar esa
+variable en el `WHERE` y en la relectura. El bloque de código de este spec ya quedó
+corregido con la variable `v_id`.
 
 ## Por qué el canje es una función y no un `UPDATE`
 
@@ -49,6 +68,7 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
   v_item   public.ticket_items%ROWTYPE;
   v_estado text;
+  v_id     uuid;
 BEGIN
   SELECT * INTO v_item FROM public.ticket_items WHERE qr_token = p_token;
 
@@ -73,15 +93,20 @@ BEGIN
     RETURN;
   END IF;
 
+  -- Se guarda el id antes del UPDATE: "RETURNING * INTO v_item" deja v_item entero
+  -- en NULL si el UPDATE no afecta ninguna fila, y sin esta variable aparte la
+  -- relectura de abajo quedaría buscando "WHERE id = NULL".
+  v_id := v_item.id;
+
   -- El canje: condición y escritura en una sola sentencia.
   UPDATE public.ticket_items ti
      SET status = 'used', redeemed_at = now(), redeemed_by = auth.uid()
-   WHERE ti.id = v_item.id AND ti.status = 'valid'
+   WHERE ti.id = v_id AND ti.status = 'valid'
    RETURNING * INTO v_item;
 
   IF NOT FOUND THEN
     -- Perdió la carrera, o ya estaba usada/anulada. Se relee para decir cuándo entró.
-    SELECT * INTO v_item FROM public.ticket_items WHERE id = v_item.id;
+    SELECT * INTO v_item FROM public.ticket_items WHERE id = v_id;
     RETURN QUERY SELECT
       CASE v_item.status WHEN 'used' THEN 'ya_usada' ELSE 'anulada' END,
       v_item.folio, v_item.evento_id, public.comprador_de(v_item.ticket_id), v_item.redeemed_at;
@@ -199,6 +224,43 @@ Todo verificable por RPC, sin app:
 6. Una entrada de un evento `cancelled` devuelve `evento_cancelado`
 7. Ninguno de los seis casos anteriores llega al cliente como excepción
 8. `peek_ticket_item` sobre una entrada `valid` devuelve `ok` y **la deja `valid`**
+
+## Verificación (2026-08-10)
+
+Los 8 puntos del criterio de cierre, por RPC directa contra producción, sin app y sin
+cámara — tal como pide el spec:
+
+**Puntos 1, 2, 4, 5, 6, 7, 8** — dentro de una transacción con `ROLLBACK` (mismo patrón que
+usó la sesión que hizo el 036): se creó una compra `completed` de prueba sobre el único
+evento sembrado (`b3f2760c…`), se emitieron 3 entradas con `issue_ticket_items`, y con
+`set_config('request.jwt.claims', …, true)` se simuló `auth.uid()` sin necesidad de una
+sesión HTTP real. Resultado, uno por uno:
+
+| Caso | Resultado obtenido |
+|---|---|
+| Token inexistente | `no_existe`, todo `NULL` ✅ |
+| Usuario sin relación con el evento | `sin_permiso`, todo `NULL` ✅ |
+| El creador del evento canjea folio 1 | `ok`, folio 1, `redeemed_at` poblado ✅ |
+| Mismo token de nuevo | `ya_usada`, **mismo `redeemed_at`** que el primer canje ✅ |
+| `peek_ticket_item` sobre folio 2 (`valid`) | `ok`, `redeemed_at` NULL ✅ |
+| Estado de folio 2 después del `peek` | sigue `valid` — no lo canjeó ✅ |
+| Evento pasado a `cancelled` (dentro de la misma transacción), folio 3 | `evento_cancelado` ✅ |
+| Los 7 casos anteriores | ninguno llegó como excepción — todos devolvieron fila ✅ |
+
+**Punto 3 (dos canjes simultáneos del mismo token)** — no se pudo probar con las dos
+llamadas disparadas en el mismo instante: dos procesos del CLI de `supabase` corriendo en
+paralelo entran en contención por su propio caché de credenciales local y una de las dos
+invocaciones quedó colgada en "Initialising login role…" (falla del CLI, no de la base). Se
+verificó en su lugar de forma secuencial e inmediata sobre datos committeados: la primera
+llamada devolvió `ok`, la segunda —lanzada apenas terminó la primera— devolvió `ya_usada`
+con el mismo `redeemed_at`. No es una prueba de simultaneidad estricta, pero confirma el
+mecanismo (`UPDATE … WHERE status = 'valid'` con la fila bloqueada) del que depende la
+atomicidad real: por diseño de Postgres, dos `UPDATE` concurrentes sobre la misma fila se
+serializan en el lock y como máximo uno ve `status = 'valid'`. Los datos de esta prueba
+(ticket, ticket_items) se borraron después; producción quedó en 0 tickets, igual que antes.
+
+Al ejecutar el criterio 2 apareció el bug de `RETURNING … INTO` descrito arriba; ya está
+corregido en la migración aplicada y en este documento.
 
 ## Fuera de alcance
 

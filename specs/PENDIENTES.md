@@ -516,6 +516,22 @@ en migraciones futuras — no es específico de este spec.
 
 ---
 
+## Spec 040 — Canje atómico de entradas 🟢 aplicado y verificado
+
+**Estado:** migración `20260811020000_spec_040_canje_entradas.sql` aplicada a producción el
+2026-08-10. `comprador_de`, `redeem_ticket_item` y `peek_ticket_item` creadas. Los 8 puntos
+del criterio de cierre verificados por RPC directa (7 dentro de una transacción con
+`ROLLBACK`, el de concurrencia con datos committeados y luego borrados). Detalle completo,
+incluido un bug de `RETURNING ... INTO` encontrado y corregido durante la verificación, en
+`specs/040-canje-atomico-de-entradas.md`.
+
+**A diferencia de 030/031/033/036/038**, este spec no queda con el criterio de cierre
+pendiente por falta de datos: se pudo verificar entero porque no depende de una compra real
+ni de una sesión HTTP autenticada — `set_config('request.jwt.claims', …)` simula
+`auth.uid()` sin pasar por PostgREST. Es el primero de la serie 036-041 que cierra del todo.
+
+---
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

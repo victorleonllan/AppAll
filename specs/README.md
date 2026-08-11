@@ -30,10 +30,10 @@
 | 037 | Emisión de entradas al confirmar el pago | Propuesto |
 | 038 | Quién ve las ventas: de `created_by` a `event_collaborators` | Aplicado a producción — falta criterio de cierre (0 tickets, sin segundo colaborador de prueba) |
 | 039 | Dashboard de entradas del evento | Propuesto |
-| 040 | Canje atómico: `redeem_ticket_item(token)` | Propuesto |
+| 040 | Canje atómico: `redeem_ticket_item(token)` | Aplicado a producción — los 8 puntos del criterio de cierre verificados por RPC |
 | 041 | Escáner de QR montado en los dos dashboards | Propuesto |
 
-## Progreso: 25 specs aplicados; 021 y 028 abiertos; 030, 031, 032, 033, 036 y 038 en `main` sin verificar en runtime completo (031, 033, 036 y 038 sí tienen su migración verificada contra producción); 029, 034, 037, 039, 040 y 041 propuestos.
+## Progreso: 26 specs aplicados; 021 y 028 abiertos; 030, 031, 032, 033, 036 y 038 en `main` sin verificar en runtime completo (031, 033, 036, 038 y 040 sí tienen su migración verificada contra producción — 040 con los 8 puntos de su criterio de cierre por RPC); 029, 034, 037, 039 y 041 propuestos.
 
 ## Serie 036-041 — flujo de entradas con QR
 
@@ -56,11 +56,13 @@ sin pisarse:
 | 040 | Comportamiento | `supabase/migrations/` |
 | 041 | Frontend | `src/screens/`, `src/hooks/`, `src/navigation/`, `package.json` |
 
-**036 y 038 — hecho, en paralelo (2026-08-10):** dos sesiones de Claude Code distintas los
-tomaron a la vez sobre el mismo working tree, se coordinaron por mensaje antes de tocar
-archivos compartidos (`README.md`/`PENDIENTES.md`) y no hubo pisada porque son migraciones
-y objetos distintos, tal como anticipaba esta nota. **Ahora se puede seguir con 037 y 040**
-(Edge Function vs. migración, tampoco comparten archivo).
+**036, 038 y 040 — hecho (2026-08-10):** dos sesiones de Claude Code distintas trabajaron a
+la vez sobre el mismo working tree (mismo `.git`, mismo disco), se coordinaron por mensaje
+antes de tocar archivos compartidos (`README.md`/`PENDIENTES.md`) y no hubo pisada porque
+son migraciones y objetos distintos, tal como anticipaba esta nota. El 040 verificó sus 8
+criterios de cierre por RPC contra producción y de paso encontró y corrigió un bug real en
+el propio SQL del spec (`RETURNING … INTO` vaciando la fila en el segundo canje — ver
+`specs/040-canje-atomico-de-entradas.md`). **Queda 037** (Edge Function + backfill).
 
 ⚠️ **No se pueden trabajar en paralelo:** 039 y 041 — comparten `MusicoStack.tsx`,
 `MiLocalStack.tsx`, `CarteleraStack.tsx` y `src/types/index.ts`. El **spec 034** escribe esos
