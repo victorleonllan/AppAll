@@ -185,6 +185,11 @@ export default function DashboardLocalScreen() {
               <Text style={styles.textoBotonSecundario}>✏️ Editar local</Text>
             </TouchableOpacity>
           </View>
+          {/* Spec 041 — el mismo EscanerQRScreen que monta MusicoStack, sin
+              evento en los params: la pantalla pide cuál antes de la cámara. */}
+          <TouchableOpacity style={styles.botonEscaner} onPress={() => navigation.navigate('Escaner')}>
+            <Text style={styles.textoBotonSecundario}>📷 Escanear entradas</Text>
+          </TouchableOpacity>
 
           <Text style={styles.tituloSeccion}>Próximos eventos</Text>
           {misEventos.length === 0 && (
@@ -325,6 +330,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   textoBotonSecundario: { color: colors.secondary, fontWeight: 'bold', fontSize: fontSize.sm },
+  botonEscaner: {
+    backgroundColor: colors.accentLight,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    padding: 12,
+    borderRadius: borderRadius.sm,
+    alignItems: 'center',
+  },
   vacio: {
     fontSize: fontSize.sm,
     color: colors.muted,

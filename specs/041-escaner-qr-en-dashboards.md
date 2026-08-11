@@ -1,8 +1,11 @@
 # Spec 041 — Escáner de QR: una pantalla montada en los dos dashboards
 
-> Estado: **planificado el 2026-08-10, sin implementar.** Último de la serie 036-041 y el
-> único que agrega una capacidad nativa (cámara). Capa de frontend: consume el RPC del
-> spec 040 y no escribe nada por su cuenta.
+> Estado: **implementado el 2026-08-11.** Último de la serie 036-041 y el único que agrega
+> una capacidad nativa (cámara). Capa de frontend: consume los RPC del spec 040 y no escribe
+> nada por su cuenta. `tsc --noEmit` limpio en `src/` y `expo export --platform web` compila
+> (1.7MB → 1.8MB por `expo-camera`). **Falta verificar en runtime**: la puerta necesita
+> entradas emitidas y producción tiene 0 tickets — ver *Verificación* al final, donde también
+> quedan anotadas las cuatro decisiones que se apartaron de lo escrito acá y por qué.
 
 ## El pedido, literal
 
@@ -128,6 +131,8 @@ Reglas de la pantalla, todas por el mismo motivo —es de noche, hay ruido y hay
 | `src/hooks/useCanjeEntrada.ts` (nuevo) | Llama a `redeem_ticket_item`, traduce los 6 resultados a `{color, titulo, detalle}`, y lleva el anti-rebote y el contador de sesión |
 | `src/navigation/MusicoStack.tsx`, `MiLocalStack.tsx`, `CarteleraStack.tsx` | Ruta `Escaner: { eventoId?: string }` |
 | `src/screens/EntradasEventoScreen.tsx` (del 039) | Botón "📷 Escanear" que entra con el evento ya fijado |
+| `src/screens/PerfilMusicoScreen.tsx`, `DashboardLocalScreen.tsx` | Botón "📷 Escanear entradas" en el bloque de acciones — entra **sin** evento, y la pantalla lo pide. Es lo que hace de "pestaña" en los dos dashboards |
+| `src/theme/index.ts` | `colors.danger` y `colors.warning`: la paleta solo tenía `success` |
 
 El hook separado de la pantalla es lo que permite que la entrada manual y la cámara compartan
 exactamente el mismo camino de canje: dos disparadores, una función.
@@ -158,6 +163,75 @@ exactamente el mismo camino de canje: dos disparadores, una función.
    blanco ni crash
 8. Funciona en web sobre HTTPS y en nativo
 9. `npx tsc --noEmit 2>&1 | grep -v "supabase/functions"` limpio
+
+## Verificación (2026-08-11)
+
+Hecho:
+
+- `npx tsc --noEmit 2>&1 | grep -v "supabase/functions"` limpio (criterio 9)
+- `expo export --platform web` compila los dos bundles sin error; el de la app pasa de 1.7MB
+  a 1.8MB por `expo-camera`
+- El escáner es **un archivo** (`EscanerQRScreen.tsx`) registrado con el mismo nombre de ruta
+  en `MusicoStack`, `MiLocalStack` y `CarteleraStack` (criterio 1, la mitad que se puede
+  verificar leyendo código)
+
+### Cuatro decisiones que se apartaron de lo escrito arriba
+
+**1. `peek` antes de `redeem`, no solo cuando la entrada es de otro evento.** El flujo de este
+documento pregunta "¿es de este evento?" antes de llamar al RPC, pero el token no dice de qué
+evento es: eso lo sabe la base. Precargar los tokens del evento y comparar en el cliente sería
+una sola llamada, y falla en el peor momento — una entrada comprada durante el show no está en
+la lista precargada y se rechazaría como "de otro evento" en la puerta. Así que el orden real
+es `peek_ticket_item` → comparar `evento_id` → `redeem_ticket_item` solo si coincide y la
+entrada está `valid`. Cuesta dos RPC en el caso bueno y **una sola en todos los rechazos**
+(usada, anulada, QR ajeno, sin permiso, evento cancelado: `peek` ya da la respuesta final).
+De paso hace lo que el 040 anticipó: un escaneo accidental no quema una entrada, porque `peek`
+no escribe.
+
+Entre el `peek` y el `redeem` cabe otro escáner. No importa: manda lo que devuelve el `redeem`,
+que es el único que escribe, y su atomicidad es la del spec 040.
+
+**2. El resultado se queda 4 segundos cuando es un rechazo, no 2.** El motivo por el que este
+spec pide que vuelva sola —"un botón siguiente son dos toques por persona en una fila"— se
+respeta igual. Pero un `ya_usada` trae la hora del ingreso anterior, que es exactamente el dato
+con el que se resuelve la discusión, y 2 segundos no alcanzan para leerla mientras hay alguien
+reclamando. Verde sigue en 2 s. Tocando la pantalla se cierra antes.
+
+**3. Hay un séptimo resultado: `folio_no_existe`.** Es de la entrada manual, no del RPC: si el
+portero escribe un número que no existe en ese evento, la búsqueda en `ticket_items` vuelve
+vacía y nunca se llega a llamar al canje. Decirlo como "folio no encontrado" en naranja es
+distinto de decir "QR no reconocido", y en la puerta esa diferencia es la que hace que el
+portero reintente en vez de mandar a la persona a la cola de reclamos.
+
+**4. El botón de escanear está en los dos dashboards y en las entradas del evento, no en el
+detalle del evento.** `DetalleEventoScreen` ya lleva a "🎟️ Entradas" y esa pantalla tiene el
+botón de escanear con el evento fijado: un segundo botón al lado del primero sería dos caminos
+al mismo lugar en la misma pantalla. La ruta igual queda registrada en `CarteleraStack`, que es
+donde vive `EntradasEventoScreen`.
+
+Además, `src/theme/index.ts` suma `danger` y `warning`: la paleta solo tenía `success`, y un
+resultado que se lee de reojo necesita rojo y naranja propios. Y no hizo falta tocar
+`src/types/index.ts` — los tipos del canje (`ResultadoCanje`, `Canje`) viven en el hook, que es
+el único que los produce.
+
+### Sin verificar en runtime
+
+De los 9 puntos del criterio de cierre, el 9 está hecho y el 1 a medias (es el mismo archivo,
+pero nadie abrió las dos pestañas). Los otros siete piden la puerta de verdad:
+
+| # | Qué falta para cerrarlo |
+|---|---|
+| 2 | Una entrada emitida: producción tiene 0 tickets. Depende del 021/028 o de sembrar `ticket_items` a mano |
+| 3 | Lo mismo, más una segunda lectura del mismo QR |
+| 4 | **Dos teléfonos escaneando a la vez.** Es el criterio que cierra "que no se pisen" y el que valida el 040 en condiciones reales; también es el único que la prueba del 040 no pudo hacer de forma estrictamente simultánea |
+| 5 | Una entrada de otro evento del mismo equipo |
+| 6 | Entrada manual con un folio real |
+| 7 | Negar el permiso en un dispositivo real. Escrito para que la pantalla quede usable (la entrada manual no depende de la cámara) y probado solo por lectura |
+| 8 | Abrir la app en un navegador sobre HTTPS y en un teléfono. El bundle compila; el render del `CameraView` no se vio |
+
+⚠️ El 4 y el 8 **no se pueden probar en `localhost` ni con el dev server por IP de red**: la
+cámara en web exige HTTPS, y `http://192.168.x.x:8081` no lo es. Se prueban en
+`app-all-lemon.vercel.app` o en nativo.
 
 ## Fuera de alcance
 

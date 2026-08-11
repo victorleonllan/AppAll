@@ -5,6 +5,7 @@ import ConfirmacionCompraScreen from '../screens/ConfirmacionCompraScreen';
 import EquipoEventoScreen from '../screens/EquipoEventoScreen';
 import EditarEventoScreen from '../screens/EditarEventoScreen';
 import EntradasEventoScreen from '../screens/EntradasEventoScreen';
+import EscanerQRScreen from '../screens/EscanerQRScreen';
 import { colors, fontSize } from '../theme';
 
 export type CarteleraStackParamList = {
@@ -14,6 +15,7 @@ export type CarteleraStackParamList = {
   EquipoEvento: { eventoId: string };
   EditarEvento: { eventoId: string };
   EntradasEvento: { eventoId: string };
+  Escaner: { eventoId?: string } | undefined;
 };
 
 const Stack = createNativeStackNavigator<CarteleraStackParamList>();
@@ -56,6 +58,14 @@ export default function CarteleraStack() {
         name="EntradasEvento"
         component={EntradasEventoScreen}
         options={{ title: 'Entradas' }}
+      />
+      {/* Registrada también acá porque DetalleEventoScreen vive en este stack:
+          sin esto, el botón de escanear desde el detalle del evento no resuelve
+          la ruta. Mismo motivo por el que el 033 registró EquipoEvento tres veces. */}
+      <Stack.Screen
+        name="Escaner"
+        component={EscanerQRScreen}
+        options={{ title: 'Escanear entradas' }}
       />
     </Stack.Navigator>
   );

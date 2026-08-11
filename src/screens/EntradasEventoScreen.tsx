@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator,
 } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import QRCode from 'react-native-qrcode-svg';
 import { useEventos } from '../context/EventosContext';
 import { useEntradasEvento } from '../hooks/useEntradasEvento';
@@ -21,6 +21,7 @@ function horaDeIso(iso: string | null): string {
  */
 export default function EntradasEventoScreen() {
   const route = useRoute();
+  const navigation = useNavigation();
   const { eventoId } = route.params as { eventoId: string };
   const { eventos } = useEventos();
   const permisos = useEventoPermisos(eventoId);
@@ -67,6 +68,15 @@ export default function EntradasEventoScreen() {
           <Text style={styles.subtituloEvento}>{evento.venueName} · {evento.fecha}</Text>
         </View>
       )}
+
+      {/* Spec 041 — entra con el evento ya fijado, que es lo que evita el error
+          más común de la puerta: escanear con el escáner del show de anoche. */}
+      <TouchableOpacity
+        style={styles.botonEscanear}
+        onPress={() => (navigation as any).navigate('Escaner', { eventoId })}
+      >
+        <Text style={styles.textoBotonEscanear}>📷 Escanear entradas</Text>
+      </TouchableOpacity>
 
       <View style={[styles.card, styles.filaContadores]}>
         <View style={styles.contador}>
@@ -157,6 +167,14 @@ const styles = StyleSheet.create({
   },
   tituloEvento: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
   subtituloEvento: { fontSize: fontSize.sm, color: colors.secondary, marginTop: 2 },
+  botonEscanear: {
+    backgroundColor: colors.accent,
+    padding: 14,
+    borderRadius: borderRadius.sm,
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  textoBotonEscanear: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
   filaContadores: { flexDirection: 'row', justifyContent: 'space-around' },
   contador: { alignItems: 'center' },
   contadorNumero: { fontSize: fontSize.xl, fontWeight: 'bold', color: colors.accent },

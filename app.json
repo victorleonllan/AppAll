@@ -31,7 +31,13 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Sonópolis usa la cámara para leer el código QR de las entradas en la puerta del show."
+        }
+      ]
     ]
   }
 }

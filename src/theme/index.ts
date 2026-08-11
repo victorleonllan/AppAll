@@ -7,6 +7,11 @@ export const colors = {
   muted: '#A0897A',
   cardBackground: '#FFFFFF',
   success: '#2E7D32',
+  // Spec 041 — el resultado del escáner se lee de reojo, de noche y con ruido:
+  // el color llega antes que la palabra, así que rechazo y advertencia necesitan
+  // tono propio y no alcanzaba con `muted`.
+  danger: '#C62828',
+  warning: '#EF6C00',
   white: '#FFFFFF',
   border: '#E8DDD4',
 } as const;

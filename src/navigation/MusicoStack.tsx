@@ -6,6 +6,7 @@ import VentasMusicoScreen from '../screens/VentasMusicoScreen';
 import EquipoEventoScreen from '../screens/EquipoEventoScreen';
 import EditarEventoScreen from '../screens/EditarEventoScreen';
 import EntradasEventoScreen from '../screens/EntradasEventoScreen';
+import EscanerQRScreen from '../screens/EscanerQRScreen';
 import { colors, fontSize } from '../theme';
 
 export type MusicoStackParamList = {
@@ -16,6 +17,9 @@ export type MusicoStackParamList = {
   EquipoEvento: { eventoId: string };
   EditarEvento: { eventoId: string };
   EntradasEvento: { eventoId: string };
+  // Spec 041 — `eventoId` opcional: desde el dashboard se entra sin evento y la
+  // pantalla lo pide; desde las entradas del evento se entra con él ya fijado.
+  Escaner: { eventoId?: string } | undefined;
 };
 
 const Stack = createNativeStackNavigator<MusicoStackParamList>();
@@ -63,6 +67,15 @@ export default function MusicoStack() {
         name="EntradasEvento"
         component={EntradasEventoScreen}
         options={{ title: 'Entradas' }}
+      />
+      {/* Mismo archivo y mismo nombre de ruta que en MiLocalStack y
+          CarteleraStack (spec 041): no hay un escáner de banda y otro de local
+          porque quien autoriza es can_edit_event(), que mira el equipo del
+          evento y no el rol de la persona. */}
+      <Stack.Screen
+        name="Escaner"
+        component={EscanerQRScreen}
+        options={{ title: 'Escanear entradas' }}
       />
     </Stack.Navigator>
   );
