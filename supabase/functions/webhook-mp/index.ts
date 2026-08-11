@@ -95,6 +95,30 @@ serve(async (req) => {
     }
 
     console.log(`Tickets actualizados: ${data?.length ?? 0} → ${nuevoEstado}`);
+
+    // Emitir las entradas es parte de confirmar el pago, no un paso posterior
+    // opcional (spec 037). issue_ticket_items es SECURITY DEFINER con el EXECUTE
+    // revocado a anon/authenticated (spec 036); solo el service role de acá puede
+    // llamarla.
+    if (nuevoEstado === 'completed' && data) {
+      for (const t of data) {
+        const { data: emitidas, error: emitErr } = await supabase.rpc(
+          'issue_ticket_items',
+          { p_ticket: t.id },
+        );
+
+        if (emitErr) {
+          // El pago SÍ está confirmado y el ticket ya quedó 'completed'. No
+          // revertimos: devolvemos 500 para que MP reintente la notificación, y
+          // la reentrada completa lo que falte (issue_ticket_items emite
+          // cantidad - ya_emitidas, no vuelve a emitir de cero).
+          console.error('issue_ticket_items falló', t.id, emitErr);
+          return new Response('emision_fallida', { status: 500 });
+        }
+        console.log(`Ticket ${t.id}: ${emitidas} entradas emitidas`);
+      }
+    }
+
     return new Response('OK', { status: 200 });
   } catch (err) {
     // 500 a propósito: MP reintenta lo que no devuelve 2xx. Devolver 200 aquí

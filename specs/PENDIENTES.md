@@ -532,6 +532,28 @@ ni de una sesión HTTP autenticada — `set_config('request.jwt.claims', …)` s
 
 ---
 
+## Spec 037 — Emisión de entradas al confirmar el pago 🟢 desplegado, falta punta a punta
+
+**Estado:** migración de backfill `20260811051330_spec_037_backfill_entradas.sql` aplicada
+(0 filas — coincide con las 0 compras `completed` de producción) y `webhook-mp` versión 5
+desplegado con la llamada a `issue_ticket_items` tras confirmar el pago. Confirmado por
+Management API que el código desplegado es el del repo (criterio 7).
+
+**Ajuste sobre el documento del spec:** el `UPDATE` de `tickets` en el código real devuelve
+un arreglo (`.select('id')`), no una fila (`.single()` como sugería el ejemplo del spec) —
+usar `.single()` habría sumado un modo de fallo que el webhook no tenía (error si 0 filas
+matchean `preference_id`). La emisión itera el arreglo; en la práctica es 0 o 1 fila, porque
+`preference_id` es único por compra.
+
+**Sin verificar de punta a punta** (criterios 1, 2, 3 y 5): piden que Mercado Pago le mande
+una notificación real al webhook desplegado, y eso depende del 021 (flujo de compra cerrado)
+y el 028 (correo, para no agotar el tope de 2 magic links/hora). La función que este spec
+invoca, `issue_ticket_items`, ya tiene sus propios criterios de emisión verificados por RPC
+directa en el spec 036 — este spec no los repite, solo confirma que el webhook la llama bien
+y que lo desplegado coincide con el repo.
+
+---
+
 ## Spec 034 — Editar evento 🟢 implementado, falta verificar en runtime
 
 **Estado:** `updateEvento` en `EventosContext.tsx`, pantalla nueva `EditarEventoScreen.tsx`,
