@@ -62,9 +62,19 @@ en una sesión de trabajo. **Es lo que conviene arrancar primero en el calendari
 `rate_limit_email_sent: 30`, `smtp_max_frequency: 20` y el asunto/contenido en español quedaron
 guardados. Un `POST /auth/v1/otp` de prueba devolvió `200 {}`, sin `429`.
 
-**Falta un solo punto del criterio de cierre:** confirmar en la bandeja de entrada que el
-correo llegó con el diseño y el texto en español (no se pudo verificar la recepción desde
-esta sesión, solo que Supabase lo aceptó y no rechazó por rate limit).
+**Actualización — el primero cayó en spam.** Victor confirmó que el correo con
+`onboarding@resend.dev` llegó a la carpeta de spam de Gmail: síntoma esperado de mandar
+desde el dominio compartido de Resend sin DMARC/SPF alineados a la marca. `sonopolis.org`
+ya estaba comprado y **verificado** en Resend (Victor lo dio de alta aparte), así que se
+adelantó la *Ruta a producción* del spec: `smtp_admin_email` ahora es
+`no-reply@sonopolis.org`. Falta que confirme si este correo sí llega a la bandeja principal.
+
+⚠️ **Hallazgo de la API, no del dominio:** el primer intento de cambiar solo
+`smtp_admin_email` (un PATCH con ese único campo) **borró todo el grupo SMTP** —
+`smtp_host`/`port`/`user`/`sender_name` volvieron a `null`, y de paso `rate_limit_email_sent`
+volvió a 2 y la plantilla al default en inglés. El endpoint no hace merge parcial de este
+grupo de campos: **hay que mandar los 6 juntos siempre**, igual que la config inicial.
+Se corrigió reenviando el set completo. Detalle en `028-smtp-resend.md`.
 
 ⚠️ `smtp_max_frequency` quedó en 20s (era 60s) — recordatorio del propio spec: volver a 60
 antes del Demo Day, es un freno anti-abuso.

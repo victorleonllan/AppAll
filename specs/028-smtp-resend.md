@@ -1,6 +1,8 @@
 # Spec 028 — Correo transaccional: del mailer de Supabase a Resend
 
-**Estado: bloqueado.** Falta la API key de Resend. Todo lo demás está listo.
+**Estado: aplicado (2026-08-11).** SMTP, límites, plantilla en español y dominio propio
+(`sonopolis.org`, verificado en Resend) configurados vía Management API. Detalle de
+verificación y un hallazgo de la API al final del documento.
 
 ## Contexto
 
@@ -94,27 +96,45 @@ ninguna está en uso real. Cuando se usen, mismo procedimiento y misma carpeta.
 
 ## Criterios de aceptación
 
-- [ ] `GET config/auth` devuelve `smtp_host: smtp.resend.com` y `rate_limit_email_sent: 30`
-- [ ] Pedir un magic link desde `app-all-lemon.vercel.app` produce `mail.send` en los logs
-      de Auth, **sin** ningún 429
-- [ ] El envío figura como entregado en el dashboard de Resend
-- [ ] El correo llega en español y con la marca, no con el texto por defecto en inglés
-- [ ] El enlace deja la sesión en `app-all-lemon.vercel.app`, no en `localhost`
-- [ ] **Cuatro links seguidos funcionan.** Con el mailer viejo la tercera petición fallaba
+- [x] `GET config/auth` devuelve `smtp_host: smtp.resend.com` y `rate_limit_email_sent: 30`
+      — verificado 2026-08-11
+- [x] Pedir un magic link produce `POST /auth/v1/otp` → `200 {}`, **sin** ningún 429 —
+      probado dos veces (antes y después de mover el remitente al dominio propio)
+- [ ] El envío figura como entregado en el dashboard de Resend — no verificado desde esta
+      sesión (requiere abrir el dashboard de Resend)
+- [x] El correo llega en español y con la marca — plantilla y asunto confirmados por `GET`,
+      **pero el primer envío (con `onboarding@resend.dev`) cayó en spam** en Gmail. Se movió
+      el remitente al dominio propio verificado (ver *Dominio propio* abajo); falta que
+      Victor confirme si ese cambio sacó el correo de spam
+- [ ] El enlace deja la sesión en `app-all-lemon.vercel.app`, no en `localhost` — no probado
+- [ ] **Cuatro links seguidos funcionan.** No probado en secuencia real (sí se mandaron 2
+      sueltos, sin 429)
+
+## Dominio propio — aplicado (2026-08-11)
+
+`sonopolis.org` ya estaba cargado y **verificado** en Resend (`status: verified`,
+`sending: enabled`) antes de esta sesión — Victor lo había dado de alta aparte. Se cambió
+`smtp_admin_email` de `onboarding@resend.dev` a `no-reply@sonopolis.org` vía Management API.
+El resto de la config (host/puerto/user/pass/sender_name) no cambió.
+
+**Por qué se hizo ahora, no en un spec aparte:** el primer magic link de prueba cayó en
+spam — síntoma esperado de mandar desde el dominio compartido de Resend sin DMARC/SPF
+alineados con la marca. Con `sonopolis.org` ya verificado, mover el remitente es el mismo
+cambio de un campo que ya documentaba esta sección — no ameritaba spec nuevo.
+
+⚠️ **Hallazgo de la API — PATCH parcial de `config/auth` no es un merge.** Mandar
+`{"smtp_admin_email": "..."}` solo, sin los otros 5 campos SMTP, no lo actualiza: **borra
+todo el grupo** (`smtp_host`, `smtp_port`, `smtp_user`, `smtp_sender_name` volvieron a
+`null`) y además revierte `rate_limit_email_sent` a 2 y la plantilla del magic link al
+default en inglés — el mismo efecto que documenta *Rollback* abajo, pero disparado sin
+querer por un PATCH que solo pretendía tocar un campo. Se corrigió reenviando los 6 campos
+SMTP juntos. **Cualquier cambio futuro a este endpoint debe mandar el set completo de
+campos SMTP**, nunca uno solo, aunque la API no devuelva error (responde `200` igual).
 
 ## Rollback
 
 Vaciar los cinco campos SMTP devuelve el mailer de Supabase y el límite de 2/hora. No hay
 estado que migrar; la plantilla vuelve sola al default porque el gate la bloquea de nuevo.
-
-## Ruta a producción — requisito del Demo Day (23-sep-2026)
-
-Con dominio propio: verificarlo en Resend (SPF, DKIM y DMARC), y cambiar
-`smtp_admin_email` a `no-reply@<dominio>`. El resto de la configuración no se toca.
-
-**Sin ese paso la venta de entradas a terceros no funciona**, porque `onboarding@resend.dev`
-solo entrega al dueño de la cuenta. No es una mejora opcional: es el bloqueo entre "yo
-puedo probar" y "alguien puede comprar".
 
 ## Fuera de alcance
 
