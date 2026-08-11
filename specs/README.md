@@ -19,7 +19,7 @@
 | 020 | Fix de dos agujeros criticos de RLS | Completado |
 | 021 | Cerrar el flujo de compra en web | Código completo — los 9 problemas del spec verificados contra el repo actual, checklist al día. Falta solo la prueba end-to-end (depende del 028) |
 | 022 | Endurecer webhook y creación de preferencias: firma x-signature, validar cantidad, límite de aforo | Propuesto |
-| 028 | Correo transaccional por Resend (SMTP + plantillas) | Aplicado (2026-08-11) — SMTP, límites (30/h, 20s) y plantilla en español verificados por Management API. Magic link de prueba devolvió 200 sin 429. Falta confirmar en la bandeja que llegó bien |
+| 028 | Correo transaccional por Resend (SMTP + plantillas + dominio propio) | Aplicado (2026-08-11) — SMTP, límites, plantilla y remitente en `sonopolis.org` (verificado en Resend). El primero con `onboarding@resend.dev` cayó en spam; falta confirmar si el del dominio propio llega bien |
 | 029 | Correo de confirmación de compra | Propuesto — depende del 028 y del 021 |
 | 030 | Dashboard de banda: perfil completo y panel | Implementado y desplegado — falta verificar en runtime |
 | 031 | Dashboard de local: perfil editable, dueño y panel | Aplicado (migración + código en `main`, sin verificar en runtime) |
