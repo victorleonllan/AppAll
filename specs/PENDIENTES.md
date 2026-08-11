@@ -4,7 +4,8 @@
 > Cada sección es un spec candidato. Se trabajan de a uno; el orden importa.
 >
 > Los specs 018, 019 y 020 ya están aplicados y desplegados.
-> El **021** está escrito y aplicado en disco, pendiente de desplegar y verificar.
+> El **021** tiene el código completo y verificado contra el repo (2026-08-11); solo falta
+> la prueba end-to-end, que depende del 028.
 > El **028** está escrito y bloqueado por la API key de Resend.
 > El **042** (login con Google) tiene el código listo, bloqueado por el Client ID/Secret de Google.
 
@@ -36,8 +37,8 @@ Supabase tope en **2 correos por hora** ya bloqueó una sesión de pruebas real
 cada intento de compra desde cero gasta un correo. Arreglar el correo no es una mejora
 paralela, es el prerequisito para poder probar cualquier otra cosa.
 
-**021 sigue siendo el corazón del producto**, y ya está implementado — le falta deploy y
-la prueba de punta a punta, que depende del 028.
+**021 sigue siendo el corazón del producto**, y su código ya está completo y desplegado — le
+falta solo la prueba de punta a punta, que depende del 028.
 
 **023 antes de vender**, porque hoy borrar un local destruye ventas en silencio.
 
@@ -118,19 +119,29 @@ no hay nada que enviar).
 
 ---
 
-## Spec 021 — Cerrar el flujo de compra en web 🔴 implementado, sin desplegar
+## Spec 021 — Cerrar el flujo de compra en web 🟢 código completo, falta la puerta
 
-**Estado:** spec completo en `021-cerrar-flujo-compra-web.md`, código aplicado en disco.
-Edge Functions desplegadas; **falta el deploy web, el commit y la prueba end-to-end.**
+**Estado (revisado 2026-08-11):** los 9 problemas del spec —los 6 originales de la tabla de
+abajo más los 3 encontrados al implementar (anon key en vez de access_token, sin CORS,
+`monto` NULL)— están **todos verificados contra el repo actual**: 12 de los 13 checkboxes
+de *Criterios de aceptación* quedaron tildados, cada uno con el archivo y la línea donde se
+confirmó. El checklist nunca se había actualizado desde que se escribió, tres días y quince
+specs atrás, aunque el código ya lo cumplía.
 
-**Por qué:** el flujo nunca se completó una sola vez. Hay 0 tickets en la base, lo que confirma que `create-preference` jamás terminó bien.
+**Lo único que sigue abierto es real:** la compra end-to-end con tarjeta de prueba. Producción
+sigue en 0 tickets — el flujo nunca se ejecutó completo, ni antes ni después de estos fixes.
+Depende del **028** (Resend): con el mailer de Supabase topado en 2 correos/hora, cada intento
+de compra desde cero gasta un magic link que no siempre hay.
 
 ⚠️ Al implementarlo aparecieron **tres causas raíz que este inventario no tenía**, cualquiera
 de ellas suficiente para romper todo: el cliente se autenticaba con la anon key (401 antes de
 llamar a MP), `create-preference` no respondía CORS (el navegador bloqueaba la llamada), y
 `monto` quedaba NULL en todo evento creado desde la app (*"Sin precio"*). Detalle en el spec.
 
-| # | Problema | Dónde |
+Tabla de los seis problemas originales, con la ubicación **donde se encontraron** (el código
+ya cambió de línea al arreglarlos — ver el spec para dónde quedó cada fix):
+
+| # | Problema | Dónde se encontró |
 |---|---|---|
 | 1 | `back_urls` apuntan a `appall://`, un scheme nativo. En web el navegador no lo resuelve: el usuario paga y queda varado. Además es la marca vieja. | `create-preference/index.ts:44-48` |
 | 2 | `auto_return: 'approved'` con una back_url no-HTTP puede hacer que MP **rechace la preferencia al crearla**. | `create-preference/index.ts:49` |
@@ -139,7 +150,12 @@ llamar a MP), `create-preference` no respondía CORS (el navegador bloqueaba la 
 | 5 | No hay manejo de pagos rechazados. Solo se actúa si `order_status === 'paid'`; un rechazo deja el ticket colgado sin feedback. | `webhook-mp/index.ts:38` |
 | 6 | El polling se rinde a los 30s sin avisar nada. El usuario queda mirando "Verificando pago…". | `ConfirmacionCompraScreen.tsx:62` |
 
-**Criterio de cierre:** una compra completa con tarjeta de prueba, ticket en `completed`, verificado en la base.
+**Criterio de cierre:** una compra completa con tarjeta de prueba, ticket en `completed`,
+verificado en la base. Sigue siendo el único punto abierto.
+
+**Lo que falta por escribir, no por arreglar** — spec 022, todavía sin archivo propio: validar
+la firma `x-signature` de MP, validar `cantidad` y limitar aforo por evento. Ver su sección
+más abajo.
 
 ---
 

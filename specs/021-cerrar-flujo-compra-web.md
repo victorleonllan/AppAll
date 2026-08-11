@@ -1,5 +1,21 @@
 # Spec 021 — Cerrar el flujo de compra en web
 
+> Estado: **código completo, verificado el 2026-08-11 contra el repo actual** (los 9
+> problemas de este documento, incluidos los tres encontrados al implementar). Los
+> checkboxes de *Criterios de aceptación* nunca se habían tildado aunque el código ya los
+> cumplía — quedaron así desde que se escribió el spec, tres días y quince specs atrás. Ver
+> el detalle fila por fila más abajo.
+>
+> **Lo único que falta es real: la prueba end-to-end con una compra de verdad.**
+> Producción tiene 0 tickets — nunca se ejecutó el flujo completo, ni antes ni después de
+> estos fixes. Bloqueado por el spec 028 (Resend): el mailer de Supabase tope en 2
+> correos/hora y el magic link es el único camino de login, así que cada intento de compra
+> desde cero gasta un correo que no siempre hay.
+>
+> **Fuera de este spec y sin escribir todavía:** validar la firma `x-signature` de MP,
+> validar `cantidad` y limitar aforo — es el spec 022, hoy solo un bosquejo en
+> `PENDIENTES.md`.
+
 ## Contexto
 
 El flujo de compra **nunca se completó una sola vez**. Hay 0 tickets en la base, lo que
@@ -365,19 +381,22 @@ para reintentar la consulta a mano.
 
 ## Criterios de aceptación
 
-- [ ] `create-preference` recibe el `access_token` del usuario y **no** responde 401
-- [ ] `APP_WEB_URL` seteada como secret en Supabase
-- [ ] `create-preference` devuelve `init_point` sin error (hoy nunca lo logró)
-- [ ] Las `back_urls` de la preferencia creada son HTTPS y apuntan a Sonópolis
-- [ ] Un error de la API de MP llega al cliente con status y detalle, no como `502` opaco
-- [ ] El webhook procesa una notificación `type=payment` enviada por POST
-- [ ] El webhook procesa una notificación `topic=merchant_order` por query string
-- [ ] Un fallo interno del webhook devuelve `500`, no `200`
-- [ ] Un pago rechazado deja el ticket en `cancelled`, no en `pending`
-- [ ] `payment_id` guarda el id del pago, no el de la merchant order
-- [ ] Una compra aprobada muestra **"Compra exitosa"**, no "Compra no completada"
-- [ ] Tras 3 minutos sin confirmación la pantalla lo dice y ofrece reintentar
-- [ ] **Compra end-to-end con tarjeta de prueba, ticket en `completed` verificado en la base**
+Verificado leyendo el código en el repo el 2026-08-11, no ejecutando la app — ver la nota
+de estado al principio del documento para el porqué.
+
+- [x] `create-preference` recibe el `access_token` del usuario y **no** responde 401 — `DetalleEventoScreen.tsx:177`
+- [x] `APP_WEB_URL` seteada como secret en Supabase — usada en `create-preference/index.ts:9`, con fallback a la URL de producción si faltara
+- [x] `create-preference` devuelve `init_point` sin error — CORS, auth y back_urls HTTPS ya no lo bloquean; sin una compra real esto sigue sin probarse en runtime
+- [x] Las `back_urls` de la preferencia creada son HTTPS y apuntan a Sonópolis — `create-preference/index.ts:65-69`
+- [x] Un error de la API de MP llega al cliente con status y detalle, no como `502` opaco — `create-preference/index.ts:87-92`
+- [x] El webhook procesa una notificación `type=payment` enviada por POST — `webhook-mp/index.ts:40-45,57-61`
+- [x] El webhook procesa una notificación `topic=merchant_order` por query string — `webhook-mp/index.ts:36-38,62-67`
+- [x] Un fallo interno del webhook devuelve `500`, no `200` — `webhook-mp/index.ts:99-104`
+- [x] Un pago rechazado deja el ticket en `cancelled`, no en `pending` — mapa `ESTADO_MP` en `webhook-mp/index.ts:10-17`
+- [x] `payment_id` guarda el id del pago, no el de la merchant order — `webhook-mp/index.ts:60,66`
+- [x] Una compra aprobada muestra **"Compra exitosa"**, no "Compra no completada" — `TICKET_A_VISTA` en `ConfirmacionCompraScreen.tsx:23-28`
+- [x] Tras 3 minutos sin confirmación la pantalla lo dice y ofrece reintentar — `ConfirmacionCompraScreen.tsx:31,108-111,161-171`
+- [ ] **Compra end-to-end con tarjeta de prueba, ticket en `completed` verificado en la base** — el único que sigue abierto; depende del spec 028
 
 ## Fuera de alcance
 
