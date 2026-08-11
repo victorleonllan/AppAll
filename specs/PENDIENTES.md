@@ -169,21 +169,29 @@ más abajo.
 
 ---
 
-## Spec 022 — Endurecer webhook y creación de preferencias 🔴
+## Spec 022 — Endurecer webhook y creación de preferencias 🟡 escrito, sin implementar
 
-**Por qué:** son los agujeros que importan cuando entre dinero real. Hoy el token es de prueba (cuenta `TESTUSER5133118553056665163`), así que no hay urgencia — pero esto debe estar cerrado **antes** de pasar a producción.
+**Estado (2026-08-11):** spec completo en `022-endurecer-webhook-preferencias.md` — dejó de
+ser un bosquejo. Quedan tres puntos (el de idempotencia pasó al spec 037 el 10-ago, con el
+`SELECT ... FOR UPDATE` de `issue_ticket_items`, y no se toca desde acá):
 
-| # | Problema |
-|---|---|
-| 1 | El webhook no valida la firma `x-signature` de MP. Mitigante: no confía en el payload, vuelve a consultar la orden a la API de MP. Riesgo bajo, pero es buena práctica. |
-| 2 | ~~Sin guarda de idempotencia.~~ **Pasó al spec 037** (2026-08-10): emitir entradas en el webhook vuelve la guarda obligatoria, así que se resuelve ahí, con el `SELECT ... FOR UPDATE` de `issue_ticket_items` (spec 036). No volver a tocarlo desde acá. |
-| 3 | `cantidad` llega del body **sin validar**. No hay control de cupo: un `cantidad: 500` crea una preferencia por 500 entradas en un local de 40 lugares. |
-| 4 | No hay límite de aforo por evento en ninguna parte del modelo. |
+| # | Problema | Vive en |
+|---|---|---|
+| 1 | El webhook no valida la firma `x-signature` de MP. Mitigante existente: no confía en el payload, vuelve a consultar la orden a la API de MP. | `webhook-mp/index.ts` |
+| 3 | `cantidad` llega del body **sin validar**. Un `cantidad: 500` crea una preferencia real por 500 entradas en un local de 40 lugares. | `create-preference/index.ts` |
+| 4 | No hay límite de aforo por evento, y ni siquiera alcanzaría con validarlo solo en la Edge Function: la policy `tickets_insert` de hoy deja insertar un ticket directo por PostgREST, saltándose cualquier chequeo del lado servidor. | `create-preference/index.ts` + una función `reservar_ticket_pending()` + `DROP POLICY tickets_insert` |
 
-⚠️ **Reparto de archivos con el spec 037:** lo que queda del 022 (puntos 1, 3 y 4) vive en
-`create-preference/index.ts`; `webhook-mp/index.ts` es del 037. Ese corte es lo que deja
-avanzar los dos sin conflicto. El aforo del punto 4 es además lo que le falta al dashboard de
-entradas (spec 039) para poder mostrar "disponibles" en vez de solo "emitidas".
+La solución del punto 4 sigue el mismo patrón que folios (036) y canje (040): la condición
+vive dentro de una función `SECURITY DEFINER` que bloquea la fila del evento antes de
+contar, no en un `CHECK` declarativo ni en una carrera de "contar y después insertar". El
+aforo que faltaba es además lo que le falta al dashboard de entradas (spec 039) para poder
+mostrar "disponibles" en vez de solo "emitidas" — ese dato queda listo acá, mostrarlo es
+tarea del 039 (ya aplicado, sin este dato todavía).
+
+**Punto 1 se puede verificar sin tráfico real de MP** (firmando una notificación a mano con
+el secret configurado), pero queda una pregunta abierta que sí necesita tráfico real: si el
+tópico `merchant_order` manda `x-signature` con el mismo formato que `order`/`payment`, o
+directamente no la manda — ver la nota en el spec.
 
 ---
 
