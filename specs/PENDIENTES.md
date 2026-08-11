@@ -62,12 +62,13 @@ en una sesión de trabajo. **Es lo que conviene arrancar primero en el calendari
 `rate_limit_email_sent: 30`, `smtp_max_frequency: 20` y el asunto/contenido en español quedaron
 guardados. Un `POST /auth/v1/otp` de prueba devolvió `200 {}`, sin `429`.
 
-**Actualización — el primero cayó en spam.** Victor confirmó que el correo con
+**Actualización — el primero cayó en spam, ya resuelto.** El correo con
 `onboarding@resend.dev` llegó a la carpeta de spam de Gmail: síntoma esperado de mandar
 desde el dominio compartido de Resend sin DMARC/SPF alineados a la marca. `sonopolis.org`
 ya estaba comprado y **verificado** en Resend (Victor lo dio de alta aparte), así que se
 adelantó la *Ruta a producción* del spec: `smtp_admin_email` ahora es
-`no-reply@sonopolis.org`. Falta que confirme si este correo sí llega a la bandeja principal.
+`no-reply@sonopolis.org`. **Victor confirmó (2026-08-11) que con el dominio propio ya no
+cae en spam.**
 
 ⚠️ **Hallazgo de la API, no del dominio:** el primer intento de cambiar solo
 `smtp_admin_email` (un PATCH con ese único campo) **borró todo el grupo SMTP** —
