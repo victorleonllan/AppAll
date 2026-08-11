@@ -458,6 +458,29 @@ bloquea implementar**: 036, 038 y 040 se verifican por RPC directa sin pasar por
 
 ---
 
+## Spec 038 — RLS de ventas por colaborador 🟢 aplicado, falta criterio de cierre
+
+**Estado:** migración `20260810233000_spec_038_rls_ventas_por_colaborador.sql` aplicada a
+producción el 2026-08-10. `tickets_select_event_owner` (que miraba `events.created_by`)
+fue reemplazada por `tickets_select_event_team`, que usa `can_edit_event(evento_id)` del
+spec 033. Verificado por consulta directa a `pg_policies` que la policy quedó con el
+`qual` esperado y que `tickets_select_own`/`tickets_insert` no se tocaron.
+
+**No toca frontend:** `VentasMusicoScreen` ya lee "lo que RLS deja ver" sin lógica propia,
+así que empieza a mostrar lo correcto para local y músico sin cambiar una línea de `src/`.
+
+**Falta el criterio de cierre completo** — no por código, por datos: producción tiene 0
+tickets (confirmado arriba, spec 021) y una sola fila en `event_collaborators` (el owner
+automático de un evento), así que no hay un segundo colaborador ni una venta real con que
+comparar "ve ventas" vs "ve cero". Se cierra cuando exista un ticket real (depende del
+021/028) y un segundo colaborador de prueba (invitado manual desde `EquipoEventoScreen`,
+no depende de nada externo — se puede sembrar hoy).
+
+Queda pendiente, del propio spec: borrar el comentario de 12 líneas en `MiLocalStack.tsx`
+que documentaba este hueco — lo hace el spec 039, que ya toca ese archivo.
+
+---
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs
