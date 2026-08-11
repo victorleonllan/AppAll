@@ -6,6 +6,7 @@
 > Los specs 018, 019 y 020 ya están aplicados y desplegados.
 > El **021** está escrito y aplicado en disco, pendiente de desplegar y verificar.
 > El **028** está escrito y bloqueado por la API key de Resend.
+> El **042** (login con Google) tiene el código listo, bloqueado por el Client ID/Secret de Google.
 
 ## Orden sugerido
 
@@ -72,6 +73,23 @@ migración, porque la config de Auth no vive en `supabase/migrations/`.
 | Correo en español y con la marca | La venta real de entradas |
 
 La segunda columna necesita dominio propio — ver la nota del encabezado.
+
+---
+
+## Spec 042 — Login con Google (OAuth) 🔴 código listo, bloqueado
+
+**Estado:** spec completo en `042-google-oauth-login.md`. `AuthContext.signInWithGoogle`
+y el botón en `LoginScreen` ya están en el repo, `tsc` limpio. **Bloqueado por el Client
+ID/Secret de Google Cloud Console** — sin eso el provider no está habilitado en
+Supabase Auth y el botón devuelve error.
+
+**No depende del 028 ni lo reemplaza.** Resend es el SMTP de los correos de Auth;
+Google es un provider de login aparte, sin relación con el envío de correo.
+
+**Hueco a propósito, fuera de este spec:** un usuario nuevo que entra por Google no
+pasa por el selector "¿músico o local?" de `RegisterScreen`, así que llega sin `role`
+en `user_metadata`. Necesita spec propio de UX (perfil incompleto / selector post-login)
+antes de que un músico o local reales puedan onboardearse por esta vía.
 
 ---
 

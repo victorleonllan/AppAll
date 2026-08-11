@@ -32,8 +32,9 @@
 | 039 | Dashboard de entradas del evento | Implementado — `tsc` y `expo export --platform web` limpios, falta verificar en runtime |
 | 040 | Canje atómico: `redeem_ticket_item(token)` | Aplicado a producción — los 8 puntos del criterio de cierre verificados por RPC |
 | 041 | Escáner de QR montado en los dos dashboards | Implementado — `tsc` y `expo export --platform web` limpios. Falta la puerta: 7 de 9 puntos del criterio de cierre necesitan entradas emitidas |
+| 042 | Login con Google (OAuth) además del magic link | Código listo (`AuthContext`/`LoginScreen`, `tsc` limpio) — bloqueado por Client ID/Secret de Google Cloud Console |
 
-## Progreso: 30 specs aplicados; 021 y 028 abiertos; 030, 031, 032, 033, 034, 036, 038, 039 y 041 en `main` sin verificar en runtime completo (031, 033, 036, 037, 038 y 040 sí tienen su migración y/o deploy verificado contra producción — 040 con los 8 puntos de su criterio de cierre por RPC); 029 propuesto. **La serie 036-041 está completa en código** — ver nota abajo.
+## Progreso: 30 specs aplicados; 021, 028 y 042 abiertos; 030, 031, 032, 033, 034, 036, 038, 039 y 041 en `main` sin verificar en runtime completo (031, 033, 036, 037, 038 y 040 sí tienen su migración y/o deploy verificado contra producción — 040 con los 8 puntos de su criterio de cierre por RPC); 029 propuesto. **La serie 036-041 está completa en código** — ver nota abajo.
 
 ## Serie 036-041 — flujo de entradas con QR
 
