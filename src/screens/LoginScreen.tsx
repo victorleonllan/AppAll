@@ -13,10 +13,18 @@ interface Props {
 export default function LoginScreen({ onSwitchToRegister, onBack }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { signIn } = useAuth();
+  const [cargandoGoogle, setCargandoGoogle] = useState(false);
+  const { signIn, signInWithGoogle } = useAuth();
 
   const handleLogin = async () => {
     const error = await signIn(email, password);
+    if (error) Alert.alert("Error", error);
+  };
+
+  const handleLoginGoogle = async () => {
+    setCargandoGoogle(true);
+    const error = await signInWithGoogle();
+    setCargandoGoogle(false);
     if (error) Alert.alert("Error", error);
   };
 
@@ -49,6 +57,22 @@ export default function LoginScreen({ onSwitchToRegister, onBack }: Props) {
 
       <TouchableOpacity style={styles.boton} onPress={handleLogin}>
         <Text style={styles.textoBoton}>Entrar</Text>
+      </TouchableOpacity>
+
+      <View style={styles.divisor}>
+        <View style={styles.lineaDivisor} />
+        <Text style={styles.textoDivisor}>o</Text>
+        <View style={styles.lineaDivisor} />
+      </View>
+
+      <TouchableOpacity
+        style={styles.botonGoogle}
+        onPress={handleLoginGoogle}
+        disabled={cargandoGoogle}
+      >
+        <Text style={styles.textoBotonGoogle}>
+          {cargandoGoogle ? "Conectando..." : "Continuar con Google"}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={onSwitchToRegister}>
@@ -96,6 +120,29 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   textoBoton: { color: colors.white, fontWeight: "bold", fontSize: fontSize.md },
+  divisor: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    marginTop: spacing.md,
+  },
+  lineaDivisor: { flex: 1, height: 1, backgroundColor: colors.border },
+  textoDivisor: {
+    color: colors.muted,
+    fontSize: fontSize.sm,
+    marginHorizontal: spacing.sm,
+  },
+  botonGoogle: {
+    width: "100%",
+    backgroundColor: colors.cardBackground,
+    padding: 14,
+    borderRadius: borderRadius.sm,
+    alignItems: "center",
+    marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  textoBotonGoogle: { color: colors.primary, fontWeight: "600", fontSize: fontSize.md },
   link: {
     color: colors.accent,
     marginTop: spacing.md,
