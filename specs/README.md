@@ -31,9 +31,9 @@
 | 038 | Quién ve las ventas: de `created_by` a `event_collaborators` | Aplicado a producción — falta criterio de cierre (0 tickets, sin segundo colaborador de prueba) |
 | 039 | Dashboard de entradas del evento | Implementado — `tsc` y `expo export --platform web` limpios, falta verificar en runtime |
 | 040 | Canje atómico: `redeem_ticket_item(token)` | Aplicado a producción — los 8 puntos del criterio de cierre verificados por RPC |
-| 041 | Escáner de QR montado en los dos dashboards | Propuesto |
+| 041 | Escáner de QR montado en los dos dashboards | Implementado — `tsc` y `expo export --platform web` limpios. Falta la puerta: 7 de 9 puntos del criterio de cierre necesitan entradas emitidas |
 
-## Progreso: 29 specs aplicados; 021 y 028 abiertos; 030, 031, 032, 033, 034, 036, 038 y 039 en `main` sin verificar en runtime completo (031, 033, 036, 037, 038 y 040 sí tienen su migración y/o deploy verificado contra producción — 040 con los 8 puntos de su criterio de cierre por RPC); 029 y 041 propuestos.
+## Progreso: 30 specs aplicados; 021 y 028 abiertos; 030, 031, 032, 033, 034, 036, 038, 039 y 041 en `main` sin verificar en runtime completo (031, 033, 036, 037, 038 y 040 sí tienen su migración y/o deploy verificado contra producción — 040 con los 8 puntos de su criterio de cierre por RPC); 029 propuesto. **La serie 036-041 está completa en código** — ver nota abajo.
 
 ## Serie 036-041 — flujo de entradas con QR
 
@@ -56,24 +56,35 @@ sin pisarse:
 | 040 | Comportamiento | `supabase/migrations/` |
 | 041 | Frontend | `src/screens/`, `src/hooks/`, `src/navigation/`, `package.json` |
 
-**036, 037, 038, 039 y 040 — hecho (2026-08-10/11):** dos sesiones de Claude Code distintas
+**Los seis specs — hecho (2026-08-10/11).** Dos y hasta tres sesiones de Claude Code
 trabajaron a la vez sobre el mismo working tree (mismo `.git`, mismo disco), se coordinaron
 por mensaje antes de tocar archivos compartidos (`README.md`/`PENDIENTES.md`) y no hubo
-pisada porque cada spec es dueño de sus propios archivos, tal como anticipaba esta nota. El
-040 verificó sus 8 criterios de cierre por RPC contra producción y de paso encontró y
-corrigió un bug real en el propio SQL del spec (`RETURNING … INTO` vaciando la fila en el
-segundo canje — ver `specs/040-canje-atomico-de-entradas.md`). El 037 desplegó el backfill
-(0 filas, esperado) y `webhook-mp` con la llamada a `issue_ticket_items`; confirmado por
-Management API que lo desplegado coincide con el repo. El 039 agregó
+pisada porque cada spec es dueño de sus propios archivos, tal como anticipaba esta nota — con
+una excepción: Victor asignó el 041 a dos sesiones a la vez por un cruce de mensajes; la
+segunda vio el trabajo en curso al abrir los archivos y frenó antes de escribir nada, sin
+pisada real. El 040 verificó sus 8 criterios de cierre por RPC contra producción y de paso
+encontró y corrigió un bug real en el propio SQL del spec (`RETURNING … INTO` vaciando la
+fila en el segundo canje — ver `specs/040-canje-atomico-de-entradas.md`). El 037 desplegó el
+backfill (0 filas, esperado) y `webhook-mp` con la llamada a `issue_ticket_items`; confirmado
+por Management API que lo desplegado coincide con el repo. El 039 agregó
 `react-native-qrcode-svg`/`react-native-svg`, `EntradasEventoScreen`, `useEntradasEvento` y
-borró el comentario de 12 líneas de `MiLocalStack.tsx` que documentaba el hueco del 038 —
-`tsc` y `expo export --platform web` limpios, sin verificar en runtime (037 recién
-desplegado, 0 tickets en producción). **Queda 041** (comparte archivos de navegación con el
-034 y el 039, ya aplicados — parte de esa versión).
+borró el comentario de 12 líneas de `MiLocalStack.tsx` que documentaba el hueco del 038. El
+041 cierra la serie: `expo-camera`, `EscanerQRScreen` y `useCanjeEntrada` (un solo camino de
+canje para cámara y folio manual), montado con el mismo nombre de ruta en las tres stacks.
+Decisión que no estaba en el spec: llama a `peek_ticket_item` antes de `redeem_ticket_item`
+para que un escaneo accidental no queme una entrada — detalle en
+`specs/041-escaner-qr-en-dashboards.md`. `tsc` y `expo export --platform web` limpios en
+036-041. **Nada de esto se verificó en runtime real**: producción sigue en 0 tickets, así que
+los criterios de cierre que piden una entrada de verdad (036 puntos 6-7, 038, 039, 041 puntos
+1-3-5-6-8) quedan pendientes — no son seis deudas distintas, son la misma deuda: nunca hubo
+una compra de punta a punta. El camino crítico sigue siendo el 028 (Resend) y detrás el
+dominio propio — ver `PENDIENTES.md`.
 
-⚠️ **041 no se puede trabajar junto con 039** si ambos están en curso a la vez — comparten
-`MusicoStack.tsx`, `MiLocalStack.tsx`, `CarteleraStack.tsx` y `src/types/index.ts`. Como el
-039 ya está aplicado, esto ya no aplica: quien tome el 041 parte de esa versión.
+**Verificado aparte, sin depender de una compra real:** el criterio 3 del 040 (dos canjes
+simultáneos del mismo QR) se probó con dos transacciones Postgres genuinamente concurrentes
+(vía Management API, `pg_sleep` para forzar la contención del lock en vez de confiar en el
+timing de la red) — la perdedora quedó bloqueada ~3.8 s hasta que la ganadora liberó el lock,
+y el resultado final fue exactamente un canje. Datos de prueba borrados después.
 
 ⚠️ **`webhook-mp/index.ts` es del spec 037; `create-preference/index.ts` es del spec 022.**
 El 037 se lleva la guarda de idempotencia que el 022 tenía anotada (punto 2), porque emitir
