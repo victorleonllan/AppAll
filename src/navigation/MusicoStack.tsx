@@ -5,6 +5,7 @@ import CrearEventoScreen from '../screens/CrearEventoScreen';
 import VentasMusicoScreen from '../screens/VentasMusicoScreen';
 import EquipoEventoScreen from '../screens/EquipoEventoScreen';
 import EditarEventoScreen from '../screens/EditarEventoScreen';
+import EntradasEventoScreen from '../screens/EntradasEventoScreen';
 import { colors, fontSize } from '../theme';
 
 export type MusicoStackParamList = {
@@ -14,6 +15,7 @@ export type MusicoStackParamList = {
   VentasMusico: undefined;
   EquipoEvento: { eventoId: string };
   EditarEvento: { eventoId: string };
+  EntradasEvento: { eventoId: string };
 };
 
 const Stack = createNativeStackNavigator<MusicoStackParamList>();
@@ -56,6 +58,11 @@ export default function MusicoStack() {
         name="EditarEvento"
         component={EditarEventoScreen}
         options={{ title: 'Editar evento' }}
+      />
+      <Stack.Screen
+        name="EntradasEvento"
+        component={EntradasEventoScreen}
+        options={{ title: 'Entradas' }}
       />
     </Stack.Navigator>
   );

@@ -84,6 +84,23 @@ export interface Ticket {
   createdAt: string;
 }
 
+/** Spec 036 — estado de puerta de una entrada individual, ortogonal a TicketStatus
+ * (que es el estado del pago). 'void' existe reservado sin escritor todavía —
+ * llega con el reembolso, ver spec 040. */
+export type TicketItemStatus = 'valid' | 'used' | 'void';
+
+export interface TicketItem {
+  id: string;
+  ticketId: string;
+  eventoId: string;
+  folio: number;
+  qrToken: string;
+  status: TicketItemStatus;
+  redeemedAt: string | null;
+  // Datos de la compra a la que pertenece, vía el join con tickets (spec 039).
+  compradorUserId: string;
+  compradorNombre?: string;
+}
 
 export interface Musico {
   id: string;

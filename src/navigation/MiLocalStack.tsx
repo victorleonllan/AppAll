@@ -4,6 +4,7 @@ import CrearEventoScreen from '../screens/CrearEventoScreen';
 import VerMusicoScreen from '../screens/VerMusicoScreen';
 import EquipoEventoScreen from '../screens/EquipoEventoScreen';
 import EditarEventoScreen from '../screens/EditarEventoScreen';
+import EntradasEventoScreen from '../screens/EntradasEventoScreen';
 import EditarLocalScreen from '../screens/EditarLocalScreen';
 import VentasMusicoScreen from '../screens/VentasMusicoScreen';
 import { colors, fontSize } from '../theme';
@@ -14,6 +15,7 @@ export type MiLocalStackParamList = {
   VerMusico: { musicoId: string };
   EquipoEvento: { eventoId: string };
   EditarEvento: { eventoId: string };
+  EntradasEvento: { eventoId: string };
   EditarLocal: undefined;
   Ventas: undefined;
 };
@@ -34,20 +36,13 @@ export default function MiLocalStack() {
       <Stack.Screen name="VerMusico" component={VerMusicoScreen} options={{ title: 'Músico' }} />
       <Stack.Screen name="EquipoEvento" component={EquipoEventoScreen} options={{ title: 'Equipo del evento' }} />
       <Stack.Screen name="EditarEvento" component={EditarEventoScreen} options={{ title: 'Editar evento' }} />
+      <Stack.Screen name="EntradasEvento" component={EntradasEventoScreen} options={{ title: 'Entradas' }} />
       <Stack.Screen name="EditarLocal" component={EditarLocalScreen} options={{ title: 'Editar local' }} />
-      {/*
-        Reutiliza VentasMusicoScreen tal cual (spec 031): la policy
-        tickets_select_event_owner filtra por events.created_by, así que
-        el componente ya muestra exactamente "las ventas de mis eventos"
-        sin importar si "mis" es un músico o un local. Ampliar la policy a
-        "dueño del venue" queda fuera de alcance — ver spec.
-
-        ⚠️ El spec 033 degradó created_by a hecho histórico: ahora quien
-        autoriza es event_collaborators. La policy de tickets siguió usando
-        created_by, así que un colaborador con role='owner' que no creó el
-        evento no ve sus ventas. Es un hueco real, no un descuido de este
-        spec — corregirlo es cambiar la policy, y eso pide su propio número.
-      */}
+      {/* Reutiliza VentasMusicoScreen tal cual (spec 031): el componente muestra
+          "las ventas que RLS me deja ver", sin lógica propia de rol — así que
+          sirve igual para un músico y para un local. Desde el spec 038 la policy
+          de tickets mira event_collaborators (no created_by), así que un local
+          invitado como admin también ve sus ventas sin haber tocado esta pantalla. */}
       <Stack.Screen name="Ventas" component={VentasMusicoScreen} options={{ title: 'Ventas' }} />
     </Stack.Navigator>
   );

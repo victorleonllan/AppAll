@@ -353,6 +353,13 @@ export default function DetalleEventoScreen() {
             >
               <Text style={styles.textoBotonGestion}>✏️ Editar</Text>
             </TouchableOpacity>
+            {/* Spec 039 — mismo criterio: cualquier rol del equipo ve las entradas. */}
+            <TouchableOpacity
+              style={styles.botonGestion}
+              onPress={() => (navigation as any).navigate('EntradasEvento', { eventoId: evento.id })}
+            >
+              <Text style={styles.textoBotonGestion}>🎟️ Entradas</Text>
+            </TouchableOpacity>
             {permisos.puedeInvitar && (
               <TouchableOpacity
                 style={styles.botonGestion}
