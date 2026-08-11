@@ -102,10 +102,10 @@ ninguna está en uso real. Cuando se usen, mismo procedimiento y misma carpeta.
       probado dos veces (antes y después de mover el remitente al dominio propio)
 - [ ] El envío figura como entregado en el dashboard de Resend — no verificado desde esta
       sesión (requiere abrir el dashboard de Resend)
-- [x] El correo llega en español y con la marca — plantilla y asunto confirmados por `GET`,
-      **pero el primer envío (con `onboarding@resend.dev`) cayó en spam** en Gmail. Se movió
-      el remitente al dominio propio verificado (ver *Dominio propio* abajo); falta que
-      Victor confirme si ese cambio sacó el correo de spam
+- [x] El correo llega en español y con la marca, **a la bandeja principal, no a spam** —
+      el primer envío (con `onboarding@resend.dev`) sí cayó en spam; tras mover el remitente
+      a `no-reply@sonopolis.org` (dominio propio verificado, ver *Dominio propio* abajo),
+      Victor confirmó que ya no cae en spam (2026-08-11)
 - [ ] El enlace deja la sesión en `app-all-lemon.vercel.app`, no en `localhost` — no probado
 - [ ] **Cuatro links seguidos funcionan.** No probado en secuencia real (sí se mandaron 2
       sueltos, sin 429)
