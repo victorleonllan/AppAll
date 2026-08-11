@@ -18,7 +18,7 @@
 | 019 | Backfill de profiles + hardening del trigger | Completado |
 | 020 | Fix de dos agujeros criticos de RLS | Completado |
 | 021 | Cerrar el flujo de compra en web | Código completo — los 9 problemas del spec verificados contra el repo actual, checklist al día. Falta solo la prueba end-to-end (depende del 028) |
-| 028 | Correo transaccional por Resend (SMTP + plantillas) | Bloqueado — falta la API key |
+| 028 | Correo transaccional por Resend (SMTP + plantillas) | Aplicado (2026-08-11) — SMTP, límites (30/h, 20s) y plantilla en español verificados por Management API. Magic link de prueba devolvió 200 sin 429. Falta confirmar en la bandeja que llegó bien |
 | 029 | Correo de confirmación de compra | Propuesto — depende del 028 y del 021 |
 | 030 | Dashboard de banda: perfil completo y panel | Implementado y desplegado — falta verificar en runtime |
 | 031 | Dashboard de local: perfil editable, dueño y panel | Aplicado (migración + código en `main`, sin verificar en runtime) |
@@ -34,7 +34,7 @@
 | 041 | Escáner de QR montado en los dos dashboards | Implementado — `tsc` y `expo export --platform web` limpios. Falta la puerta: 7 de 9 puntos del criterio de cierre necesitan entradas emitidas |
 | 042 | Login con Google (OAuth) además del magic link | Código listo (`AuthContext`/`LoginScreen`, `tsc` limpio) — bloqueado por Client ID/Secret de Google Cloud Console |
 
-## Progreso: 31 specs aplicados; 028 y 042 abiertos (bloqueados por credenciales externas); 021, 030, 031, 032, 033, 034, 036, 038, 039 y 041 en `main` sin verificar en runtime completo (021, 031, 033, 036, 037, 038 y 040 sí tienen su código y/o migración verificados contra producción o el repo actual — 040 con los 8 puntos de su criterio de cierre por RPC); 029 propuesto. **La serie 036-041 está completa en código** — ver nota abajo. **021 también** — ver la nota del spec.
+## Progreso: 32 specs aplicados; 042 abierto (bloqueado por credenciales de Google); 021, 030, 031, 032, 033, 034, 036, 038, 039 y 041 en `main` sin verificar en runtime completo (021, 028, 031, 033, 036, 037, 038 y 040 sí tienen su código y/o migración verificados contra producción o el repo actual — 040 con los 8 puntos de su criterio de cierre por RPC); 029 propuesto. **La serie 036-041 está completa en código** — ver nota abajo. **021 también** — ver la nota del spec.
 
 ## Serie 036-041 — flujo de entradas con QR
 

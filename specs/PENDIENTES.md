@@ -6,7 +6,7 @@
 > Los specs 018, 019 y 020 ya están aplicados y desplegados.
 > El **021** tiene el código completo y verificado contra el repo (2026-08-11); solo falta
 > la prueba end-to-end, que depende del 028.
-> El **028** está escrito y bloqueado por la API key de Resend.
+> El **028** está aplicado (2026-08-11) — falta solo confirmar en la bandeja que el correo llegó bien.
 > El **042** (login con Google) tiene el código listo, bloqueado por el Client ID/Secret de Google.
 
 ## Orden sugerido
@@ -55,9 +55,19 @@ en una sesión de trabajo. **Es lo que conviene arrancar primero en el calendari
 
 ---
 
-## Spec 028 — Correo transaccional por Resend 🔴 escrito, bloqueado
+## Spec 028 — Correo transaccional por Resend 🟢 aplicado (2026-08-11)
 
-**Estado:** spec completo en `028-smtp-resend.md`. **Bloqueado por la API key de Resend.**
+**Estado:** aplicado vía Management API (`PATCH /v1/projects/xluinfihjjtxkglihxqz/config/auth`,
+3 llamadas: SMTP, límites, plantilla). Verificado por `GET` posterior — los 6 campos SMTP,
+`rate_limit_email_sent: 30`, `smtp_max_frequency: 20` y el asunto/contenido en español quedaron
+guardados. Un `POST /auth/v1/otp` de prueba devolvió `200 {}`, sin `429`.
+
+**Falta un solo punto del criterio de cierre:** confirmar en la bandeja de entrada que el
+correo llegó con el diseño y el texto en español (no se pudo verificar la recepción desde
+esta sesión, solo que Supabase lo aceptó y no rechazó por rate limit).
+
+⚠️ `smtp_max_frequency` quedó en 20s (era 60s) — recordatorio del propio spec: volver a 60
+antes del Demo Day, es un freno anti-abuso.
 
 **Por qué va primero:** el mailer integrado de Supabase tope en 2 correos/hora y no se puede
 subir sin SMTP propio. Ese límite ya rompió una sesión de pruebas
