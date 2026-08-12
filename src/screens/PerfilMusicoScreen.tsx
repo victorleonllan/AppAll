@@ -10,6 +10,7 @@ import { useEventos } from '../context/EventosContext';
 import { musicosMock } from '../data/mock/musicos';
 import { PerfilMusico } from '../types';
 import { mapProfileFromDB, mapProfileToDB, TIPO_PROYECTO_LABEL, perfilCompletitud } from '../lib/profiles';
+import { confirmar } from '../lib/confirm';
 import TarjetaEvento from '../components/TarjetaEvento';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
@@ -101,10 +102,10 @@ export default function PerfilMusicoScreen() {
   }, [idsEventos]);
 
   const handleSignOut = () => {
-    Alert.alert('Cerrar sesión', '¿Seguro que quieres cerrar sesión?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Cerrar sesión', style: 'destructive', onPress: signOut },
-    ]);
+    confirmar(
+      { title: 'Cerrar sesión', message: '¿Seguro que quieres cerrar sesión?', confirmText: 'Cerrar sesión', destructive: true },
+      signOut
+    );
   };
 
   const handleCrearPerfil = async () => {

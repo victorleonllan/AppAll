@@ -7,6 +7,7 @@ import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { useEventos } from '../context/EventosContext';
 import { useEventoPermisos } from '../hooks/useEventoPermisos';
+import { confirmar } from '../lib/confirm';
 import { Colaborador, ColaboradorSource, EventRole } from '../types';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
@@ -94,50 +95,46 @@ export default function EquipoEventoScreen() {
   };
 
   const handleQuitar = (colaborador: Colaborador) => {
-    Alert.alert(
-      'Quitar del equipo',
-      `¿Quitar a ${colaborador.nombre ?? 'este colaborador'} del evento?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Quitar', style: 'destructive',
-          onPress: async () => {
-            setBusy(true);
-            try {
-              await quitarColaborador(eventoId, colaborador.userId);
-              await cargar();
-            } catch (err: any) {
-              Alert.alert('No se pudo quitar', err?.message ?? 'Error desconocido');
-            } finally {
-              setBusy(false);
-            }
-          },
-        },
-      ]
+    confirmar(
+      {
+        title: 'Quitar del equipo',
+        message: `¿Quitar a ${colaborador.nombre ?? 'este colaborador'} del evento?`,
+        confirmText: 'Quitar',
+        destructive: true,
+      },
+      async () => {
+        setBusy(true);
+        try {
+          await quitarColaborador(eventoId, colaborador.userId);
+          await cargar();
+        } catch (err: any) {
+          Alert.alert('No se pudo quitar', err?.message ?? 'Error desconocido');
+        } finally {
+          setBusy(false);
+        }
+      }
     );
   };
 
   const handleTransferir = (colaborador: Colaborador) => {
-    Alert.alert(
-      'Transferir propiedad',
-      `${colaborador.nombre ?? 'Este colaborador'} pasará a ser el dueño del evento. Tú quedas como administrador. ¿Continuar?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Transferir', style: 'destructive',
-          onPress: async () => {
-            setBusy(true);
-            try {
-              await transferirPropiedad(eventoId, colaborador.userId);
-              await cargar();
-            } catch (err: any) {
-              Alert.alert('No se pudo transferir', err?.message ?? 'Error desconocido');
-            } finally {
-              setBusy(false);
-            }
-          },
-        },
-      ]
+    confirmar(
+      {
+        title: 'Transferir propiedad',
+        message: `${colaborador.nombre ?? 'Este colaborador'} pasará a ser el dueño del evento. Tú quedas como administrador. ¿Continuar?`,
+        confirmText: 'Transferir',
+        destructive: true,
+      },
+      async () => {
+        setBusy(true);
+        try {
+          await transferirPropiedad(eventoId, colaborador.userId);
+          await cargar();
+        } catch (err: any) {
+          Alert.alert('No se pudo transferir', err?.message ?? 'Error desconocido');
+        } finally {
+          setBusy(false);
+        }
+      }
     );
   };
 

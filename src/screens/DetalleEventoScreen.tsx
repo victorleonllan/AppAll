@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { useEventos } from '../context/EventosContext';
 import { useEventoPermisos } from '../hooks/useEventoPermisos';
 import { supabase } from '../lib/supabase';
+import { confirmar } from '../lib/confirm';
 import { CarteleraStackParamList } from '../navigation/CarteleraStack';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
@@ -51,49 +52,47 @@ export default function DetalleEventoScreen() {
   // por el trigger events_block_delete_with_tickets si hay entradas vendidas
   // o en proceso). El mensaje de error del trigger llega tal cual al Alert.
   const handleCancelar = () => {
-    Alert.alert(
-      'Cancelar evento',
-      'El evento deja de venderse pero sigue visible como cancelado. No se puede deshacer desde acá.',
-      [
-        { text: 'Volver', style: 'cancel' },
-        {
-          text: 'Cancelar evento', style: 'destructive',
-          onPress: async () => {
-            setGestionando(true);
-            try {
-              await cancelEvento(evento.id);
-            } catch (err: any) {
-              Alert.alert('No se pudo cancelar', err?.message ?? 'Error desconocido');
-            } finally {
-              setGestionando(false);
-            }
-          },
-        },
-      ]
+    confirmar(
+      {
+        title: 'Cancelar evento',
+        message: 'El evento deja de venderse pero sigue visible como cancelado. No se puede deshacer desde acá.',
+        confirmText: 'Cancelar evento',
+        cancelText: 'Volver',
+        destructive: true,
+      },
+      async () => {
+        setGestionando(true);
+        try {
+          await cancelEvento(evento.id);
+        } catch (err: any) {
+          Alert.alert('No se pudo cancelar', err?.message ?? 'Error desconocido');
+        } finally {
+          setGestionando(false);
+        }
+      }
     );
   };
 
   const handleBorrar = () => {
-    Alert.alert(
-      'Borrar evento',
-      'Esta acción es definitiva. Si el evento tiene entradas vendidas o en proceso, la base lo va a rechazar — cancélalo en su lugar.',
-      [
-        { text: 'Volver', style: 'cancel' },
-        {
-          text: 'Borrar', style: 'destructive',
-          onPress: async () => {
-            setGestionando(true);
-            try {
-              await deleteEvento(evento.id);
-              navigation.goBack();
-            } catch (err: any) {
-              Alert.alert('No se pudo borrar', err?.message ?? 'Error desconocido');
-            } finally {
-              setGestionando(false);
-            }
-          },
-        },
-      ]
+    confirmar(
+      {
+        title: 'Borrar evento',
+        message: 'Esta acción es definitiva. Si el evento tiene entradas vendidas o en proceso, la base lo va a rechazar — cancélalo en su lugar.',
+        confirmText: 'Borrar',
+        cancelText: 'Volver',
+        destructive: true,
+      },
+      async () => {
+        setGestionando(true);
+        try {
+          await deleteEvento(evento.id);
+          navigation.goBack();
+        } catch (err: any) {
+          Alert.alert('No se pudo borrar', err?.message ?? 'Error desconocido');
+        } finally {
+          setGestionando(false);
+        }
+      }
     );
   };
 

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { useVenues } from '../context/VenuesContext';
 import { useEventos } from '../context/EventosContext';
 import { supabase } from '../lib/supabase';
+import { confirmar } from '../lib/confirm';
 import TarjetaEvento from '../components/TarjetaEvento';
 import { venueEmoji, venueLabel } from '../lib/venues';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
@@ -41,10 +42,10 @@ export default function DashboardLocalScreen() {
   const { eventos, misColaboraciones } = useEventos();
 
   const handleSignOut = () => {
-    Alert.alert('Cerrar sesión', '¿Seguro que quieres cerrar sesión?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Cerrar sesión', style: 'destructive', onPress: signOut },
-    ]);
+    confirmar(
+      { title: 'Cerrar sesión', message: '¿Seguro que quieres cerrar sesión?', confirmText: 'Cerrar sesión', destructive: true },
+      signOut
+    );
   };
 
   const [musicos, setMusicos] = useState<MusicoPerfil[]>([]);
