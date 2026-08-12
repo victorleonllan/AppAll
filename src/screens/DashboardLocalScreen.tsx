@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image, ActivityIndicator, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
@@ -36,9 +36,16 @@ function completitud(v: Venue): { llenos: number; total: number } {
 
 export default function DashboardLocalScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { allVenues } = useVenues();
   const { eventos, misColaboraciones } = useEventos();
+
+  const handleSignOut = () => {
+    Alert.alert('Cerrar sesión', '¿Seguro que quieres cerrar sesión?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Cerrar sesión', style: 'destructive', onPress: signOut },
+    ]);
+  };
 
   const [musicos, setMusicos] = useState<MusicoPerfil[]>([]);
   const [cargandoMusicos, setCargandoMusicos] = useState(true);
@@ -118,6 +125,9 @@ export default function DashboardLocalScreen() {
         </Text>
         <TouchableOpacity style={styles.botonNuevo} onPress={() => navigation.navigate('EditarLocal')}>
           <Text style={styles.textoBotonNuevo}>+ Registrar mi local</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.botonSalir} onPress={handleSignOut}>
+          <Text style={styles.textoBotonSalir}>Cerrar sesión</Text>
         </TouchableOpacity>
       </View>
     );
@@ -221,6 +231,9 @@ export default function DashboardLocalScreen() {
               </TouchableOpacity>
             ))
           )}
+          <TouchableOpacity style={styles.botonSalir} onPress={handleSignOut}>
+            <Text style={styles.textoBotonSalir}>Cerrar sesión</Text>
+          </TouchableOpacity>
         </View>
       }
       contentContainerStyle={{ paddingBottom: 100 }}
@@ -365,4 +378,6 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   textoBotonPerfil: { color: colors.secondary, fontWeight: 'bold', fontSize: fontSize.sm },
+  botonSalir: { alignItems: 'center', marginTop: spacing.lg, marginBottom: spacing.md },
+  textoBotonSalir: { color: colors.danger, fontWeight: '600', fontSize: fontSize.sm },
 });

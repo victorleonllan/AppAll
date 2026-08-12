@@ -15,7 +15,7 @@ import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export default function PerfilMusicoScreen() {
   const navigation = useNavigation();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { eventos, misColaboraciones } = useEventos();
   const [perfil, setPerfil] = useState<PerfilMusico | null>(null);
   const [esMock, setEsMock] = useState(false);
@@ -100,6 +100,13 @@ export default function PerfilMusicoScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idsEventos]);
 
+  const handleSignOut = () => {
+    Alert.alert('Cerrar sesión', '¿Seguro que quieres cerrar sesión?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Cerrar sesión', style: 'destructive', onPress: signOut },
+    ]);
+  };
+
   const handleCrearPerfil = async () => {
     if (!user) return;
     setCreando(true);
@@ -139,6 +146,9 @@ export default function PerfilMusicoScreen() {
           ) : (
             <Text style={styles.textoBoton}>Crear mi perfil</Text>
           )}
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.botonSalir} onPress={handleSignOut}>
+          <Text style={styles.textoBotonSalir}>Cerrar sesión</Text>
         </TouchableOpacity>
       </View>
     );
@@ -233,6 +243,10 @@ export default function PerfilMusicoScreen() {
           misEventos.map((ev) => <TarjetaEvento key={ev.id} evento={ev} />)
         )}
       </View>
+
+      <TouchableOpacity style={styles.botonSalir} onPress={handleSignOut}>
+        <Text style={styles.textoBotonSalir}>Cerrar sesión</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -326,4 +340,6 @@ const styles = StyleSheet.create({
     marginTop: 40,
     paddingHorizontal: spacing.lg,
   },
+  botonSalir: { alignItems: 'center', marginTop: spacing.sm, marginBottom: spacing.lg },
+  textoBotonSalir: { color: colors.danger, fontWeight: '600', fontSize: fontSize.sm },
 });

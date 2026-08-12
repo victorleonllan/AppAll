@@ -1,7 +1,17 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { useAuth } from '../context/AuthContext';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export default function PerfilScreen() {
+  const { signOut } = useAuth();
+
+  const handleSignOut = () => {
+    Alert.alert('Cerrar sesión', '¿Seguro que quieres cerrar sesión?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Cerrar sesión', style: 'destructive', onPress: signOut },
+    ]);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.icono}>👤</Text>
@@ -22,6 +32,10 @@ export default function PerfilScreen() {
       </View>
 
       <Text style={styles.aviso}>Si eres músico o local, podrás gestionar tu perfil después.</Text>
+
+      <TouchableOpacity style={styles.botonSalir} onPress={handleSignOut}>
+        <Text style={styles.textoBotonSalir}>Cerrar sesión</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -38,4 +52,6 @@ const styles = StyleSheet.create({
   textoRol: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
   textoRolInactivo: { color: colors.secondary, fontSize: fontSize.md },
   aviso: { fontSize: fontSize.xs, color: colors.muted, marginTop: 20, textAlign: 'center', paddingHorizontal: 30 },
+  botonSalir: { marginTop: spacing.xl },
+  textoBotonSalir: { color: colors.danger, fontWeight: '600', fontSize: fontSize.md },
 });
