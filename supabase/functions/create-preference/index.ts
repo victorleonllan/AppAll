@@ -22,6 +22,10 @@ const json = (body: unknown, status: number) =>
     headers: { ...CORS, 'Content-Type': 'application/json' },
   });
 
+// Spec 022, problema 2. Valor de partida, no una decisión de negocio cerrada
+// — ver la nota del spec si Victor quiere otro número.
+const MAX_CANTIDAD_POR_COMPRA = 10;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS });
@@ -39,6 +43,15 @@ serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || user.id !== user_id) {
       return json({ error: 'unauthorized', detail: 'Sesión inválida o user_id no coincide' }, 401);
+    }
+
+    // Spec 022, problema 2. Sin esto, cantidad: 0/negativa confunde a MP y
+    // cantidad: 999999 crea una preferencia real cobrable por esa cantidad.
+    if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > MAX_CANTIDAD_POR_COMPRA) {
+      return json({
+        error: 'cantidad_invalida',
+        detail: `cantidad debe ser un entero entre 1 y ${MAX_CANTIDAD_POR_COMPRA}`,
+      }, 400);
     }
 
     // Info del evento
@@ -93,23 +106,25 @@ serve(async (req) => {
 
     const mpData = await mpRes.json();
 
-    // Guardar ticket
+    // Spec 022, problema 3. Reserva cantidad + aforo dentro de una función
+    // SECURITY DEFINER que bloquea la fila del evento antes de contar (mismo
+    // patrón que event_folio_counters, spec 036). No hay policy de INSERT en
+    // tickets: ésta es la única vía de escritura real, incluso por RPC directo.
     const { data: ticket, error: ticketError } = await supabase
-      .from('tickets')
-      .insert({
-        evento_id,
-        user_id,
-        status: 'pending',
-        preference_id: mpData.id,
-        monto: evento.monto * cantidad,
-        cantidad,
+      .rpc('reservar_ticket_pending', {
+        p_evento_id: evento_id,
+        p_cantidad: cantidad,
+        p_preference_id: mpData.id,
       })
-      .select()
       .single();
 
     if (ticketError) {
-      console.error('Ticket insert error:', ticketError);
-      return json({ error: 'ticket_insert_failed', detail: ticketError.message }, 500);
+      const sinCupo = ticketError.message?.includes('sin_cupo');
+      console.error('reservar_ticket_pending falló:', ticketError);
+      return json({
+        error: sinCupo ? 'sin_cupo' : 'ticket_insert_failed',
+        detail: ticketError.message,
+      }, sinCupo ? 409 : 500);
     }
 
     return json({

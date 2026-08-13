@@ -18,7 +18,7 @@
 | 019 | Backfill de profiles + hardening del trigger | Completado |
 | 020 | Fix de dos agujeros criticos de RLS | Completado |
 | 021 | Cerrar el flujo de compra en web | Código completo — los 9 problemas del spec verificados contra el repo actual, checklist al día. Falta solo la prueba end-to-end (depende del 028) |
-| 022 | Endurecer webhook y creación de preferencias: firma x-signature, validar cantidad, límite de aforo | Propuesto |
+| 022 | Endurecer webhook y creación de preferencias: firma x-signature, validar cantidad, límite de aforo | Aplicado y verificado (2026-08-13) — migración, `create-preference` y `webhook-mp` desplegados, 12/12 criterios de cierre verificados (RPC directa + HTTP con firma real) |
 | 028 | Correo transaccional por Resend (SMTP + plantillas + dominio propio) | Aplicado y confirmado (2026-08-11) — SMTP, límites, plantilla y remitente en `sonopolis.org` (verificado en Resend). El primero con `onboarding@resend.dev` cayó en spam; con dominio propio, confirmado que ya no |
 | 029 | Correo de confirmación de compra | Propuesto — depende del 028 y del 021 |
 | 030 | Dashboard de banda: perfil completo y panel | Implementado y desplegado — falta verificar en runtime |
@@ -35,7 +35,7 @@
 | 041 | Escáner de QR montado en los dos dashboards | Implementado — `tsc` y `expo export --platform web` limpios. Falta la puerta: 7 de 9 puntos del criterio de cierre necesitan entradas emitidas |
 | 042 | Login con Google (OAuth) además del magic link | Código listo (`AuthContext`/`LoginScreen`, `tsc` limpio) — bloqueado por Client ID/Secret de Google Cloud Console |
 
-## Progreso: 32 specs aplicados; 042 abierto (bloqueado por credenciales de Google); 021, 030, 031, 032, 033, 034, 036, 038, 039 y 041 en `main` sin verificar en runtime completo (021, 028, 031, 033, 036, 037, 038 y 040 sí tienen su código y/o migración verificados contra producción o el repo actual — 040 con los 8 puntos de su criterio de cierre por RPC); 022 y 029 propuestos. **La serie 036-041 está completa en código** — ver nota abajo. **021 también** — ver la nota del spec.
+## Progreso: 33 specs aplicados (el 022 se suma, 2026-08-13, con sus 12 criterios de cierre verificados); 042 abierto (bloqueado por credenciales de Google); 021, 030, 031, 032, 033, 034, 036, 038, 039 y 041 en `main` sin verificar en runtime completo (021, 022, 028, 031, 033, 036, 037, 038 y 040 sí tienen su código y/o migración verificados contra producción o el repo actual — 022 y 040 con el 100% de su criterio de cierre); 029 propuesto. **La serie 036-041 está completa en código** — ver nota abajo. **021 también** — ver la nota del spec.
 
 ## Serie 036-041 — flujo de entradas con QR
 
