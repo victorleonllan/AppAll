@@ -178,6 +178,26 @@ La mayoría de los bugs del proyecto salieron de confundir estos pares. No los m
 
 Fuente de verdad de los tipos: `src/types/index.ts`.
 
+## Frontera con `sonopolisWeb`
+
+La web de Sonópolis se migró a Next.js y vive en un repo aparte, `~/projects/sonopolisWeb`
+(spec 043). Este repo sigue siendo dueño del código nativo (`src/`, `App.tsx`) y del backend
+compartido (`supabase/migrations/`, `supabase/functions/`) — la web lo consume, no lo duplica.
+
+Para que una sesión de Claude Code trabajando en un repo no edite el otro **sin que Victor se
+dé cuenta**, `.claude/settings.json` en ambos repos pone un límite técnico, no solo una
+convención escrita:
+
+- Este repo tiene bloqueado (`deny`) escribir en el código de `sonopolisWeb` (`app/`,
+  `components/`, `libs/`, config, specs) — no hay ningún caso legítimo en el que haga falta.
+- `sonopolisWeb` tiene bloqueado escribir en el código nativo de este repo (`src/`, `App.tsx`,
+  config), pero **puede pedir permiso** (`ask`, no `deny`) para escribir en `supabase/` y
+  `specs/` — porque un cambio de esquema que arranca en la web sigue siendo, por diseño, un
+  spec de este repo (ver `sonopolisWeb/CLAUDE.md`, sección "La regla que gobierna todo").
+
+Si una sesión de este repo necesita tocar algo de `sonopolisWeb`, es señal de que el pedido no
+es de este repo — avísale a Victor en vez de forzarlo.
+
 ## Contexto externo
 
 - **Mercado Pago**: Checkout Pro, cuenta de Chile (`site_id: MLC`, `currency_id: 'CLP'`).
