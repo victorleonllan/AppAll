@@ -1,5 +1,43 @@
 {
   "enabledPlugins": {
     "expo@claude-plugins-official": true
+  },
+  "permissions": {
+    "deny": [
+      "Edit(//Users/victorleon/projects/sonopolisWeb/app/**)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/app/**)",
+      "Edit(//Users/victorleon/projects/sonopolisWeb/components/**)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/components/**)",
+      "Edit(//Users/victorleon/projects/sonopolisWeb/libs/**)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/libs/**)",
+      "Edit(//Users/victorleon/projects/sonopolisWeb/public/**)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/public/**)",
+      "Edit(//Users/victorleon/projects/sonopolisWeb/specs/**)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/specs/**)",
+      "Edit(//Users/victorleon/projects/sonopolisWeb/config.js)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/config.js)",
+      "Edit(//Users/victorleon/projects/sonopolisWeb/next.config.js)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/next.config.js)",
+      "Edit(//Users/victorleon/projects/sonopolisWeb/next-sitemap.config.js)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/next-sitemap.config.js)",
+      "Edit(//Users/victorleon/projects/sonopolisWeb/postcss.config.js)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/postcss.config.js)",
+      "Edit(//Users/victorleon/projects/sonopolisWeb/jsconfig.json)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/jsconfig.json)",
+      "Edit(//Users/victorleon/projects/sonopolisWeb/package.json)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/package.json)",
+      "Edit(//Users/victorleon/projects/sonopolisWeb/yarn.lock)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/yarn.lock)",
+      "Edit(//Users/victorleon/projects/sonopolisWeb/.eslintrc.json)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/.eslintrc.json)",
+      "Edit(//Users/victorleon/projects/sonopolisWeb/CLAUDE.md)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/CLAUDE.md)",
+      "Edit(//Users/victorleon/projects/sonopolisWeb/README.md)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/README.md)",
+      "Edit(//Users/victorleon/projects/sonopolisWeb/GUIA-ALLIN.md)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/GUIA-ALLIN.md)",
+      "Edit(//Users/victorleon/projects/sonopolisWeb/.env.local)",
+      "Write(//Users/victorleon/projects/sonopolisWeb/.env.local)"
+    ]
   }
 }
