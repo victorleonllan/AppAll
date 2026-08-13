@@ -150,9 +150,42 @@ confirmó. El checklist nunca se había actualizado desde que se escribió, tres
 specs atrás, aunque el código ya lo cumplía.
 
 **Lo único que sigue abierto es real:** la compra end-to-end con tarjeta de prueba. Producción
-sigue en 0 tickets — el flujo nunca se ejecutó completo, ni antes ni después de estos fixes.
-Depende del **028** (Resend): con el mailer de Supabase topado en 2 correos/hora, cada intento
-de compra desde cero gasta un magic link que no siempre hay.
+tiene 6 tickets, todos en `pending` — el flujo llega hasta abrir el Checkout Pro de MP pero
+nunca se completó un pago, ni antes ni después de estos fixes. Ya no depende del 028 (Resend
+está aplicado desde el 2026-08-11) — el bloqueo actual es el checkout de MP en sí, ver el
+intento del 2026-08-13 abajo.
+
+### Intento end-to-end 2026-08-13 — no cerrado
+
+Evento de prueba: **QuintalClandesta** (`b3f2760c-d28f-4994-b23a-e6fa54aaa238`), $5.000 CLP.
+Comprador: `victor.leon.llanten@gmail.com` (login por magic link vía Resend, funcionó).
+
+Encontrado en el camino:
+
+1. **Pagar con la cuenta real de MP logueada en el navegador** → MP rechaza con "una de las
+   partes con la que intentas hacer el pago es de prueba". Confirma que el collector
+   (`create-preference`) usa credenciales de prueba, como dice este documento más abajo.
+   Arreglo: incógnito, para no ir logueado con la cuenta real.
+2. **Pagar como invitado** (sin loguearse en MP), con la tarjeta de prueba Chile (Mastercard
+   `5416 7526 0258 2580`, CVV 123, venc. 11/30, titular `APRO`, documento Otro `123456789` —
+   tabla oficial MLC) → rechazo genérico "No pudimos procesar tu pago", repetido incluso con
+   los datos verificados carácter por carácter contra la tabla de MP. Checkout Pro como
+   invitado no está simulando el escenario por nombre del titular de forma confiable.
+3. **Loguearse como comprador de prueba** (recomendado por la doc de MP): la app ya tenía un
+   test buyer autogenerado desde que se creó, credenciales en
+   `https://www.mercadopago.cl/developers/panel/app/7224677760508968` → *Credenciales de
+   prueba* (⚠️ el dominio es `mercadopago.cl`, **no** `mercadopago.com.cl` — ese no resuelve).
+   Usuario: `TESTUSER5133118553056665163` (contraseña visible solo en ese panel — no
+   guardarla en texto plano acá). Logueado como ese test buyer, el checkout ya trae una
+   tarjeta guardada "Coopeuch débito" recomendada por defecto — **no es la nuestra**, hay que
+   elegir a mano la Mastercard terminada en 2580 (la de titular APRO).
+4. Con la tarjeta correcta seleccionada y CVV cargado, el botón **Pagar quedó sin dejar
+   avanzar** — sin mensaje de error visible. Quedó sin diagnosticar, sesión cortada acá.
+
+**Para retomar:** repetir el intento 3-4 con la tarjeta 2580 ya seleccionada; si el botón
+Pagar sigue bloqueado, mirar si falta algún campo (CVV no cargó bien, cupón, etc.) o si hay un
+error que no se ve en pantalla completa — probar con DevTools abierto en la pestaña Network
+para ver la respuesta real del POST de pago.
 
 ⚠️ Al implementarlo aparecieron **tres causas raíz que este inventario no tenía**, cualquiera
 de ellas suficiente para romper todo: el cliente se autenticaba con la anon key (401 antes de

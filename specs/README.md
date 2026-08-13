@@ -34,8 +34,9 @@
 | 040 | Canje atómico: `redeem_ticket_item(token)` | Aplicado a producción — los 8 puntos del criterio de cierre verificados por RPC |
 | 041 | Escáner de QR montado en los dos dashboards | Implementado — `tsc` y `expo export --platform web` limpios. Falta la puerta: 7 de 9 puntos del criterio de cierre necesitan entradas emitidas |
 | 042 | Login con Google (OAuth) además del magic link | Código listo (`AuthContext`/`LoginScreen`, `tsc` limpio) — bloqueado por Client ID/Secret de Google Cloud Console |
+| 043 | Migración de la web a Next.js (spec puente) — el trabajo real vive en `sonopolisWeb/specs/`, empezando por el `001-andamiaje.md` | Fase 0 (andamiaje) aplicada — remote al molde cortado, Mongo/NextAuth/Stripe/R2 fuera, Supabase agregado, `yarn build` limpio. Fases 1-6 pendientes |
 
-## Progreso: 33 specs aplicados (el 022 se suma, 2026-08-13, con sus 12 criterios de cierre verificados); 042 abierto (bloqueado por credenciales de Google); 021, 030, 031, 032, 033, 034, 036, 038, 039 y 041 en `main` sin verificar en runtime completo (021, 022, 028, 031, 033, 036, 037, 038 y 040 sí tienen su código y/o migración verificados contra producción o el repo actual — 022 y 040 con el 100% de su criterio de cierre); 029 propuesto. **La serie 036-041 está completa en código** — ver nota abajo. **021 también** — ver la nota del spec.
+## Progreso: 33 specs aplicados (el 022 se suma, 2026-08-13, con sus 12 criterios de cierre verificados); 042 abierto (bloqueado por credenciales de Google); 043 abierto (Fase 0 de 7 aplicada, vive en otro repo); 021, 030, 031, 032, 033, 034, 036, 038, 039 y 041 en `main` sin verificar en runtime completo (021, 022, 028, 031, 033, 036, 037, 038 y 040 sí tienen su código y/o migración verificados contra producción o el repo actual — 022 y 040 con el 100% de su criterio de cierre); 029 propuesto. **La serie 036-041 está completa en código** — ver nota abajo. **021 también** — ver la nota del spec.
 
 ## Serie 036-041 — flujo de entradas con QR
 
@@ -98,8 +99,9 @@ invitado como `admin`. Lo único que faltaba era que la policy de `tickets` los 
 el spec 038.
 
 ⚠️ **"Aplicado" no significa "verificado".** El flujo de compra nunca se completó
-de punta a punta (0 tickets en la base) y no hay tests. Ver `PENDIENTES.md` para
-el inventario de lo detectado y no corregido, organizado en specs 021-029.
+de punta a punta (6 tickets en `pending`, 0 en `completed`) y no hay tests. Intento
+end-to-end del 2026-08-13 sin cerrar — quedó trabado en el checkout de MP, ver
+`PENDIENTES.md` spec 021 para el detalle y cómo retomarlo.
 
 ⚠️ **El correo es el camino crítico.** El magic link es el único acceso a la compra,
 así que el **028 va antes que el 021**: con 2 correos/hora no se puede ni depurar.
