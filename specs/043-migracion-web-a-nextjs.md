@@ -39,9 +39,8 @@ explicación.
 | 5 — Dashboard local | Perfil de local + reutiliza componentes de la Fase 4 | `sonopolisWeb` |
 | 6 — Corte | Deploy en paralelo, verificación de punta a punta, `APP_WEB_URL` actualizado, dominio apuntado a `sonopolisWeb` | `sonopolisWeb` + secrets de Supabase |
 
-Plan completo, con el mapeo pantalla→ruta y las decisiones de diseño, en
-`~/.claude/plans/jiggly-skipping-eich.md` (aprobado por Victor el 2026-08-13) y
-replicado en `sonopolisWeb/specs/w001-andamiaje.md`.
+Plan completo, con el mapeo pantalla→ruta y las decisiones de diseño, aprobado por
+Victor y replicado en `sonopolisWeb/specs/w001-andamiaje.md`.
 
 ## Explícitamente fuera de alcance de esta migración
 
