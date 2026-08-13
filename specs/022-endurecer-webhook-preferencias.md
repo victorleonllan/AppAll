@@ -1,9 +1,29 @@
 # Spec 022 — Endurecer webhook y creación de preferencias
 
-> Estado: **propuesto el 2026-08-11, sin implementar.** No es urgente por dinero real —el
-> token de Mercado Pago sigue siendo de prueba (`TESTUSER5133118553056665163`)— pero tiene
-> que estar cerrado **antes** de pasar a producción. Toca `webhook-mp/index.ts`,
-> `create-preference/index.ts` y una migración: ninguna pantalla de `src/`.
+> Estado: **aplicado y verificado (2026-08-13).** Migración
+> `20260813054051_spec_022_endurecer_compra.sql` en producción, `create-preference` (v6) y
+> `webhook-mp` (v7) desplegados con el código de este spec. Los 12 criterios de cierre
+> verificados:
+>
+> - **1-2 (cantidad en `create-preference`):** verificados por revisión de código + `tsc`, no
+>   por HTTP real — requeriría un `access_token` de sesión real, mismo bloqueo que el 021
+>   (Resend, correos limitados). Pendiente de ejercitar cuando haya una compra real de punta
+>   a punta.
+> - **3-8 (RLS, aforo, cantidad, monto):** verificados por RPC directa contra producción
+>   (transacciones con `ROLLBACK` o datos de prueba borrados después), mismo método que 036/040.
+>   Incluye una prueba de concurrencia real (dos reservas simultáneas contra un cupo de 1: exactamente
+>   una tuvo éxito).
+> - **9 (`tsc --noEmit`):** limpio.
+> - **10-12 (firma `x-signature`):** verificados con tráfico HTTP real contra el `webhook-mp`
+>   desplegado — firma válida aceptada (pasó a 500 por `Payment not found`, un pago de prueba
+>   que no existe, no por la firma), firma alterada y sin header ambas rechazadas con 401.
+>   Confirmado en logs.
+>
+> **Sigue abierta la duda que el spec ya anotaba:** si el tópico `merchant_order` manda
+> `x-signature` con el mismo formato — solo se puede confirmar con tráfico real de MP.
+>
+> No es urgente por dinero real —el token de Mercado Pago sigue siendo de prueba
+> (`TESTUSER5133118553056665163`)— pero ya no bloquea pasar a producción por este lado.
 
 ## Contexto
 

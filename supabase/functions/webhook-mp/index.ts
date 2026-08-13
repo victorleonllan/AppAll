@@ -2,8 +2,53 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const MERCADOPAGO_ACCESS_TOKEN = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN')!;
+const MERCADOPAGO_WEBHOOK_SECRET = Deno.env.get('MERCADOPAGO_WEBHOOK_SECRET')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+async function hmacSha256Hex(secret: string, mensaje: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+  );
+  const firma = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(mensaje));
+  return Array.from(new Uint8Array(firma)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Comparación en tiempo constante: con === , un atacante puede medir cuántos
+// caracteres acertó por cuánto tardó la respuesta. No es teórico para un XOR
+// de 64 caracteres hexadecimales corriendo miles de veces.
+function igualesEnTiempoConstante(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+// Spec 022, problema 1. MP manda X-Signature: ts=...,v1=<hmac>. El manifest se
+// arma con data.id (del query string, no del body), x-request-id y ts — si
+// data.id o x-request-id no vienen, esa línea se omite del manifest.
+async function firmaValida(req: Request, url: URL): Promise<boolean> {
+  const xSignature = req.headers.get('x-signature') ?? '';
+  const xRequestId = req.headers.get('x-request-id') ?? '';
+  const dataId = (url.searchParams.get('data.id') ?? '').toLowerCase();
+
+  let ts = '', v1 = '';
+  for (const parte of xSignature.split(',')) {
+    const [k, v] = parte.split('=');
+    if (k?.trim() === 'ts') ts = (v ?? '').trim();
+    if (k?.trim() === 'v1') v1 = (v ?? '').trim();
+  }
+  if (!ts || !v1) return false;
+
+  const partes: string[] = [];
+  if (dataId) partes.push(`id:${dataId}`);
+  if (xRequestId) partes.push(`request-id:${xRequestId}`);
+  partes.push(`ts:${ts}`);
+
+  const esperado = await hmacSha256Hex(MERCADOPAGO_WEBHOOK_SECRET, partes.join(';') + ';');
+  return igualesEnTiempoConstante(esperado, v1);
+}
 
 // Estado de MP → estado del ticket. 'paid'/'approved' son de Mercado Pago;
 // los valores de la derecha son TicketStatus (src/types/index.ts).
@@ -28,12 +73,22 @@ async function mpGet(path: string) {
 }
 
 serve(async (req) => {
+  const url = new URL(req.url);
+
+  // Spec 022, problema 1. 401 y no 500: una firma inválida no es un error
+  // transitorio que valga la pena reintentar, es una notificación que no
+  // confiamos en procesar. MP no reintenta sobre 401.
+  if (!(await firmaValida(req, url))) {
+    console.error('Firma x-signature inválida, notificación rechazada', { url: req.url });
+    return new Response('Invalid signature', { status: 401 });
+  }
+
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
     // MP notifica de dos formas: query string (?topic=&id=) y POST con cuerpo
     // { type, data: { id } }. En webhooks v2 el POST es el camino habitual.
-    const url = new URL(req.url);
+    // `url` ya se parseó arriba, antes de validar la firma.
     let topic = url.searchParams.get('topic') ?? url.searchParams.get('type');
     let id = url.searchParams.get('id') ?? url.searchParams.get('data.id');
 

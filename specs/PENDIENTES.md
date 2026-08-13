@@ -180,11 +180,14 @@ más abajo.
 
 ---
 
-## Spec 022 — Endurecer webhook y creación de preferencias 🟡 escrito, sin implementar
+## Spec 022 — Endurecer webhook y creación de preferencias 🟢 aplicado y verificado (2026-08-13)
 
-**Estado (2026-08-11):** spec completo en `022-endurecer-webhook-preferencias.md` — dejó de
-ser un bosquejo. Quedan tres puntos (el de idempotencia pasó al spec 037 el 10-ago, con el
-`SELECT ... FOR UPDATE` de `issue_ticket_items`, y no se toca desde acá):
+**Estado:** migración `20260813054051_spec_022_endurecer_compra.sql` en producción,
+`create-preference` (v6) y `webhook-mp` (v7) desplegados. Los 12 criterios de cierre
+verificados — 3-8 y 10-12 contra producción real (RPC directa y HTTP con firma calculada a
+mano), 1-2 y 9 por código + `tsc`. Detalle completo en `022-endurecer-webhook-preferencias.md`.
+Los tres puntos originales (idempotencia pasó al spec 037 el 10-ago, con el
+`SELECT ... FOR UPDATE` de `issue_ticket_items`, y no se tocó desde acá):
 
 | # | Problema | Vive en |
 |---|---|---|
@@ -199,10 +202,11 @@ aforo que faltaba es además lo que le falta al dashboard de entradas (spec 039)
 mostrar "disponibles" en vez de solo "emitidas" — ese dato queda listo acá, mostrarlo es
 tarea del 039 (ya aplicado, sin este dato todavía).
 
-**Punto 1 se puede verificar sin tráfico real de MP** (firmando una notificación a mano con
-el secret configurado), pero queda una pregunta abierta que sí necesita tráfico real: si el
-tópico `merchant_order` manda `x-signature` con el mismo formato que `order`/`payment`, o
-directamente no la manda — ver la nota en el spec.
+**Punto 1 verificado (2026-08-13)** firmando notificaciones a mano contra el `webhook-mp`
+desplegado: firma válida aceptada, alterada y ausente ambas rechazadas con 401 (confirmado en
+logs). **Sigue abierta la pregunta que necesita tráfico real:** si el tópico `merchant_order`
+manda `x-signature` con el mismo formato que `order`/`payment`, o directamente no la manda —
+ver la nota en el spec.
 
 ---
 
