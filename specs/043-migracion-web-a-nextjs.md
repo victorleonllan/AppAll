@@ -20,7 +20,7 @@ Functions de pago (`create-preference`, `webhook-mp`) no se tocan.
 El trabajo real de la migración pasa a vivir en `~/projects/sonopolisWeb` (clonado
 de `shipearapido`, con el remote hacia el molde ya cortado — nada de eso se pushea
 de vuelta ahí). Ese repo tiene su propia serie de specs, numerada desde
-`sonopolisWeb/specs/001-...`, para no forzar que alguien la lea después de 42 specs
+`sonopolisWeb/specs/w001-...`, para no forzar que alguien la lea después de 42 specs
 de un proyecto RN que no le aplican.
 
 Este 043 es el único registro que queda en `AppAll/specs/`: declara el corte y
@@ -41,7 +41,7 @@ explicación.
 
 Plan completo, con el mapeo pantalla→ruta y las decisiones de diseño, en
 `~/.claude/plans/jiggly-skipping-eich.md` (aprobado por Victor el 2026-08-13) y
-replicado en `sonopolisWeb/specs/001-andamiaje.md`.
+replicado en `sonopolisWeb/specs/w001-andamiaje.md`.
 
 ## Explícitamente fuera de alcance de esta migración
 
@@ -53,6 +53,6 @@ replicado en `sonopolisWeb/specs/001-andamiaje.md`.
 
 ## Estado
 
-Fase 0 (andamiaje) aplicada en `sonopolisWeb` — ver `sonopolisWeb/specs/001-andamiaje.md`
+Fase 0 (andamiaje) aplicada en `sonopolisWeb` — ver `sonopolisWeb/specs/w001-andamiaje.md`
 para el detalle de qué se borró y qué se agregó. `yarn build` limpio. Fases 1-6
 pendientes.
