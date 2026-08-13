@@ -7,10 +7,10 @@
 > el detalle fila por fila más abajo.
 >
 > **Lo único que falta es real: la prueba end-to-end con una compra de verdad.**
-> Producción tiene 0 tickets — nunca se ejecutó el flujo completo, ni antes ni después de
-> estos fixes. Bloqueado por el spec 028 (Resend): el mailer de Supabase tope en 2
-> correos/hora y el magic link es el único camino de login, así que cada intento de compra
-> desde cero gasta un correo que no siempre hay.
+> Producción tiene 6 tickets, todos en `pending` — el flujo llega hasta el Checkout Pro de MP
+> pero ningún pago se completó, ni antes ni después de estos fixes. Ya no bloqueado por el
+> spec 028 (Resend, aplicado 2026-08-11): el magic link llega bien. Intento del 2026-08-13
+> trabado en el propio checkout de MP — detalle y cómo retomarlo en `PENDIENTES.md`, spec 021.
 >
 > **Fuera de este spec y sin escribir todavía:** validar la firma `x-signature` de MP,
 > validar `cantidad` y limitar aforo — es el spec 022, hoy solo un bosquejo en
