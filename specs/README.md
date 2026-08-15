@@ -37,8 +37,11 @@
 | 043 | Migración de la web a Next.js (spec puente) — el trabajo real vive en `sonopolisWeb/specs/`, empezando por el `001-andamiaje.md` | Fase 0 (andamiaje) aplicada — remote al molde cortado, Mongo/NextAuth/Stripe/R2 fuera, Supabase agregado, `yarn build` limpio. Fases 1-6 pendientes |
 | 044 | `reservar_ticket_pending` no miraba `events.status`: se podía cobrar por un evento cancelado o en draft. Pedido desde `sonopolisWeb/specs/w008-datos-guarda-cancelacion.md` | Aplicado y verificado (2026-08-13) — migración en producción, 6/6 criterios de cierre verificados por RPC/SQL directo (transacciones con `ROLLBACK`). También cancela los tickets `pending` en curso al cancelar el evento y habilita Realtime en `events` |
 | 045 | `comienza_at timestamptz` en `events` — la fecha del evento como dato comparable, para la web nueva. Pedido desde `sonopolisWeb/specs/w005-datos-comienza-at.md` | Aplicado en producción (2026-08-13), pero el `.sql` y este spec se aplicaron vía `apply_migration` sin guardar archivo — drift detectado desde `sonopolisWeb` y cerrado recreando el archivo el 2026-08-14, verificado byte a byte contra `information_schema`/`pg_indexes` antes de escribirlo |
+| 046 | Rol `fan`, rename `cafe`→`local`, guest checkout y claim por email. Pedido desde el vault (`plan-datos-fan-guest-checkout-20260815.md`) | Diseñado, migración escrita — sin aplicar |
+| 047 | Seguir músicos y locales (`follows_musicians`, `follows_venues`) | Diseñado, migración escrita — sin aplicar. Independiente del 046 |
+| 048 | Lógica y frontend para 046/047: rename de literales de rol, guest checkout real en `create-preference`/`DetalleEventoScreen`, seguir + dashboard del fan en `PerfilScreen` | Propuesto — depende de que 046 y 047 se apliquen antes de implementarse |
 
-## Progreso: 35 specs aplicados (el 022 se suma, 2026-08-13, con sus 12 criterios de cierre verificados); 042 abierto (bloqueado por credenciales de Google); 043 abierto (Fase 0 de 7 aplicada, vive en otro repo); 021, 030, 031, 032, 033, 034, 036, 038, 039 y 041 en `main` sin verificar en runtime completo (021, 022, 028, 031, 033, 036, 037, 038 y 040 sí tienen su código y/o migración verificados contra producción o el repo actual — 022 y 040 con el 100% de su criterio de cierre); 029 propuesto. **La serie 036-041 está completa en código** — ver nota abajo. **021 también** — ver la nota del spec.
+## Progreso: 35 specs aplicados (el 022 se suma, 2026-08-13, con sus 12 criterios de cierre verificados); 042 abierto (bloqueado por credenciales de Google); 043 abierto (Fase 0 de 7 aplicada, vive en otro repo); 046-048 diseñados/propuestos, sin aplicar ni implementar; 021, 030, 031, 032, 033, 034, 036, 038, 039 y 041 en `main` sin verificar en runtime completo (021, 022, 028, 031, 033, 036, 037, 038 y 040 sí tienen su código y/o migración verificados contra producción o el repo actual — 022 y 040 con el 100% de su criterio de cierre); 029 propuesto. **La serie 036-041 está completa en código** — ver nota abajo. **021 también** — ver la nota del spec.
 
 ## Serie 036-041 — flujo de entradas con QR
 
@@ -132,7 +135,8 @@ La categoria se llama **"locales"** en la UI, nunca "cafes". Los nombres propios
 su palabra ("Café La Palma" se sigue llamando asi).
 
 ⚠️ **`profiles.role` sigue usando `'cafe'`**, no `'local'`. Cambiarlo exige migrar
-`auth.users.raw_user_meta_data` de usuarios reales: es un spec aparte.
+`auth.users.raw_user_meta_data` de usuarios reales: es un spec aparte — spec 046,
+diseñado y con migración escrita, sin aplicar todavía.
 
 ## Nomenclatura de tipo de proyecto (spec 019)
 
