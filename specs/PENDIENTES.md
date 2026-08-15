@@ -8,6 +8,9 @@
 > la prueba end-to-end, que depende del 028.
 > El **028** está aplicado (2026-08-11) — falta solo confirmar en la bandeja que el correo llegó bien.
 > El **042** (login con Google) tiene el código listo, bloqueado por el Client ID/Secret de Google.
+> El **048** (rol fan, guest checkout real, seguir) está bloqueado en el aire: **046 y 047 ya
+> están aplicados en producción (2026-08-15)**, pero nada en el código de esta app los usa
+> todavía — ver la entrada destacada arriba de todo, justo debajo de este bloque.
 
 ## Orden sugerido
 
@@ -52,6 +55,28 @@ Comprar y verificar un dominio (SPF, DKIM, DMARC en Resend) es **requisito duro 
 Day del 23-sep-2026**. No tiene número de spec porque es una compra, no código — pero es
 la dependencia de mayor plazo de todo este inventario y la única que no se puede resolver
 en una sesión de trabajo. **Es lo que conviene arrancar primero en el calendario.**
+
+---
+
+## 🚨 Spec 048 — Lógica y frontend para rol fan, guest checkout y seguir 🔴 datos aplicados, código sin empezar
+
+**La base de datos ya cambió, el código de esta app todavía no.** Los specs 046 (rol
+`fan`, rename `cafe`→`local`, guest checkout, claim por email) y 047 (seguir músicos y
+locales) están **aplicados en `xluinfihjjtxkglihxqz`** desde el 2026-08-15 — `profiles.role`
+ya es `{fan, musician, local}`, `reservar_ticket_pending_guest`, `set_my_role` y las tablas
+`follows_musicians`/`follows_venues` ya existen y fueron verificados contra producción.
+
+**Nada en `src/` los usa todavía.** Cuatro archivos siguen comparando contra los roles
+viejos (`'cafe'`, `'public'`) — funcionan hoy solo porque `handle_new_user()` acepta
+`'cafe'` como alias, pero es deuda que ya no tiene excusa (spec 032 la dejó abierta *porque*
+la base seguía diciendo `'cafe'`; ya no es el caso). El spec completo, con líneas exactas y
+los tres cambios (rename de roles, guest checkout real en `create-preference` +
+`DetalleEventoScreen`, seguir + dashboard del fan en `PerfilScreen`), está en
+`specs/048-logica-fan-guest-checkout-frontend.md`.
+
+**Retomar acá cuando se vuelva a esta app** — quedó pausado a propósito el 2026-08-15
+porque Victor pasó a trabajar en `sonopolisWeb` (que ya no necesita nada de este spec: su
+frontend ya decía `'fan'`/`'local'` antes de que la base migrara).
 
 ---
 
