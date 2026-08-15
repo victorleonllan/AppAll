@@ -1,8 +1,9 @@
 # Spec 047 — Seguir músicos y locales
 
-> Estado: **diseñado, archivo de migración escrito, sin aplicar** (2026-08-15).
-> `supabase/migrations/20260815190508_spec_047_seguir_musicos_locales.sql` existe en el
-> repo; falta correrlo contra producción. Diseño original en
+> Estado: **aplicado en producción (2026-08-15)**.
+> `supabase/migrations/20260815232523_spec_047_seguir_musicos_locales.sql`. Aplicado sin
+> incidentes (a diferencia del spec 046 — ver ahí los dos bugs encontrados al aplicar).
+> Diseño original en
 > `Hermes/Agentes/Base de Datos/plan-datos-fan-guest-checkout-20260815.md` (vault),
 > decisión D.
 
@@ -48,7 +49,7 @@ seguible).
 
 ## Trabajo
 
-Migración `20260815190508_spec_047_seguir_musicos_locales.sql` — SQL completo en el
+Migración `20260815232523_spec_047_seguir_musicos_locales.sql` — SQL completo en el
 archivo.
 
 ## Fuera de alcance
@@ -60,15 +61,18 @@ que lista lo seguido — eso es el **spec 048**.
 
 ## Criterios de aceptación
 
-- [ ] `follows_musicians` y `follows_venues` existen con PK compuesta y FKs `ON DELETE
-      CASCADE`
+- [x] `follows_musicians` y `follows_venues` existen con PK compuesta y FKs `ON DELETE
+      CASCADE` — verificado (`pg_tables`, `relrowsecurity = true` en ambas)
+- [x] Las 6 policies existen (`select`/`insert`/`delete` × 2 tablas) — verificado
+      (`pg_policies`)
 - [ ] Un usuario autenticado puede insertar una fila con `follower_id = auth.uid()`;
-      insertar con otro `follower_id` falla por RLS
+      insertar con otro `follower_id` falla por RLS — no probado con una sesión real
 - [ ] Insertar en `follows_musicians` con un `musician_id` que no tiene `role = 'musician'`
-      falla por el `EXISTS` del `WITH CHECK`
-- [ ] Un usuario solo ve (`SELECT`) sus propias filas de "seguir", no las de otros
+      falla por el `EXISTS` del `WITH CHECK` — no probado
+- [ ] Un usuario solo ve (`SELECT`) sus propias filas de "seguir", no las de otros — no
+      probado
 - [ ] Borrar la cuenta seguidora o el perfil/venue seguido borra la fila de "seguir" en
-      cascada
+      cascada — no probado (no hay filas de seguir todavía, nada que ejercitar)
 
 ## Relacionado
 

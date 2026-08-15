@@ -17,10 +17,14 @@
 --  12. comprador_de(): ajustada para mostrar guest_email cuando el ticket no tiene dueño aún
 
 -- ---------------------------------------------------------- 1. profiles.role
+-- El DROP va antes del backfill: el CHECK viejo ({public,musician,cafe}) rechaza
+-- 'fan'/'local' si el UPDATE corre primero (encontrado al aplicar esta migración
+-- el 2026-08-15 — el orden original del plan estaba invertido).
+ALTER TABLE public.profiles DROP CONSTRAINT profiles_role_check;
+
 UPDATE public.profiles SET role = 'fan'   WHERE role = 'public';
 UPDATE public.profiles SET role = 'local' WHERE role = 'cafe';
 
-ALTER TABLE public.profiles DROP CONSTRAINT profiles_role_check;
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check
   CHECK (role = ANY (ARRAY['fan','musician','local']));
 
