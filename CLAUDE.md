@@ -173,7 +173,7 @@ La mayoría de los bugs del proyecto salieron de confundir estos pares. No los m
 | Estado de pago | `paid` / `completed` | `paid` y `approved` son **de Mercado Pago**. Los estados de ticket son `pending`, `completed`, `refunded`, `cancelled` (`TicketStatus`) |
 | Estado en la UI de confirmación | `success` / `failure` / `pending` / `timeout` | Vocabulario **solo** de `ConfirmacionCompraScreen`. Se traduce desde `TicketStatus`, nunca se castea |
 | Tipo de local | `cafe`, `bar`, `sala`, `centro_cultural` | `'venue'` **ya no es válido**; el CHECK lo rechaza. La categoría se llama "locales" en la UI, nunca "cafés" |
-| Rol de usuario | `profiles.role` = `public`\|`musician`\|`cafe` | Sigue diciendo `cafe`, no `local`. `admin` todavía no es un valor válido |
+| Rol de usuario | `profiles.role` = `fan`\|`musician`\|`local` | Migrado del viejo `public`/`cafe` por el spec 046 (2026-08-15). El frontend de esta app (`navigation/index.tsx`, `AuthContext.tsx`, `AuthScreen.tsx`, `RegisterScreen.tsx`) todavía compara contra `'cafe'` — sigue andando por el alias que acepta `handle_new_user()`, corregirlo es el spec 048. `admin` todavía no es un valor válido |
 | Tipo de proyecto musical | `tipo_proyecto` / `tipoProyecto` / `genero` | DB / TS / estado local de formulario, en ese orden |
 
 Fuente de verdad de los tipos: `src/types/index.ts`.

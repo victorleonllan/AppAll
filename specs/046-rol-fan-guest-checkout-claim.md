@@ -1,10 +1,36 @@
 # Spec 046 — Rol `fan`, rename `cafe`→`local`, guest checkout y claim por email
 
-> Estado: **diseñado, archivo de migración escrito, sin aplicar** (2026-08-15).
-> `supabase/migrations/20260815190507_spec_046_rol_fan_guest_checkout.sql` existe en el
-> repo; falta correrlo contra producción. Diseño completo hecho por el agente de Base de
-> Datos del vault, en `Hermes/Agentes/Base de Datos/plan-datos-fan-guest-checkout-20260815.md`
-> — este spec es la versión aplicable en este repo, con el número asignado.
+> Estado: **aplicado en producción (2026-08-15)**. Dos migraciones:
+> `20260815232514_spec_046_rol_fan_guest_checkout.sql` (el diseño completo) y
+> `20260815232700_spec_046_revoke_anon_execute_grants.sql` (corrección de grants, ver
+> "Bugs encontrados al aplicar" abajo). Diseño original del agente de Base de Datos del
+> vault, en `Hermes/Agentes/Base de Datos/plan-datos-fan-guest-checkout-20260815.md`.
+>
+> **Bugs encontrados al aplicar (no estaban en el diseño original, corregidos en el
+> momento antes de dar el spec por cerrado):**
+> 1. **Orden de la sección 1 invertido.** El plan original hacía los `UPDATE` de
+>    `profiles.role` a `'fan'`/`'local'` *antes* de tocar el CHECK — pero el CHECK viejo
+>    (`{public,musician,cafe}`) rechaza esos valores nuevos, así que la migración
+>    completa abortaba en la primera sentencia (transaccional, sin dejar nada a medias).
+>    Corregido: `DROP CONSTRAINT` va antes del backfill, `ADD CONSTRAINT` después.
+> 2. **`_reservar_ticket_shared`, `claim_guest_tickets` y `set_my_role` quedaron
+>    ejecutables por `anon`/`authenticated` vía REST** pese al `REVOKE ALL ... FROM
+>    PUBLIC` del archivo original — Supabase otorga `EXECUTE` a esos dos roles por
+>    defecto en funciones nuevas del schema `public`, y ese grant es directo por rol, no
+>    vía `PUBLIC`, así que el `REVOKE` no lo tocaba. Confirmado con `get_advisors`
+>    (`anon_security_definer_function_executable`) segundos después de aplicar. El caso
+>    real: cualquiera sin sesión podía llamar `_reservar_ticket_shared` con un
+>    `p_user_id` arbitrario y crear tickets a nombre de cualquier usuario, saltándose el
+>    `auth.uid()` que `reservar_ticket_pending` exige — vulnerabilidad real, cerrada por
+>    la segunda migración antes de que nadie más que yo la hubiera usado.
+>
+> Verificado tras aplicar: conteo de `profiles.role` (`fan:3, musician:2, local:1`,
+> mismas filas que antes, sin pérdida), las 6 funciones nuevas existen,
+> `follows_musicians`/`follows_venues` existen, `proacl` de las 3 funciones corregidas
+> ya no incluye `anon`/`authenticated` de más, y un guest checkout de punta a punta
+> (`reservar_ticket_pending_guest` → ticket con `guest_email`, `user_id NULL` →
+> `comprador_de` devuelve el email) — ticket de prueba borrado después, mismo criterio
+> que el spec 040.
 
 **Capa: DATOS · `supabase/migrations/` · Depende de: nada** (independiente del spec 047)
 
@@ -91,13 +117,15 @@ Alternativa si se prefiere cero riesgo sobre la función ya probada en producci�
 
 ## Trabajo
 
-Migración `20260815190507_spec_046_rol_fan_guest_checkout.sql` — SQL completo en el
-archivo, 12 pasos numerados en el propio archivo (no reordenar). Resumen: backfill de rol
-+ CHECK nuevo, backfill de `auth.users`, `handle_new_user()` con alias `cafe`→`local`,
+Migración `20260815232514_spec_046_rol_fan_guest_checkout.sql` — SQL completo en el
+archivo, pasos numerados en el propio archivo (no reordenar; el paso 1 corrige el orden
+del plan original, ver "Bugs encontrados al aplicar"). Resumen: backfill de rol + CHECK
+nuevo, backfill de `auth.users`, `handle_new_user()` con alias `cafe`→`local`,
 `set_my_role()` nuevo, `search_collaborator_candidates()` actualizado, `tickets` con
 `guest_email`, `_reservar_ticket_shared()` + dos wrappers (`reservar_ticket_pending` y
 `reservar_ticket_pending_guest`), trigger de claim, lectura de invitado, `comprador_de()`
-con `LEFT JOIN`.
+con `LEFT JOIN`. Segunda migración,
+`20260815232700_spec_046_revoke_anon_execute_grants.sql`: cierra el agujero de grants.
 
 ## Fuera de alcance
 
@@ -110,25 +138,29 @@ mentir lo mismo que miente la base") desaparece en cuanto la base deja de decir 
 
 ## Criterios de aceptación
 
-- [ ] `profiles.role` CHECK acepta `{fan, musician, local}` y rechaza `public`/`cafe`
-- [ ] Las filas existentes de `profiles` y `auth.users.raw_user_meta_data` quedan
-      backfillleadas (`public`→`fan`, `cafe`→`local`) — verificar con `SELECT role, count(*)
-      FROM profiles GROUP BY role` antes y después
+- [x] `profiles.role` CHECK acepta `{fan, musician, local}` y rechaza `public`/`cafe` —
+      verificado con `pg_get_constraintdef` (2026-08-15)
+- [x] Las filas existentes de `profiles` quedan backfilleadas (`public`→`fan`,
+      `cafe`→`local`) — verificado: `fan:3, musician:2, local:1`, mismo total de filas
+      que antes de aplicar (`auth.users.raw_user_meta_data` corre el mismo `UPDATE`, no
+      verificado por separado)
 - [ ] `handle_new_user()` nuevo: signup con `role:'cafe'` (AppAll actual) sigue cayendo en
-      `'local'`; signup sin rol reconocido cae en `'fan'`
+      `'local'`; signup sin rol reconocido cae en `'fan'` — no probado con un signup real
 - [ ] `set_my_role('local')` desde una sesión autenticada actualiza `profiles.role` y
-      `auth.users.raw_user_meta_data` a la vez
-- [ ] `reservar_ticket_pending_guest(evento_id, cantidad, preference_id, email)` crea un
-      ticket con `user_id NULL` y `guest_email` seteado, respeta el mismo control de aforo
-      que `reservar_ticket_pending`
-- [ ] `reservar_ticket_pending` (con sesión) sigue funcionando idéntico al spec 022 —
-      regresión, no solo criterio nuevo
-- [ ] Crear una cuenta con el mismo email de un `guest_email` existente dispara el trigger
-      y el ticket pasa a tener `user_id` seteado y `guest_email NULL`
+      `auth.users.raw_user_meta_data` a la vez — no probado con una sesión real
+- [x] `reservar_ticket_pending_guest(evento_id, cantidad, preference_id, email)` crea un
+      ticket con `user_id NULL` y `guest_email` seteado — verificado de punta a punta
+      (ticket de prueba, borrado después)
+- [ ] `reservar_ticket_pending` (con sesión) sigue funcionando idéntico al spec 022 — no
+      re-probado, el cuerpo de `_reservar_ticket_shared` es el mismo que tenía
+      `reservar_ticket_pending` antes del refactor (sin cambios de lógica, solo de dónde
+      vive el código)
+- [ ] Crear una cuenta con el mismo email de un `guest_email` existente dispara el
+      trigger — no probado con un signup real
 - [ ] `guest_ticket_status`/`guest_ticket_items` devuelven datos solo si `user_id IS NULL`
-      (invisibles después del claim)
-- [ ] `comprador_de(ticket)` devuelve `guest_email` cuando no hay `user_id`, y el nombre
-      del perfil cuando sí lo hay
+      — no probado
+- [x] `comprador_de(ticket)` devuelve `guest_email` cuando no hay `user_id` — verificado
+      con el ticket de prueba de punta a punta
 
 ## Relacionado
 
