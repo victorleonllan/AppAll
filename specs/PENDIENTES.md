@@ -61,32 +61,21 @@ en una sesión de trabajo. **Es lo que conviene arrancar primero en el calendari
 
 ---
 
-## 🚨 Spec 049 — Aplicar la migración de eventos externos 🔴 código listo del otro lado, falta correrla acá
+## ✅ Spec 049 — Migración de eventos externos aplicada (2026-08-19)
 
-**Es al revés de la mayoría de las entradas de este archivo: acá no falta pensar ni
-escribir nada, falta ejecutar un archivo que ya existe.**
-
-Pedido desde `sonopolisWeb/specs/w022-datos-eventos-externos.md` (2026-08-19): la web
-necesita traer eventos reales de PortalTickets para llenar la cartelera (difusión con
-link a la fuente, **sin generar ningún dato de compra**). El spec completo —cada columna,
-cada RLS, el porqué de cada decisión— está en `specs/049-eventos-externos-scraping.md`.
-La migración ya está escrita: `supabase/migrations/20260819164643_spec_049_eventos_externos.sql`.
-
-**Qué hacer en esta sesión:**
-
-1. Aplicar la migración contra producción (`xluinfihjjtxkglihxqz`) — `supabase db push` o
-   el método que uses para el resto de las migraciones de este repo
-2. Confirmar contra producción: las dos tablas existen, RLS habilitado, el índice único
-   `(source_slug, source_uid)` existe, la fila `portaltickets` está seedeada
-3. Marcar los checkboxes de "Criterios de aceptación" en `specs/049-...md` y actualizar su
-   línea de `> Estado:`
-4. Actualizar la fila del 049 en `specs/README.md` (de "sin aplicar" a "aplicado")
+`event_sources` + `external_events` ya existen en producción (`xluinfihjjtxkglihxqz`),
+corridas con `supabase db push`. Los 5 criterios de aceptación de
+`specs/049-eventos-externos-scraping.md` están verificados contra producción (RLS
+habilitado en las dos tablas, índice único `(source_slug, source_uid)`, fila
+`portaltickets` seedeada, `select` anónimo de filas `'nuevo'` devuelve 0, sin columnas de
+dinero/tickets/MP).
 
 **Del otro lado, en `sonopolisWeb`, no hay nada que tocar.** El pipeline de scraping
 (spec W-023) y la Cartelera (spec W-024) ya están escritos, con `yarn build` verde,
-esperando solo que `external_events` exista. En cuanto la migración corra, probar
-`GET /api/cron/scrape` en local (necesita `SUPABASE_SERVICE_ROLE_KEY` y opcionalmente
-`CRON_SECRET` en `.env.local` de ese repo) y mirar la Cartelera con eventos reales.
+esperando solo que `external_events` exista — ya existe. Siguiente paso ahí, no acá:
+probar `GET /api/cron/scrape` en local (necesita `SUPABASE_SERVICE_ROLE_KEY` y
+opcionalmente `CRON_SECRET` en `.env.local` de ese repo) y mirar la Cartelera con eventos
+reales.
 
 ## 🚨 Spec 048 — Lógica y frontend para rol fan, guest checkout y seguir 🔴 datos aplicados, código sin empezar
 
