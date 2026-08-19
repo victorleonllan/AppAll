@@ -11,6 +11,9 @@
 > El **048** (rol fan, guest checkout real, seguir) está bloqueado en el aire: **046 y 047 ya
 > están aplicados en producción (2026-08-15)**, pero nada en el código de esta app los usa
 > todavía — ver la entrada destacada arriba de todo, justo debajo de este bloque.
+> El **049** (eventos externos para `sonopolisWeb`) es al revés del 048: el **código está
+> completo en `sonopolisWeb`** (specs W-023/W-024, `yarn build` verde) y lo que falta es
+> correr la migración acá — ver la entrada destacada, primera de todas.
 
 ## Orden sugerido
 
@@ -57,6 +60,33 @@ la dependencia de mayor plazo de todo este inventario y la única que no se pued
 en una sesión de trabajo. **Es lo que conviene arrancar primero en el calendario.**
 
 ---
+
+## 🚨 Spec 049 — Aplicar la migración de eventos externos 🔴 código listo del otro lado, falta correrla acá
+
+**Es al revés de la mayoría de las entradas de este archivo: acá no falta pensar ni
+escribir nada, falta ejecutar un archivo que ya existe.**
+
+Pedido desde `sonopolisWeb/specs/w022-datos-eventos-externos.md` (2026-08-19): la web
+necesita traer eventos reales de PortalTickets para llenar la cartelera (difusión con
+link a la fuente, **sin generar ningún dato de compra**). El spec completo —cada columna,
+cada RLS, el porqué de cada decisión— está en `specs/049-eventos-externos-scraping.md`.
+La migración ya está escrita: `supabase/migrations/20260819164643_spec_049_eventos_externos.sql`.
+
+**Qué hacer en esta sesión:**
+
+1. Aplicar la migración contra producción (`xluinfihjjtxkglihxqz`) — `supabase db push` o
+   el método que uses para el resto de las migraciones de este repo
+2. Confirmar contra producción: las dos tablas existen, RLS habilitado, el índice único
+   `(source_slug, source_uid)` existe, la fila `portaltickets` está seedeada
+3. Marcar los checkboxes de "Criterios de aceptación" en `specs/049-...md` y actualizar su
+   línea de `> Estado:`
+4. Actualizar la fila del 049 en `specs/README.md` (de "sin aplicar" a "aplicado")
+
+**Del otro lado, en `sonopolisWeb`, no hay nada que tocar.** El pipeline de scraping
+(spec W-023) y la Cartelera (spec W-024) ya están escritos, con `yarn build` verde,
+esperando solo que `external_events` exista. En cuanto la migración corra, probar
+`GET /api/cron/scrape` en local (necesita `SUPABASE_SERVICE_ROLE_KEY` y opcionalmente
+`CRON_SECRET` en `.env.local` de ese repo) y mirar la Cartelera con eventos reales.
 
 ## 🚨 Spec 048 — Lógica y frontend para rol fan, guest checkout y seguir 🔴 datos aplicados, código sin empezar
 
