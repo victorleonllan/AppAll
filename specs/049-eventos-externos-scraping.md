@@ -1,6 +1,6 @@
 # Spec 049 — `event_sources` + `external_events` (eventos scrapeados)
 
-> Estado: escrito, sin aplicar (2026-08-19)
+> Estado: aplicado (2026-08-19)
 
 **Capa: DATOS · `supabase/migrations/` · Depende de: nada**
 
@@ -38,11 +38,11 @@ Migración `20260819164643_spec_049_eventos_externos.sql`:
 
 ## Criterios de aceptación
 
-- [ ] Las dos tablas existen con RLS habilitado
-- [ ] El índice único `(source_slug, source_uid)` existe
-- [ ] La fila `portaltickets` está seedeada
-- [ ] Un `select` anónimo sobre `external_events` con filas en `'nuevo'` devuelve 0 filas
-- [ ] `external_events` no tiene ninguna columna de monto, tickets ni Mercado Pago
+- [x] Las dos tablas existen con RLS habilitado
+- [x] El índice único `(source_slug, source_uid)` existe
+- [x] La fila `portaltickets` está seedeada
+- [x] Un `select` anónimo sobre `external_events` con filas en `'nuevo'` devuelve 0 filas
+- [x] `external_events` no tiene ninguna columna de monto, tickets ni Mercado Pago
 
 ## Fuera de alcance
 
