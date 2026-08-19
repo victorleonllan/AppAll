@@ -61,6 +61,28 @@ en una sesión de trabajo. **Es lo que conviene arrancar primero en el calendari
 
 ---
 
+## 🚨 Spec 050 — Aplicar la migración de `pais` (bloquea W-026 de `sonopolisWeb`)
+
+**El código ya está escrito y verificado (`yarn build` verde) en `sonopolisWeb`.** Lo único
+que falta es correr una migración acá — misma situación que tuvo el spec 049.
+
+Archivo: `supabase/migrations/20260819144528_spec_050_pais_fuentes.sql`. Agrega
+`event_sources.pais` y `external_events.pais` (`char(2)`, `NOT NULL`, sin `DEFAULT` tras el
+backfill a `'CL'`), más el índice `(pais, comienza_at)`. Ver `specs/050-pais-fuentes-scraping.md`
+para el diseño completo.
+
+**Por qué bloquea:** el pipeline de scraping (`sonopolisWeb/libs/scraping/pipeline.js`) ya
+arma cada fila con un campo `pais` — hasta que esta migración corra, cualquier ejecución del
+cron (`GET /api/cron/scrape`) va a fallar con "columna pais no existe".
+
+Pasos para una sesión nueva:
+1. `supabase link --project-ref xluinfihjjtxkglihxqz` (si no está linkeado)
+2. `supabase db push` para correr la migración pendiente
+3. Verificar: `event_sources.pais = 'CL'` en la fila `portaltickets`, y las 33 filas de
+   `external_events` ya insertadas quedaron en `'CL'` tras el backfill
+4. Avisar en `sonopolisWeb` para correr el pipeline una vez y confirmar que las filas nuevas
+   traen `pais` poblado
+
 ## ✅ Spec 049 — Migración de eventos externos aplicada (2026-08-19)
 
 `event_sources` + `external_events` ya existen en producción (`xluinfihjjtxkglihxqz`),
