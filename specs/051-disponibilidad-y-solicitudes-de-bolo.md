@@ -1,7 +1,7 @@
 # Spec 051 — Disponibilidad del músico y solicitudes de bolo (`booking_requests`)
 
 **Capa: DATOS · `supabase/migrations/` · Depende de: nada**
-> Estado: migración escrita (`20260820183953_spec_051_disponibilidad_y_solicitudes.sql`), sin aplicar en producción (2026-08-20)
+> Estado: aplicado en producción (2026-08-20) — `20260820183953_spec_051_disponibilidad_y_solicitudes.sql` corrida contra `xluinfihjjtxkglihxqz`
 
 Pedido desde `sonopolisWeb/specs/w031-datos-disponibilidad-y-solicitudes.md`. Vive
 acá por la misma regla del spec 049: un cambio de esquema es un spec de AppAll,

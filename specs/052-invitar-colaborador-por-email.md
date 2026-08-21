@@ -1,7 +1,7 @@
 # Spec 052 — Invitar a un colaborador de evento que todavía no tiene cuenta
 
 **Capa: DATOS · `supabase/migrations/` · Depende de: nada**
-> Estado: migración escrita (`20260820183954_spec_052_invitar_colaborador_email.sql`), sin aplicar en producción (2026-08-20)
+> Estado: aplicado en producción (2026-08-20) — `20260820183954_spec_052_invitar_colaborador_email.sql` corrida contra `xluinfihjjtxkglihxqz`
 **Extiende: spec 033** (no lo edita — los specs aplicados no se editan) — cierra el
 punto que el 033 dejó fuera de alcance ("invitar por correo a quien no tiene
 cuenta — depende del 028"), ya resuelto: el 028 (SMTP/Resend) está aplicado.
