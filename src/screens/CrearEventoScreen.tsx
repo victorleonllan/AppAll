@@ -9,6 +9,7 @@ import { venueEmoji } from '../lib/venues';
 import { useAuth } from '../context/AuthContext';
 import { useVenues } from '../context/VenuesContext';
 import { useEventos } from '../context/EventosContext';
+import GeneroPicker from '../components/GeneroPicker';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export default function CrearEventoScreen() {
@@ -25,6 +26,7 @@ export default function CrearEventoScreen() {
   const [fecha, setFecha] = useState('');
   const [hora, setHora] = useState('');
   const [genero, setGenero] = useState('');
+  const [pickerGeneroVisible, setPickerGeneroVisible] = useState(false);
   const [precio, setPrecio] = useState('');
   const [publicando, setPublicando] = useState(false);
 
@@ -244,12 +246,16 @@ export default function CrearEventoScreen() {
         />
 
         <Text style={styles.label}>Género</Text>
-        <TextInput
-          style={styles.input}
-          value={genero}
-          onChangeText={setGenero}
-          placeholder="Ej: Jazz fusión"
-          placeholderTextColor={colors.muted}
+        <TouchableOpacity style={styles.input} onPress={() => setPickerGeneroVisible(true)}>
+          <Text style={genero ? styles.inputTexto : styles.inputPlaceholder}>
+            {genero || 'Seleccionar género'}
+          </Text>
+        </TouchableOpacity>
+        <GeneroPicker
+          visible={pickerGeneroVisible}
+          onClose={() => setPickerGeneroVisible(false)}
+          seleccionados={genero ? [genero] : []}
+          onCambiar={(gs) => setGenero(gs[0] ?? '')}
         />
 
         <Text style={styles.label}>Precio</Text>
@@ -307,6 +313,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  // Spec 056 — el campo de género es un TouchableOpacity, no un TextInput: el
+  // texto interno necesita su propio estilo (fontSize/color no le llegan al Text hijo).
+  inputTexto: { fontSize: fontSize.md, color: colors.primary },
+  inputPlaceholder: { fontSize: fontSize.md, color: colors.muted },
   suggestions: {
     backgroundColor: colors.cardBackground,
     borderWidth: 1,
