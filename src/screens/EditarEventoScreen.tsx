@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useEventos } from '../context/EventosContext';
+import GeneroPicker from '../components/GeneroPicker';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 /**
@@ -31,6 +32,7 @@ export default function EditarEventoScreen() {
   const [fecha, setFecha] = useState(evento?.fecha ?? '');
   const [hora, setHora] = useState(evento?.hora ?? '');
   const [genero, setGenero] = useState(evento?.genero ?? '');
+  const [pickerGeneroVisible, setPickerGeneroVisible] = useState(false);
   const [precio, setPrecio] = useState(evento?.precio ?? '');
   const [guardando, setGuardando] = useState(false);
 
@@ -95,12 +97,16 @@ export default function EditarEventoScreen() {
         />
 
         <Text style={styles.label}>Género</Text>
-        <TextInput
-          style={styles.input}
-          value={genero}
-          onChangeText={setGenero}
-          placeholder="Ej: Jazz fusión"
-          placeholderTextColor={colors.muted}
+        <TouchableOpacity style={styles.input} onPress={() => setPickerGeneroVisible(true)}>
+          <Text style={genero ? styles.inputTexto : styles.inputPlaceholder}>
+            {genero || 'Seleccionar género'}
+          </Text>
+        </TouchableOpacity>
+        <GeneroPicker
+          visible={pickerGeneroVisible}
+          onClose={() => setPickerGeneroVisible(false)}
+          seleccionados={genero ? [genero] : []}
+          onCambiar={(gs) => setGenero(gs[0] ?? '')}
         />
 
         <Text style={styles.label}>Precio</Text>
@@ -162,6 +168,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  // Spec 056 — igual que en CrearEventoScreen: el campo de género es un
+  // TouchableOpacity, el texto interno necesita su propio estilo.
+  inputTexto: { fontSize: fontSize.md, color: colors.primary },
+  inputPlaceholder: { fontSize: fontSize.md, color: colors.muted },
   aviso: {
     fontSize: fontSize.xs,
     color: colors.muted,

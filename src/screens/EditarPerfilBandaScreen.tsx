@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { TipoProyecto } from '../types';
 import { mapProfileFromDB, mapProfileToDB, TIPO_PROYECTO_LABEL, TIPOS_PROYECTO } from '../lib/profiles';
+import GeneroPicker from '../components/GeneroPicker';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export default function EditarPerfilBandaScreen() {
@@ -19,7 +20,8 @@ export default function EditarPerfilBandaScreen() {
 
   const [nombre, setNombre] = useState('');
   const [tipoProyecto, setTipoProyecto] = useState<TipoProyecto | ''>('');
-  const [generosTexto, setGenerosTexto] = useState('');
+  const [generos, setGeneros] = useState<string[]>([]);
+  const [pickerGenerosVisible, setPickerGenerosVisible] = useState(false);
   const [bio, setBio] = useState('');
   const [ciudad, setCiudad] = useState('');
   const [integrantes, setIntegrantes] = useState('');
@@ -48,7 +50,7 @@ export default function EditarPerfilBandaScreen() {
       const p = mapProfileFromDB(data);
       setNombre(p.nombre);
       setTipoProyecto(p.tipoProyecto);
-      setGenerosTexto((p.generos ?? []).join(', '));
+      setGeneros(p.generos ?? []);
       setBio(p.bio);
       setCiudad(p.ciudad ?? '');
       setIntegrantes(p.integrantes != null ? String(p.integrantes) : '');
@@ -103,10 +105,6 @@ export default function EditarPerfilBandaScreen() {
 
     setGuardando(true);
     try {
-      const generos = generosTexto
-        .split(',')
-        .map((g) => g.trim())
-        .filter(Boolean);
       const { error } = await supabase.from('profiles').upsert(
         mapProfileToDB({
           userId: user.id,
@@ -184,13 +182,19 @@ export default function EditarPerfilBandaScreen() {
           ))}
         </View>
 
-        <Text style={styles.label}>Géneros musicales (separados por coma)</Text>
-        <TextInput
-          style={styles.input}
-          value={generosTexto}
-          onChangeText={setGenerosTexto}
-          placeholder="jazz, bossa, fusión"
-          placeholderTextColor={colors.muted}
+        <Text style={styles.label}>Géneros musicales</Text>
+        <TouchableOpacity style={styles.input} onPress={() => setPickerGenerosVisible(true)}>
+          <Text style={generos.length > 0 ? styles.inputTexto : styles.inputPlaceholder}>
+            {generos.length > 0 ? generos.join(', ') : 'Seleccionar géneros'}
+          </Text>
+        </TouchableOpacity>
+        <GeneroPicker
+          visible={pickerGenerosVisible}
+          onClose={() => setPickerGenerosVisible(false)}
+          seleccionados={generos}
+          onCambiar={setGeneros}
+          multiple
+          titulo="Géneros musicales"
         />
 
         <Text style={styles.label}>Bio</Text>
@@ -330,6 +334,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  // Spec 056 — el campo de géneros es un TouchableOpacity, no un TextInput: el
+  // texto interno necesita su propio estilo (fontSize/color no le llegan al Text hijo).
+  inputTexto: { fontSize: fontSize.md, color: colors.secondary },
+  inputPlaceholder: { fontSize: fontSize.md, color: colors.muted },
   inputMultiline: { minHeight: 90 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   chip: {
