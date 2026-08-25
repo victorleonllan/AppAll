@@ -806,3 +806,10 @@ paralelo). Necesita HTTPS: no se prueba en `localhost` ni con el dev server por 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs
 - El dashboard de Vercel tiene `buildCommand: npm run vercel-build` y output `public`, que no coinciden con el proyecto. Es inocuo porque `vercel.json` los sobrescribe, pero confunde a quien edite desde el dashboard
 - `create-preference` usa `currency_id: 'CLP'`. Verificado correcto: la cuenta MP es `site_id: MLC` (Chile)
+- **El filtro de género de `CarteleraScreen` (spec 056) queda peor que el de `sonopolisWeb`.**
+  Ofrece los 174 géneros del listado cerrado completo en vez de derivar las opciones de los
+  eventos que hay en pantalla — con pocos eventos cargados, la mayoría no devuelve nada.
+  `sonopolisWeb/components/Cartelera.js` ya resolvía esto bien (opciones dinámicas, mismo
+  criterio que sus filtros de local/comuna), pero el spec 056 se escribió antes de tocar ese
+  repo. Ver el addendum del 2026-08-25 en `specs/056-frontend-picker-genero.md`. Recalibrar
+  es spec nuevo (siguiente número libre) si Victor lo pide.

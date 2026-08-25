@@ -76,3 +76,23 @@ como quiera (un campo en Crear Evento, chips en perfil de banda).
 - Spec 055 — `buscarGeneros`/`eventoCoincideConGenero` que este spec consume
 - Spec 030 — precedente de los chips de `tipoProyecto`, mismo criterio de "trigger propio
   de cada pantalla, componente de selección aparte"
+
+## Addendum (2026-08-25) — el filtro de Cartelera queda peor que el de sonopolisWeb
+
+Al portar esto a la web (specs W-035/W-036/W-037) apareció que `Cartelera.js` **ya tenía**
+su propio filtro de género, resuelto distinto y mejor: las opciones del `<select>` se
+derivan de `[...new Set(eventos.map(e => e.genero))]` — solo se ofrecen los géneros que
+existen entre los eventos que están en pantalla, igual que ya hace con `locales` y
+`comunas`. Nunca hay una opción sin resultados.
+
+El picker de `CarteleraScreen` en AppAll (arriba) hace lo contrario: ofrece los 174 géneros
+del listado cerrado completo, sin importar cuántos eventos hay cargados. Con pocos eventos
+(que es el caso real hoy) la mayoría de las opciones no devuelven nada — peor UX que el de
+la web, que este spec no conocía porque se escribió antes de tocar `sonopolisWeb`.
+
+**No se corrige acá** — el spec ya está aplicado y el diseño no se reescribe en silencio
+(ver `Hermes/Config/ClaudeCode/CLAUDE.md` → specs inmutables). Recalibrar `CarteleraScreen`
+para que derive las opciones de `eventos` en vez de usar `GENEROS_MUSICALES` completo es un
+**spec nuevo** (siguiente número libre) si Victor lo pide — mismo patrón que `sonopolisWeb/components/Cartelera.js`,
+adaptado a React Native (reemplazar el `<select>` HTML por el modal de `GeneroPicker`, pero
+alimentado con la lista dinámica en vez de `buscarGeneros`).
