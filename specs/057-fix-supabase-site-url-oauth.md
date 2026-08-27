@@ -2,7 +2,9 @@
 
 **Capa: INFRA · Configuración del dashboard de Supabase, sin código · Depende de: nada**
 
-> Estado: pendiente — acción manual en el dashboard, no requiere sesión de código.
+> Estado: aplicado (2026-08-27) — verificado por captura del dashboard: Site URL ya en
+> `https://sonopolis.org`, y Redirect URLs con los 12 esperados (incluyendo
+> `https://app-all-lemon.vercel.app/**`, agregado en este cierre). Ver nota abajo.
 
 ## El problema
 
@@ -46,14 +48,26 @@ compartido por AppAll y `sonopolisWeb` — ver `AppAll.md` del vault):
 
 ## Criterios de aceptación
 
-- [ ] Site URL en el dashboard de Supabase quedó en `https://sonopolis.org`
-- [ ] Forzar el error (cancelar el login de Google a medio camino, o dejar expirar el
-      `state` esperando) redirige a `sonopolis.org/signin?error=...`, nunca a
-      `app-all-lemon.vercel.app`
-- [ ] AppAll (`app-all-lemon.vercel.app`) sigue pudiendo loguear con Google sin romperse —
-      sigue en la allowlist aunque no sea el Site URL por default
+- [x] Site URL en el dashboard de Supabase quedó en `https://sonopolis.org` — verificado
+      por captura (2026-08-27)
+- [ ] Forzar el error (cancelar el login de Google a medio camino) redirige a
+      `sonopolis.org/signin?motivo=...`, nunca a `app-all-lemon.vercel.app` — es V12 en
+      `sonopolisWeb/specs/W-PENDIENTES.md`, todavía no corrido
+- [x] AppAll (`app-all-lemon.vercel.app`) sigue pudiendo loguear con Google sin romperse —
+      `https://app-all-lemon.vercel.app/**` está en la allowlist de Redirect URLs
+
+## Addendum (2026-08-27)
+
+Al verificar, el Site URL **ya estaba** en `https://sonopolis.org` — no se pudo confirmar
+si Victor lo corrigió en algún momento entre el diagnóstico (2026-08-25) y esta captura, o
+si el Site URL nunca fue la causa real del incidente original y el error de aquel día vino
+por otro lado (un deploy específico de AppAll usado como `redirectTo` en ese momento,
+por ejemplo). Lo que sí se agregó recién es `https://app-all-lemon.vercel.app/**` a
+Redirect URLs, que antes no estaba — sin eso, un login de Google en AppAll web
+directamente fallaría hoy. El estado final es el correcto de todos modos; queda la duda
+de la causa exacta sin resolver, sin impacto práctico.
 
 ## Fuera de alcance
 
-El mensaje que se muestra en `sonopolis.org/signin` cuando llega `?error=...` — hoy es un
-`alert-error` con el texto crudo de Supabase. Eso es el spec w038 de `sonopolisWeb`.
+El mensaje que se muestra en `sonopolis.org/signin` cuando llega `?error=...`/`?motivo=...`
+— eso es el spec w038 de `sonopolisWeb`, ya aplicado.
