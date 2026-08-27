@@ -376,7 +376,9 @@ export default function DetalleEventoScreen() {
                 <Text style={styles.textoBotonGestion}>🚫 Cancelar</Text>
               </TouchableOpacity>
             )}
-            {permisos.puedeBorrar && (
+            {/* Spec 059/060 — borrar es solo del owner: events_delete ya no acepta
+                can_delete de un colaborador, RLS lo rechazaría igual. */}
+            {permisos.rol === 'owner' && (
               <TouchableOpacity
                 style={[styles.botonGestion, styles.botonPeligro]}
                 onPress={handleBorrar}
