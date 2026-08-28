@@ -56,8 +56,7 @@ interno, no algo que el usuario vea.
 evento, `FormEvento.js` lo llama con `carpeta="pendientes"`, `id={userId}` en vez de
 `carpeta="eventos"`, `id={evento.id}`. Frontend en spec w046.
 
-> Estado: diseño, migración escrita (`20260828000000_spec_062_storage_flyer_pendiente.sql`)
-> — **no aplicada**: el `supabase db push` quedó bloqueado por el classifier de la
-> herramienta al intentar correrlo en modo automático. Pendiente que Victor lo corra a
-> mano (`supabase db push`, en `~/projects/AppAll`) antes de que w046 funcione en
-> producción — el frontend ya está escrito y espera esto.
+> Estado: aplicado en producción (2026-08-28) —
+> `20260828000000_spec_062_storage_flyer_pendiente.sql` corrida a mano por Victor contra
+> `xluinfihjjtxkglihxqz` (el `supabase db push` automático había quedado bloqueado por el
+> classifier de la herramienta).
