@@ -1,6 +1,6 @@
 # Spec 050 — `pais` en fuentes y eventos externos
 
-> Estado: escrito, sin aplicar
+> Estado: aplicado en producción (2026-08-20) — ver "Bugs encontrados al aplicar" abajo
 
 **Capa: DATOS · `supabase/migrations/` · Depende de: spec 049**
 
@@ -50,10 +50,10 @@ Migración `<timestamp>_spec_050_pais_fuentes.sql`:
 
 ## Criterios de aceptación
 
-- [ ] `event_sources.pais` y `external_events.pais` existen, `NOT NULL`, sin `DEFAULT`
-- [ ] La fila `portaltickets` tiene `pais = 'CL'`
-- [ ] Las filas de `external_events` ya existentes quedaron en `'CL'` tras el backfill
-- [ ] Índice `(pais, comienza_at)` existe
+- [x] `event_sources.pais` y `external_events.pais` existen, `NOT NULL`, sin `DEFAULT`
+- [x] La fila `portaltickets` tiene `pais = 'CL'`
+- [x] Las filas de `external_events` ya existentes quedaron en `'CL'` tras el backfill
+- [x] Índice `(pais, comienza_at)` existe
 
 ## Fuera de alcance
 
@@ -61,3 +61,28 @@ Migración `<timestamp>_spec_050_pais_fuentes.sql`:
   escribe cuando exista una segunda fuente real, no antes
 - Selector de país en la UI de la Cartelera — v1 sigue siendo Chile-only, este spec solo
   deja el dato listo para cuando deje de serlo
+
+## Bugs encontrados al aplicar (2026-08-20)
+
+La migración quedó escrita en el repo el 2026-08-19 pero nunca se corrió contra
+producción: `supabase migration list` la mostraba con `remote: ""` mientras la migración
+049 (posterior en el trabajo real, pero con timestamp más nuevo) sí estaba aplicada.
+Causa: el archivo de este spec lleva timestamp `14:45:28`, anterior al de 049
+(`16:46:43`), aunque se escribió después — quedó "antes" en el orden de aplicación, así
+que un `supabase db push` normal no la detectaba como pendiente al final de la cola.
+
+Efecto en producción: el pipeline de scraping (`sonopolisWeb/libs/scraping/pipeline.js`)
+ya escribía `pais` en cada fila desde que ese campo se agregó al código, así que cada
+corrida del cron fallaba entera con `column external_events.pais does not exist` — 0
+eventos nuevos, 0 marcados como desaparecidos, 0 purgados. No rompía la cartelera (seguía
+sirviendo lo ya cargado) pero la dejaba congelada en silencio, con el error solo visible
+en `event_sources.last_error`.
+
+Fix: `supabase db push --include-all` — el flag hace falta específicamente cuando hay una
+migración con timestamp anterior a la última ya aplicada. Verificado con una corrida real
+después del fix: 6 nuevos, 24 actualizados, 0 errores.
+
+Lección para el futuro: si un spec de datos se escribe después de otro pero su migración
+queda con timestamp anterior (por reordenar specs, por ejemplo), `supabase migration
+list` es el chequeo real — no asumir que "se aplicó" solo porque el archivo existe en el
+repo.
