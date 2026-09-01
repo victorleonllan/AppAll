@@ -9,6 +9,7 @@ import { venueEmoji, venueLabel } from '../lib/venues';
 import { useAuth } from '../context/AuthContext';
 import { useVenues } from '../context/VenuesContext';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
+import GeneroPicker from '../components/GeneroPicker';
 
 const TIPOS: VenueType[] = ['cafe', 'bar', 'sala', 'centro_cultural'];
 
@@ -27,6 +28,7 @@ export default function EditarLocalScreen() {
   const [aforo, setAforo] = useState('');
   const [description, setDescription] = useState('');
   const [estilo, setEstilo] = useState('');
+  const [pickerGeneroVisible, setPickerGeneroVisible] = useState(false);
   const [horarios, setHorarios] = useState('');
   const [tieneEscenario, setTieneEscenario] = useState(false);
   const [tieneSonido, setTieneSonido] = useState(false);
@@ -173,7 +175,19 @@ export default function EditarLocalScreen() {
         />
 
         <Text style={styles.label}>Estilo musical</Text>
-        <TextInput style={styles.input} value={estilo} onChangeText={setEstilo} placeholder="Ej: Jazz/Experimental" placeholderTextColor={colors.muted} />
+        {/* Vocabulario cerrado (spec 054), no texto libre — mismo componente
+            que CrearEventoScreen (spec 059 AppAll / W-065 sonopolisWeb). */}
+        <TouchableOpacity style={styles.input} onPress={() => setPickerGeneroVisible(true)}>
+          <Text style={estilo ? styles.inputTexto : styles.inputPlaceholder}>
+            {estilo || 'Seleccionar género'}
+          </Text>
+        </TouchableOpacity>
+        <GeneroPicker
+          visible={pickerGeneroVisible}
+          onClose={() => setPickerGeneroVisible(false)}
+          seleccionados={estilo ? [estilo] : []}
+          onCambiar={(gs) => setEstilo(gs[0] ?? '')}
+        />
 
         <Text style={styles.label}>Horarios</Text>
         <TextInput style={styles.input} value={horarios} onChangeText={setHorarios} placeholder="Ej: Jue-Sáb 21:00-01:00" placeholderTextColor={colors.muted} />
@@ -253,6 +267,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   inputMultiline: { minHeight: 80 },
+  inputTexto: { fontSize: fontSize.md, color: colors.primary },
+  inputPlaceholder: { fontSize: fontSize.md, color: colors.muted },
   filaDoble: { flexDirection: 'row', gap: spacing.sm },
   mitad: { flex: 1 },
   tiposRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
