@@ -99,3 +99,22 @@ pasa de texto libre a buscar/crear contra `artists` (spec w045, FRONTEND).
 > `profiles.role='musician'`) y que ningún `events.artist_id` haya quedado huérfano tras
 > el repunte del FK — el permiso para correr esa verificación se bloqueó del lado de la
 > herramienta después de aplicar.
+
+## Bugs encontrados al aplicar
+
+**2026-09-01 — `events_claim_owner_trg` rompía "Crear Evento" con artista elegido.**
+Este spec cambió `events.artist_id` de apuntar a `profiles` a apuntar a `artists`
+(tabla propia, id independiente de cualquier cuenta), pero no tocó
+`events_claim_owner()` (spec 033), que seguía insertando `NEW.artist_id` directo como
+`event_collaborators.user_id` — columna con FK a `auth.users(id)`. Como `artists.id` casi
+nunca coincide con un `auth.users.id` real, cualquier evento creado eligiendo o creando un
+artista vía `ArtistaSelect` (spec w045, sonopolisWeb) fallaba al cerrar con
+`insert or update on table "event_collaborators" violates foreign key constraint
+"event_collaborators_user_id_fkey"`. Reportado por Victor al crear el evento "Roda de
+Samba" en Quintal Clandesta.
+
+Fix en `20260901120000_spec_061_fix_claim_owner_artist_fk.sql`: el insert de colaborador
+"artist" ahora hace join contra `artists` y usa `artists.profile_id` (el músico real, solo
+si el placeholder ya fue reclamado) en vez de `NEW.artist_id` directo. Si el artista es un
+placeholder sin reclamar, simplemente no se agrega ese tercer colaborador — el evento se
+crea igual.
