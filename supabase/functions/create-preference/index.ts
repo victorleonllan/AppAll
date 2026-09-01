@@ -65,13 +65,25 @@ serve(async (req) => {
       return json({ error: 'evento_no_encontrado', evento_id }, 404);
     }
 
+    // Cuánto se cobra ahora mismo (spec 065): general, puerta, o la preventa vigente
+    // — la decide precio_vigente_de() en Postgres, esta function no sabe nada de
+    // tipo_precio ni de event_preventas, solo relaya el número.
+    const { data: cotizacion, error: cotizError } = await supabase
+      .rpc('precio_vigente_de', { p_evento_id: evento_id })
+      .single();
+
+    if (cotizError || !cotizacion) {
+      console.error('precio_vigente_de falló:', cotizError);
+      return json({ error: 'precio_no_disponible', detail: cotizError?.message }, 500);
+    }
+
     // Crear preferencia en MP
     const preference = {
       items: [{
         id: evento.id,
         title: `Entrada: ${evento.artist_name} - ${evento.venue_name}`,
         quantity: cantidad,
-        unit_price: evento.monto,
+        unit_price: cotizacion.monto,
         currency_id: 'CLP',
       }],
       payer: { email: user.email },
