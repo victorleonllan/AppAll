@@ -178,6 +178,19 @@ La mayoría de los bugs del proyecto salieron de confundir estos pares. No los m
 
 Fuente de verdad de los tipos: `src/types/index.ts`.
 
+### Género musical — vocabulario cerrado, nunca texto libre
+
+`src/constants/generos.ts` (spec 054, 174 géneros) es el único vocabulario válido para
+"género"/"estilo musical" — evento, perfil de músico, perfil de local. Cualquier campo
+que represente esto usa `components/GeneroPicker.tsx` (spec 056, `single` o `multiple`
+según el campo), nunca un `TextInput` de texto libre — dos locales escribiendo "jazz" y
+"Jazz" a mano no empatan entre sí. `EditarLocalScreen.tsx` tuvo este bug hasta el spec 063.
+
+**Mismo array en dos repos:** `libs/constants.js` (`GENEROS_MUSICALES`) en sonopolisWeb
+(spec W-035) es una copia — agregar o quitar un género hay que hacerlo en los dos, mismo
+orden, mismo texto exacto (sin CHECK en ninguna de las dos bases, así que un desajuste no
+falla, solo deja de matchear en silencio).
+
 ## Frontera con `sonopolisWeb`
 
 La web de Sonópolis se migró a Next.js y vive en un repo aparte, `~/projects/sonopolisWeb`
