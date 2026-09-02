@@ -1,49 +1,72 @@
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FAF0E6;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<!--
+  Rediseñado 2026-09-02 (pedido de Victor): tenía el estilo viejo de AppAll
+  (marrón/crema, nota musical emoji) — este usa los tokens de marca actuales
+  de Sonópolis Web (spec W-015: --son-black #08090A, --son-yellow #FFE900,
+  --son-neutral-50 #F6F5F4...), mismo negro+amarillo del Splash
+  (components/Splash.js) y de la pantalla de confirmación de compra.
+
+  Hex hardcodeados a propósito: los clientes de correo no soportan custom
+  properties de CSS, así que no se puede leer de globals.css en vivo — si
+  la paleta cambia (spec W-015 u otro), actualizar los hex acá a mano.
+
+  Fuentes: Fraunces (display) e Instrument Sans (texto) son .woff2
+  autohospedadas (spec W-015) — no cargan en clientes de correo, así que el
+  título usa una pila serif del sistema (Georgia) que se acerca al peso de
+  Fraunces, y el cuerpo una pila sans-serif del sistema. Logo: PNG absoluto
+  a sonopolis.org/logo.png (una URL relativa no resuelve en el email).
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F6F5F4;padding:32px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
   <tr>
     <td align="center">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;background-color:#FFFFFF;border-radius:16px;border:1px solid #E8DDD4;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;background-color:#08090A;border-radius:24px;overflow:hidden;">
         <tr>
-          <td style="padding:32px 32px 8px 32px;text-align:center;">
-            <div style="font-size:40px;line-height:1;">&#127926;</div>
-            <h1 style="margin:16px 0 0 0;font-size:24px;font-weight:bold;color:#3D2B1F;">Tu enlace para entrar</h1>
+          <td style="padding:40px 32px 8px 32px;text-align:center;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
+              <tr>
+                <td width="88" height="88" align="center" valign="middle" style="width:88px;height:88px;border-radius:50%;background-color:#FFFFFF;">
+                  <img src="https://sonopolis.org/logo.png" width="72" height="72" alt="Sonópolis" style="display:block;border-radius:50%;width:72px;height:72px;">
+                </td>
+              </tr>
+            </table>
+            <h1 style="margin:24px 0 0 0;font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:600;color:#FFFFFF;letter-spacing:-0.01em;">Tu enlace para entrar</h1>
           </td>
         </tr>
         <tr>
-          <td style="padding:8px 32px 0 32px;text-align:center;">
-            <p style="margin:0;font-size:16px;line-height:24px;color:#6B4F3A;">
-              Toca el bot&oacute;n para iniciar sesi&oacute;n en <strong style="color:#3D2B1F;">Son&oacute;polis</strong> y continuar con tu compra. No necesitas contrase&ntilde;a.
+          <td style="padding:12px 32px 0 32px;text-align:center;">
+            <p style="margin:0;font-size:15px;line-height:23px;color:#A7A2A9;">
+              Toca el bot&oacute;n para iniciar sesi&oacute;n en <strong style="color:#FFFFFF;">Son&oacute;polis</strong> y continuar con tu compra. No necesitas contrase&ntilde;a.
             </p>
           </td>
         </tr>
         <tr>
-          <td style="padding:24px 32px;">
+          <td style="padding:28px 32px 0 32px;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td align="center" style="background-color:#8B4513;border-radius:8px;">
-                  <a href="{{ .ConfirmationURL }}" style="display:block;padding:16px 24px;font-size:16px;font-weight:bold;color:#FFFFFF;text-decoration:none;">Entrar a Son&oacute;polis</a>
+                <td align="center" style="background-color:#FFE900;border-radius:12px;">
+                  <a href="{{ .ConfirmationURL }}" style="display:block;padding:16px 24px;font-size:15px;font-weight:700;color:#08090A;text-decoration:none;">Entrar a Son&oacute;polis</a>
                 </td>
               </tr>
             </table>
           </td>
         </tr>
         <tr>
-          <td style="padding:0 32px 24px 32px;">
-            <div style="background-color:#F5EDE6;border-radius:8px;padding:16px;">
-              <p style="margin:0 0 8px 0;font-size:13px;color:#6B4F3A;">&iquest;El bot&oacute;n no funciona? Copia y pega este enlace en tu navegador:</p>
-              <p style="margin:0;font-size:12px;line-height:18px;word-break:break-all;"><a href="{{ .ConfirmationURL }}" style="color:#8B4513;">{{ .ConfirmationURL }}</a></p>
+          <td style="padding:20px 32px 0 32px;">
+            <div style="background-color:#151617;border-radius:12px;padding:16px;">
+              <p style="margin:0 0 8px 0;font-size:12px;color:#A7A2A9;">&iquest;El bot&oacute;n no funciona? Copia y pega este enlace en tu navegador:</p>
+              <p style="margin:0;font-size:11px;line-height:17px;word-break:break-all;"><a href="{{ .ConfirmationURL }}" style="color:#FFE900;">{{ .ConfirmationURL }}</a></p>
             </div>
           </td>
         </tr>
         <tr>
-          <td style="padding:0 32px 32px 32px;text-align:center;border-top:1px solid #E8DDD4;">
-            <p style="margin:16px 0 0 0;font-size:12px;line-height:18px;color:#A0897A;">
+          <td style="padding:24px 32px 32px 32px;text-align:center;border-top:1px solid #232527;">
+            <p style="margin:20px 0 0 0;font-size:12px;line-height:18px;color:#575A5E;">
               El enlace vence en 1 hora y solo se puede usar una vez.<br>
               Si no pediste este correo, ign&oacute;ralo: nadie podr&aacute; entrar a tu cuenta.
             </p>
           </td>
         </tr>
       </table>
-      <p style="margin:24px 0 0 0;font-size:12px;color:#A0897A;">Son&oacute;polis &mdash; m&uacute;sica en vivo en Santiago</p>
+      <p style="margin:24px 0 0 0;font-size:12px;color:#A7A2A9;">Son&oacute;polis &mdash; m&uacute;sica en vivo</p>
     </td>
   </tr>
 </table>
