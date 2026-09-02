@@ -140,3 +140,19 @@ estado que migrar; la plantilla vuelve sola al default porque el gate la bloquea
 
 - El 401 de la anon key y los eventos mock → spec 021. Este spec **no** arregla la compra.
 - Correos que no sean de Auth (confirmación de compra, entrada en PDF) → spec aparte.
+
+## Addendum (2026-09-02) — rediseño de `magic-link.html` al estilo actual de marca
+
+`supabase/email-templates/magic-link.html` tenía el estilo viejo de AppAll (marrón/crema,
+emoji de nota musical) que quedó desactualizado desde el rediseño de marca de Sonópolis Web
+(spec W-015: negro `#08090A` + amarillo `#FFE900`, Splash y confirmación de compra ya lo
+usan). Pedido de Victor tras ver el correo real en su bandeja.
+
+Archivo actualizado en el repo con los hex de esa paleta (hardcodeados a propósito — los
+clientes de correo no leen custom properties de CSS) y logo absoluto a
+`https://sonopolis.org/logo.png`. **No se aplicó todavía al proyecto vía Management API**
+— dado el hallazgo de arriba (un PATCH parcial de `config/auth` borra el grupo SMTP
+completo y revierte límites y plantilla), aplicarlo requiere reenviar el set completo de
+campos junto con el contenido nuevo, no solo el campo de plantilla. Pendiente: subirlo
+desde el Dashboard de Supabase (Authentication → Email Templates → Magic Link, pega el
+HTML) — evita el riesgo del PATCH parcial porque el Dashboard sí manda el objeto completo.
