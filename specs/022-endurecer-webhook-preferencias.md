@@ -1,5 +1,25 @@
 # Spec 022 — Endurecer webhook y creación de preferencias
 
+> **Bug encontrado al aplicar (2-sep-2026):** primera compra real de punta a punta
+> (Problema 5/6/7 en `02-PROJECTS/Sonópolis Web/Investigación/como-testear-una-compra.md`)
+> reveló que `webhook-mp` nunca pudo encontrar el ticket a actualizar. Este spec guardaba
+> `mpData.id` (el `preference_id` real de MP) en `tickets.preference_id` y esperaba
+> recuperarlo en el webhook vía `pago.preference_id ?? pago.order?.id`. Verificado contra
+> un pago real aprobado: **`pago.preference_id` ya no existe** en la respuesta actual de
+> `GET /v1/payments/{id}` (MP la movió/quitó al migrar por dentro a la Orders API), y
+> `pago.order.id` es un id de otro concepto que nunca coincide. El `UPDATE` de tickets
+> siempre matcheaba 0 filas, sin error — el webhook devolvía `200 OK` igual, así que MP
+> nunca reintentaba. Esto explica por qué nunca se había completado un ticket real desde
+> que este spec se cerró.
+>
+> **Fix (2-sep-2026):** `create-preference` genera su propia referencia
+> (`crypto.randomUUID()`) *antes* de llamar a MP, la manda en `metadata.ticket_ref` de la
+> preferencia (MP la devuelve tal cual en el pago) y es lo que ahora se guarda en
+> `tickets.preference_id` — deja de depender de un campo que MP puede dejar de mandar sin
+> avisar. `webhook-mp` lee `pago.metadata?.ticket_ref` primero, con los campos viejos como
+> fallback por si un pago previo a este fix los trae. Ningún cambio de esquema — mismo
+> tipo de dato en la misma columna, solo cambió qué valor se le pone.
+>
 > Estado: **aplicado y verificado (2026-08-13).** Migración
 > `20260813054051_spec_022_endurecer_compra.sql` en producción, `create-preference` (v6) y
 > `webhook-mp` (v7) desplegados con el código de este spec. Los 12 criterios de cierre

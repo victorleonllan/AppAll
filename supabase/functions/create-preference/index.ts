@@ -77,6 +77,14 @@ serve(async (req) => {
       return json({ error: 'precio_no_disponible', detail: cotizError?.message }, 500);
     }
 
+    // Bug encontrado 2-sep-2026: GET /v1/payments/{id} ya no trae `preference_id`
+    // como campo propio (MP lo movió/quitó al migrar a la Orders API por dentro).
+    // webhook-mp no tenía con qué encontrar el ticket — nunca se completó uno real.
+    // Fix: generamos nuestra propia referencia ANTES de llamar a MP, se la mandamos
+    // en `metadata` (MP la devuelve tal cual en el pago) y es lo que guardamos en
+    // tickets.preference_id — deja de depender de un campo que MP dejó de mandar.
+    const ticketRef = crypto.randomUUID();
+
     // Crear preferencia en MP
     const preference = {
       items: [{
@@ -95,6 +103,7 @@ serve(async (req) => {
       auto_return: 'approved',
       notification_url: `${SUPABASE_URL}/functions/v1/webhook-mp`,
       external_reference: `${evento_id}|${user_id}`,
+      metadata: { ticket_ref: ticketRef },
     };
 
     const mpRes = await fetch(
@@ -126,7 +135,7 @@ serve(async (req) => {
       .rpc('reservar_ticket_pending', {
         p_evento_id: evento_id,
         p_cantidad: cantidad,
-        p_preference_id: mpData.id,
+        p_preference_id: ticketRef,
       })
       .single();
 

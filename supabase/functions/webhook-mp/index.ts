@@ -111,7 +111,15 @@ serve(async (req) => {
 
     if (topic === 'payment') {
       const pago = await mpGet(`/v1/payments/${id}`);
-      preferenceId = pago.preference_id ?? pago.order?.id ?? null;
+      // Bug encontrado 2-sep-2026: `pago.preference_id` ya no existe en la
+      // respuesta actual de MP (verificado contra un pago real) y `pago.order.id`
+      // es un id de otro concepto (Orders API) que nunca coincide con el
+      // preference_id que guardamos — el UPDATE de abajo nunca encontraba el
+      // ticket y ningún pago real se marcó completed. Fix: create-preference
+      // manda `metadata.ticket_ref` (una referencia propia, no depende de campos
+      // que MP puede dejar de mandar) y acá la leemos primero. Los fallbacks
+      // quedan solo por si algún pago viejo, previo a este fix, sí trae alguno.
+      preferenceId = pago.metadata?.ticket_ref ?? pago.preference_id ?? pago.order?.id ?? null;
       paymentId = pago.id?.toString() ?? id;
       estadoMp = pago.status;
     } else if (topic === 'merchant_order') {
