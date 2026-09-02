@@ -1,5 +1,17 @@
 # Spec 021 — Cerrar el flujo de compra en web
 
+> **Bug encontrado al aplicar (2-sep-2026):** primera compra real de punta a punta (test
+> user comprador de MP, tarjeta de sandbox, pago aprobado) reveló que `APP_WEB_URL` no
+> existía como secret en Supabase — se perdió el 1-sep-2026 en la migración a las nuevas
+> API keys de Supabase (todos los demás secrets se recrearon ese día; este no). Sin el
+> secret, `create-preference` caía al fallback hardcodeado de este spec
+> (`https://app-all-lemon.vercel.app`), un deployment de Vercel que ya no existe — el pago
+> se acreditaba en MP pero el fan volvía a un 404 `DEPLOYMENT_NOT_FOUND` en vez de a
+> Sonópolis. Corregido: `APP_WEB_URL` reseteado a `https://sonopolis.org` en Supabase
+> secrets + redeploy de `create-preference`, y el fallback en código actualizado al mismo
+> dominio (antes apuntaba al Vercel viejo). Detalle completo en el vault:
+> `02-PROJECTS/Sonópolis Web/Investigación/como-testear-una-compra.md` (Problema 6).
+>
 > Estado: **código completo, verificado el 2026-08-11 contra el repo actual** (los 9
 > problemas de este documento, incluidos los tres encontrados al implementar). Los
 > checkboxes de *Criterios de aceptación* nunca se habían tildado aunque el código ya los

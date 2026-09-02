@@ -6,7 +6,7 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 // Deploy web de Sonópolis. Las back_urls deben ser HTTPS: MP las valida al crear la
 // preferencia y con auto_return activo un scheme nativo hace que la rechace.
-const APP_WEB_URL = Deno.env.get('APP_WEB_URL') ?? 'https://app-all-lemon.vercel.app';
+const APP_WEB_URL = Deno.env.get('APP_WEB_URL') ?? 'https://sonopolis.org';
 
 // La app web llama a esta function desde otro origen. Sin esto el navegador
 // bloquea el preflight y la petición nunca sale.
