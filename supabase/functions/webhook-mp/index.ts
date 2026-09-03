@@ -46,7 +46,18 @@ async function firmaValida(req: Request, url: URL): Promise<boolean> {
   if (xRequestId) partes.push(`request-id:${xRequestId}`);
   partes.push(`ts:${ts}`);
 
-  const esperado = await hmacSha256Hex(MERCADOPAGO_WEBHOOK_SECRET, partes.join(';') + ';');
+  const manifest = partes.join(';') + ';';
+  const esperado = await hmacSha256Hex(MERCADOPAGO_WEBHOOK_SECRET, manifest);
+  // DEBUG TEMPORAL (2-sep-2026) — quitar una vez resuelto el 401. No loguea el secret.
+  console.log('firmaValida debug', {
+    xSignatureRaw: xSignature,
+    xRequestId,
+    dataId,
+    manifest,
+    v1Recibido: v1,
+    esperado,
+    coincide: igualesEnTiempoConstante(esperado, v1),
+  });
   return igualesEnTiempoConstante(esperado, v1);
 }
 
