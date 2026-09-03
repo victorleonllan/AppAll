@@ -96,7 +96,9 @@ serve(async (req) => {
       }],
       payer: { email: user.email },
       back_urls: {
-        success: `${APP_WEB_URL}/?compra=success`,
+        // Spec W076 (3-sep-2026) ya resolvió dónde ve el fan sus entradas —
+        // el pago aprobado vuelve directo ahí, no a la home.
+        success: `${APP_WEB_URL}/mis-entradas?compra=success`,
         failure: `${APP_WEB_URL}/?compra=failure`,
         pending: `${APP_WEB_URL}/?compra=pending`,
       },
