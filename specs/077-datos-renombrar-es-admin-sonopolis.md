@@ -1,6 +1,6 @@
 # Spec 077 — `es_admin()` pasa a llamarse `es_admin_sonopolis()`
 
-> Estado: escrito (4-sep-2026), sin aplicar
+> Estado: aplicado (4-sep-2026) — `supabase db push` verde; `es_admin_sonopolis()` devuelve `true` para el admin y `es_admin()` ya no existe
 > Capa: DATOS. Renombra una función del spec 074, ya aplicado. No cambia ningún permiso.
 >
 > **En una frase:** hoy la palabra "admin" nombra dos cosas distintas —el dueño de Sonópolis
