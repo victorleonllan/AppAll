@@ -5,6 +5,10 @@
 > Decisión de Victor (4-sep-2026), tras revisar el diseño original: el permiso de admin
 > vive en la base, no en una variable de entorno, y no hay clave ni login aparte.
 
+> **En una frase:** guardar en la base de datos quién es admin de Sonópolis, para que
+> Postgres mismo pueda decidir quién ve las cuentas bancarias y quién puede marcar un pago
+> — en vez de que eso dependa solo del código de la app.
+
 ## Contexto
 
 El diseño original (W-085) resolvía "quién es admin" con una variable de entorno
@@ -36,8 +40,9 @@ CREATE TABLE public.platform_admins (
 
 ALTER TABLE public.platform_admins ENABLE ROW LEVEL SECURITY;
 
--- Cada quien ve si él mismo es admin, y nada más. Sin esto la app no puede
--- decidir si dibuja el link a /admin sin preguntarle a un endpoint aparte.
+-- Cada quien ve si él mismo es admin, y nada más: nadie puede listar quiénes
+-- son los admins de la plataforma. Alcanza para que el layout de /admin decida
+-- si deja pasar o redirige (spec W-083).
 CREATE POLICY platform_admins_select_self ON public.platform_admins FOR SELECT
   USING (user_id = auth.uid());
 ```
