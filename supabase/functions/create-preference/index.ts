@@ -98,9 +98,21 @@ serve(async (req) => {
       back_urls: {
         // Spec W076 (3-sep-2026) ya resolvió dónde ve el fan sus entradas —
         // el pago aprobado vuelve directo ahí, no a la home.
-        success: `${APP_WEB_URL}/mis-entradas?compra=success`,
+        // `ref` (spec 072): la pestaña que MP devuelve puede pedirle la
+        // confirmación a confirm-payment por su cuenta, en vez de depender de
+        // que la otra pestaña siga abierta haciendo polling.
+        success: `${APP_WEB_URL}/mis-entradas?compra=success&ref=${ticketRef}`,
         failure: `${APP_WEB_URL}/?compra=failure`,
         pending: `${APP_WEB_URL}/?compra=pending`,
+      },
+      // Spec 072. Fuera efectivo (`ticket`) y transferencia por cajero (`atm`):
+      // MP los aprueba horas o días después del checkout, y la reconciliación
+      // hoy corre una vez al día (límite del plan Hobby de Vercel), así que ese
+      // comprador se quedaría sin entrada hasta la corrida siguiente. Quedan
+      // tarjeta y saldo de MP, que se aprueban en el acto.
+      // REVERTIR cuando el cron pase a correr cada pocos minutos.
+      payment_methods: {
+        excluded_payment_types: [{ id: 'ticket' }, { id: 'atm' }],
       },
       auto_return: 'approved',
       notification_url: `${SUPABASE_URL}/functions/v1/webhook-mp`,

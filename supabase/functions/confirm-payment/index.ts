@@ -55,9 +55,14 @@ serve(async (req) => {
   }
 
   try {
-    const { ticket_id } = await req.json();
-    if (!ticket_id) {
-      return json({ error: 'ticket_id_requerido' }, 400);
+    // `ticket_ref` (spec 072) es el `metadata.ticket_ref` que create-preference
+    // genera ANTES de hablar con MP y guarda en tickets.preference_id — la única
+    // referencia del ticket que existe antes que el ticket, y por eso la única
+    // que puede viajar en la back_url de Mercado Pago. `ticket_id` sigue siendo
+    // el camino del polling de /compra/confirmacion, que sí lo tiene.
+    const { ticket_id, ticket_ref } = await req.json();
+    if (!ticket_id && !ticket_ref) {
+      return json({ error: 'ticket_id_o_ticket_ref_requerido' }, 400);
     }
 
     // Service role: esta function solo puede CONFIRMAR contra datos reales de
@@ -66,11 +71,13 @@ serve(async (req) => {
     // estado depende de lo que MP responda, no de lo que pida quien llama.
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { data: ticket, error: ticketError } = await supabase
+    const consulta = supabase
       .from('tickets')
-      .select('id, evento_id, user_id, status, preference_id')
-      .eq('id', ticket_id)
-      .maybeSingle();
+      .select('id, evento_id, user_id, status, preference_id');
+
+    const { data: ticket, error: ticketError } = await (
+      ticket_id ? consulta.eq('id', ticket_id) : consulta.eq('preference_id', ticket_ref)
+    ).maybeSingle();
 
     if (ticketError || !ticket) {
       return json({ error: 'ticket_no_encontrado' }, 404);
