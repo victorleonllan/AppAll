@@ -54,6 +54,7 @@
 | 065 | `precio_vigente_de()` — único lugar que decide cuánto se cobra (general/puerta/preventa); `_reservar_ticket_shared` y `create-preference` pasan a relayarlo, sin ninguna rama de preventa en la Edge Function ni en la llamada a Mercado Pago | Aplicado (2026-09-01) — 1 bug encontrado y corregido antes de aplicar (`FOUND` reutilizado entre selects), ver addendum en el spec. FRONTEND (formulario de preventas) sigue pendiente |
 | 068 | `event_preventas.cupo` pasa a `NOT NULL` + `CHECK (cupo > 0)` — supera la parte "cupo opcional" de spec 064, pedido de Victor: toda preventa necesita un límite | Aplicado (2026-09-02) — se revisó producción antes de aplicar, la única fila existente ya tenía cupo, sin backfill |
 | 069 | `precio_vigente_de()` suma `restantes` (cupo - vendidos) a su salida, para que el frontend muestre "cuántas quedan" sin una segunda consulta | Aplicado (2026-09-02) — verificado contra producción con la fila real (restantes: 25). FRONTEND (mostrarlo en pantalla) es spec w070 (sonopolisWeb) |
+| 072 | Reconciliación de pagos pendientes: Edge Function `reconciliar-pagos` (barre los `pending` recientes y delega en `confirm-payment`), `ticket_ref` como segunda llave de `confirm-payment`, `ref=` en la `back_url` y fuera los medios de pago que MP aprueba en diferido. Red de seguridad del bloqueante mayor de la auditoría pre-producción | Aplicado (2026-09-04) — desplegada y verificada contra producción; la primera corrida destrabó 2 tickets pagados que llevaban horas en `pending`. Cron en `sonopolisWeb/specs/w079` |
 
 ## Progreso: 41 specs aplicados (el 022 se suma, 2026-08-13, con sus 12 criterios de cierre verificados; 046 y 047 se suman, 2026-08-15; 049 se suma, 2026-08-19, con sus 5 criterios de cierre verificados contra producción); 042 abierto (bloqueado por credenciales de Google); 043 abierto (Fase 0 de 7 aplicada, vive en otro repo); 048 propuesto, sin implementar; 050, 051 y 052 se suman, 2026-08-20, migraciones aplicadas contra producción; 021, 030, 031, 032, 033, 034, 036, 038, 039 y 041 en `main` sin verificar en runtime completo (021, 022, 028, 031, 033, 036, 037, 038 y 040 sí tienen su código y/o migración verificados contra producción o el repo actual — 022 y 040 con el 100% de su criterio de cierre); 029 propuesto. **La serie 036-041 está completa en código** — ver nota abajo. **021 también** — ver la nota del spec.
 
@@ -220,4 +221,4 @@ Fuente de verdad: `TicketStatus` en `src/types/index.ts`.
 
 - Supabase: xluinfihjjtxkglihxqz
 - Tablas: venues, events, profiles, tickets
-- MP: Checkout Pro (app Sonópolis, credenciales de prueba)
+- MP: Checkout Pro (app Sonópolis, credenciales de prueba — auditoría pre-producción en el spec 072)
