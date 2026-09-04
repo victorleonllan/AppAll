@@ -48,16 +48,11 @@ async function firmaValida(req: Request, url: URL): Promise<boolean> {
 
   const manifest = partes.join(';') + ';';
   const esperado = await hmacSha256Hex(MERCADOPAGO_WEBHOOK_SECRET, manifest);
-  // DEBUG TEMPORAL (2-sep-2026) — quitar una vez resuelto el 401. No loguea el secret.
-  console.log('firmaValida debug', {
-    xSignatureRaw: xSignature,
-    xRequestId,
-    dataId,
-    manifest,
-    v1Recibido: v1,
-    esperado,
-    coincide: igualesEnTiempoConstante(esperado, v1),
-  });
+  // El log de diagnóstico que vivía acá (2-sep-2026) se quitó antes de pasar a
+  // producción: imprimía el manifest, el `v1` recibido y el hash esperado en
+  // cada notificación, o sea un oráculo de firma para cualquiera con acceso a
+  // los logs. Si hay que volver a diagnosticar el 401, se reactiva a mano y por
+  // el rato que dure la sesión de diagnóstico, nunca desplegado.
   return igualesEnTiempoConstante(esperado, v1);
 }
 
