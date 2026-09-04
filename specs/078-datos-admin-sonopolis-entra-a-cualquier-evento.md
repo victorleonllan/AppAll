@@ -1,6 +1,6 @@
 # Spec 078 — El admin de Sonópolis entra a cualquier evento sin que lo inviten
 
-> Estado: escrito (4-sep-2026), sin aplicar
+> Estado: aplicado (4-sep-2026) — `supabase db push` verde; **falta verificarlo con la sesión real del admin** (ver Verificación)
 > Capa: DATOS. Modifica dos funciones del spec 033, ya aplicado.
 > **Depende del spec 077** (`es_admin()` → `es_admin_sonopolis()`): usa el nombre nuevo, así
 > que se aplica después. Los dos son DATOS contra la misma base: van uno detrás del otro,
