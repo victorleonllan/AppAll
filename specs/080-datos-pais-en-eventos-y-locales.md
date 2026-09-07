@@ -1,0 +1,92 @@
+# Spec 080 — `pais` en `events` y `venues`
+
+> Estado: escrito, sin aplicar (7-sep-2026)
+> Capa: DATOS. `supabase/migrations/<timestamp>_spec_080_pais_eventos_locales.sql`.
+> Depende de: spec 050 (`pais` en `event_sources`/`external_events`, ya aplicado).
+
+> **En una frase:** la cartelera mezcla eventos internos y scrapeados; los scrapeados ya
+> saben de qué país son y los internos no, así que filtrar por país hoy dejaría la mitad
+> del listado sin criterio.
+
+Pedido desde `sonopolisWeb` (cadena W-109…W-112). Vive acá por la regla de siempre: cambio
+de esquema = spec de AppAll, aunque quien lo consuma primero sea la web.
+
+## El problema
+
+El spec 050 le puso `pais` a `event_sources` y `external_events`. Con eso, un evento
+scrapeado sabe de qué país es. Pero `app/(marketing)/cartelera/page.js` arma la cartelera
+con **dos** fuentes: `getEventos` (tabla `events`, lo que se vende en Sonópolis) y
+`getEventosExternos` (lo scrapeado). `events` y `venues` no tienen ninguna noción de país
+— `venues` tiene `comuna`, que es geografía chilena sin decirlo.
+
+Filtrar solo los externos por país daría una cartelera incoherente: en Chile se vería todo,
+y en cualquier otro país se verían los eventos internos chilenos igual, porque no habría
+con qué excluirlos.
+
+## Decisión 1 — `pais` en las dos tablas, denormalizado en `events`
+
+- `venues.pais` — dónde está el local. Es su propiedad, no la de quien lo cargó.
+- `events.pais` — copiado del venue al crear el evento, **no derivado por `join`**.
+
+**Por qué `events.pais` propio y no `venues.pais` vía join:** `events.venue_id` es
+nullable — hay eventos cargados sin local de la tabla `venues` (dirección suelta, local que
+todavía no se dio de alta). Un `join` para filtrar dejaría a esos eventos fuera de toda
+cartelera, sin país al cual pertenecer. Además es el mismo criterio que el spec 049/050 ya
+aplicó a `external_events.comuna` y `external_events.pais`: el filtro de la cartelera no
+puede depender de un `join` en cada consulta.
+
+El costo conocido de denormalizar: un venue que corrija su país no arrastra los eventos ya
+creados. Se acepta a propósito — un evento pasado ocurrió donde ocurrió, y un venue no
+cambia de país en la práctica.
+
+## Decisión 2 — `char(2)` ISO en mayúsculas, `NOT NULL`, sin `DEFAULT` al final
+
+Idéntico al spec 050, para que las cuatro columnas de país del esquema se lean y se
+comparen igual (`external_events.pais`, `event_sources.pais`, `events.pais`,
+`venues.pais`).
+
+`DEFAULT 'CL'` solo durante la migración, para no romper las filas ya existentes — todo lo
+que hay hoy en producción es chileno. Después `DROP DEFAULT`: un `INSERT` que se olvide del
+país debe fallar fuerte, no asumir Chile en silencio. Ese silencio es exactamente el bug
+que este spec viene a cerrar.
+
+## Trabajo
+
+Migración `<timestamp>_spec_080_pais_eventos_locales.sql`:
+
+- `ALTER TABLE public.venues ADD COLUMN pais char(2) NOT NULL DEFAULT 'CL'`
+- `ALTER TABLE public.events ADD COLUMN pais char(2) NOT NULL DEFAULT 'CL'`
+- `ALTER TABLE public.venues ALTER COLUMN pais DROP DEFAULT`
+- `ALTER TABLE public.events ALTER COLUMN pais DROP DEFAULT`
+- `CREATE INDEX events_pais_comienza_idx ON public.events (pais, comienza_at)` — mismo
+  patrón que el `(pais, comienza_at)` de `external_events` (spec 050) y el
+  `(status, comienza_at)` del 049. Es el filtro exacto que la cartelera va a hacer.
+- `CREATE INDEX venues_pais_idx ON public.venues (pais)` — `getVenues` ordena por nombre
+  y filtrará por país; sin `comienza_at` que agregar al índice.
+
+**Sin cambios de RLS.** El país no es un criterio de permiso: no decide quién puede leer o
+escribir una fila, solo cuál cartelera la muestra. Meterlo en una policy convertiría un
+filtro de producto en una regla de seguridad, y volvería imposible que un back-office vea
+los eventos de todos los países.
+
+**Sin trigger que copie `venues.pais` a `events.pais`.** Un trigger escondería la decisión
+en la base, donde nadie la lee al escribir el formulario. Lo estampa la app al crear el
+evento (spec W-111 lo cablea), del mismo modo en que `pipeline.js` ya estampa
+`pais: FUENTE.pais` en cada fila que inserta.
+
+## Criterios de aceptación
+
+- [ ] `events.pais` y `venues.pais` existen, `char(2)`, `NOT NULL`, sin `DEFAULT`
+- [ ] Todas las filas existentes de las dos tablas quedaron en `'CL'`
+- [ ] Índices `events_pais_comienza_idx` y `venues_pais_idx` existen
+- [ ] Un `INSERT` en `events` sin `pais` falla (comprobado a mano, no asumido)
+- [ ] La app sigue levantando: `events` y `venues` se leen con `select *`, así que la
+      columna nueva llega sola a los mappers sin romper nada
+
+## Fuera de alcance
+
+- Que el formulario de crear evento/local mande el país (spec W-111 en la web)
+- Filtrar la cartelera por país (specs W-109…W-112)
+- `pais` en `profiles` o `artists` — un músico puede tocar en varios países; no es el
+  mismo dato ni se resuelve igual, y hoy nada lo pide
+- Aplicar la migración: el `supabase db push` lo decide Victor
