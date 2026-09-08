@@ -1,6 +1,6 @@
 # Spec 083 — La preventa cierra por reloj en el cobro, no en pantalla
 
-> Estado: **escrito, sin aplicar** (8-sep-2026)
+> Estado: **aplicado en producción** (8-sep-2026) — `20260908155300_spec_083_preventa_cierra_por_tiempo.sql` corrida contra `xluinfihjjtxkglihxqz`. Los 7 criterios verificados contra producción con un evento clonado dentro de una transacción revertida (cotización y reserva real con `_reservar_ticket_shared`: 2 entradas a $3.000 = 6.000 con la preventa abierta; $5.000 de puerta con el evento empezado hace 1 h). `pg_get_functiondef` de las cuatro funciones coincide con el archivo. PostgREST ya devuelve `preventa_cierra_at` y `preventa_abierta` con `anon`; la preventa del incidente sale `preventa_abierta = false`. `create-preference` no se redespliega: lee `cotizacion.monto` por nombre y la columna nueva no lo afecta.
 > Capa: LÓGICA. `supabase/migrations/<timestamp>_spec_083_preventa_cierra_por_tiempo.sql`.
 > Depende de: spec 082 (columnas de cierre), spec 069 (`precio_vigente_de` con
 > `restantes`), spec 071 (última versión de `_reservar_ticket_shared`).
@@ -160,19 +160,19 @@ cupo y dura lo que MP tarde en cobrar. Si alguna vez importa, la perilla es
 Con un evento de prueba `tipo_precio = 'puerta'`, `comienza_at` mañana a las 21:00, y una
 preventa con cupo:
 
-- [ ] `cierre_tipo = 'horas_antes'`, `cierre_horas_antes = 3` → `preventa_cierra_at` da
+- [x] `cierre_tipo = 'horas_antes'`, `cierre_horas_antes = 3` → `preventa_cierra_at` da
       mañana 18:00 y `precio_vigente_de` devuelve la preventa con ese `cierra_at`.
-- [ ] Mover `comienza_at` a hace 1 hora → `precio_vigente_de` devuelve puerta
+- [x] Mover `comienza_at` a hace 1 hora → `precio_vigente_de` devuelve puerta
       (`preventa_id NULL`) aunque `activa` y con cupo. `reservar_ticket_pending` cobra
       `events.monto`, no el de la preventa.
-- [ ] `cierre_tipo = 'fecha'`, `cierre_at = now() + interval '1 hour'` → preventa;
+- [x] `cierre_tipo = 'fecha'`, `cierre_at = now() + interval '1 hour'` → preventa;
       `cierre_at = now() - interval '1 minute'` → puerta.
-- [ ] Preventa 1 con `cierre_at` pasado y Preventa 2 abierta → `precio_vigente_de` devuelve
+- [x] Preventa 1 con `cierre_at` pasado y Preventa 2 abierta → `precio_vigente_de` devuelve
       la 2.
-- [ ] `comienza_at = NULL` con regla `horas_antes` → puerta (falla cerrado).
-- [ ] Desde la web, `.from("event_preventas").select("*, preventa_cierra_at")` trae la
+- [x] `comienza_at = NULL` con regla `horas_antes` → puerta (falla cerrado).
+- [x] Desde la web, `.from("event_preventas").select("*, preventa_cierra_at")` trae la
       columna calculada con `anon`.
-- [ ] `pg_get_functiondef` de las cuatro funciones coincide con el archivo (como se hizo
+- [x] `pg_get_functiondef` de las cuatro funciones coincide con el archivo (como se hizo
       en el 065).
 
 ## Fuera de alcance
