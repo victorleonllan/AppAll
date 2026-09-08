@@ -111,3 +111,25 @@ un número, y se anota el spec que finalmente cierra la ventana del `NOT NULL`.
 Verificado el 8-sep-2026 con `supabase migration list`: la migración del spec 050, de la que
 este depende, está aplicada en producción, y la de este spec (`20260907150500`) es la única
 pendiente contra esa base.
+
+## Addenda — 8-sep-2026: la ventana del `NOT NULL` también rompe la app móvil
+
+El diseño no cambia. Se corrige un supuesto del spec: que la única app que inserta en
+`events` y `venues` es la web.
+
+Al preparar el `db push` se verificó el código de esta app: `grep -rn "pais" src/` devuelve
+**cero**. Los dos únicos inserts a esas tablas —`mapVenueToDB` en `VenuesContext.tsx:116` y
+`mapEventoToDB` en `EventosContext.tsx:159`— no mandan la columna. Con la migración aplicada,
+crear un local o un evento **desde la app móvil** falla igual que desde la web, y el W-114
+(que es frontend de `sonopolisWeb`) no lo arregla: son dos frontends distintos contra la
+misma tabla.
+
+Consecuencia para el orden de aplicación: el `db push` no va junto al deploy del W-114 y
+listo. Necesita, además, un spec FRONTEND de AppAll simétrico al W-114 —que los dos mappers
+estampen `pais`— aplicado y en manos de quien use la app. Mientras la app móvil se distribuya
+por build (no por deploy instantáneo como la web), la ventana de rotura dura lo que tarde esa
+build en llegar al dispositivo, que es más que un deploy.
+
+Nada de esto invalida el `char(2) NOT NULL` sin default: la alternativa —dejar el `DEFAULT
+'CL'`— es exactamente el silencio que el spec vino a cerrar. Lo que cambia es qué hay que
+tener listo antes de empujar.
