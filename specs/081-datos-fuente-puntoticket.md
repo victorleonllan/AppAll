@@ -1,6 +1,6 @@
 # Spec 081 — La fuente `puntoticket` en `event_sources`
 
-> Estado: escrito, sin aplicar (8-sep-2026)
+> Estado: migración escrita (`20260908115505_spec_081_fuente_puntoticket.sql`), sin aplicar (8-sep-2026)
 > Capa: DATOS. `supabase/migrations/<timestamp>_spec_081_fuente_puntoticket.sql`.
 > Depende de: spec 049 (`event_sources`), spec 050 (`pais` en `event_sources`).
 > Habilita: `sonopolisWeb/specs/w115-logica-fuente-puntoticket.md`.
