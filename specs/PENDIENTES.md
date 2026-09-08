@@ -820,6 +820,21 @@ paralelo). Necesita HTTPS: no se prueba en `localhost` ni con el dev server por 
 
 ---
 
+## `comienza_at` en la app móvil 🟡 spec FRONTEND sin escribir (8-sep-2026)
+
+`src/` no escribe `events.comienza_at` (`grep comienza src/` da cero): un evento creado desde
+la app queda con `fecha`/`hora` en texto y `comienza_at = NULL`. Hasta ahora era cosmético
+(la web cae al texto). Con el spec 083, "horas antes del inicio" de una preventa se calcula
+contra `comienza_at`, y sin él la preventa **falla cerrado** (se cobra puerta). Hoy no muerde
+porque solo la web crea preventas y la web sí escribe `comienza_at` (`libs/fecha.js`) — pero
+un evento creado en la app y editado después en la web para agregarle preventas queda con
+preventas que nunca se venden. El arreglo es que `mapEventoToDB` (`src/context/EventosContext.tsx`)
+arme `comienza_at` desde los inputs, igual que `armarFechaHora` en la web. Va junto con el
+spec de `pais` que también le falta a la app (ver el bloqueante de arriba): mismo archivo,
+mismo motivo.
+
+---
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs
