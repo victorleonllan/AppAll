@@ -1,5 +1,24 @@
 # Pendientes — specs propuestos
 
+## ⚠️ Bloqueante en producción (8-sep-2026) — crear evento y local está roto
+
+El spec 080 se aplicó a producción con el `pais char(2) NOT NULL` sin default y **sin
+frontend que lo mande**, por decisión explícita de Victor. Desde entonces, cualquier
+`INSERT` en `events` o `venues` falla con `23502 null value in column "pais"`, en los dos
+clientes. Lo que **no** está afectado: leer la cartelera, comprar, canjear entradas y editar
+lo ya creado — nada de eso escribe la columna.
+
+Para cerrarlo hacen falta dos specs de FRONTEND, uno por cliente, y ninguno depende del otro:
+
+1. **`sonopolisWeb` W-114** — escrito, sin implementar. Depende a su vez del W-111 (los
+   mappers escriben `pais`) y del W-109 (`getPaisActivo`), también sin implementar.
+2. **AppAll — spec sin escribir.** `mapVenueToDB` (`src/context/VenuesContext.tsx:116`) y
+   `mapEventoToDB` (`src/context/EventosContext.tsx:159`) tienen que estampar `pais`. Hoy
+   `grep -rn "pais" src/` devuelve cero: la app móvil no conoce la columna. Simétrico al
+   W-114, y con un costo extra: la app se distribuye por build, así que la ventana dura lo
+   que tarde esa build en llegar al dispositivo, no lo que tarda un deploy.
+
+
 > Inventario de todo lo detectado y **no** corregido, al 2026-08-08.
 > Cada sección es un spec candidato. Se trabajan de a uno; el orden importa.
 >
