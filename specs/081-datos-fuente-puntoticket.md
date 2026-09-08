@@ -1,6 +1,6 @@
 # Spec 081 — La fuente `puntoticket` en `event_sources`
 
-> Estado: migración escrita (`20260908115505_spec_081_fuente_puntoticket.sql`), sin aplicar (8-sep-2026)
+> Estado: **aplicado en producción** (8-sep-2026) — `20260908115505_spec_081_fuente_puntoticket.sql`
 > Capa: DATOS. `supabase/migrations/<timestamp>_spec_081_fuente_puntoticket.sql`.
 > Depende de: spec 049 (`event_sources`), spec 050 (`pais` en `event_sources`).
 > Habilita: `sonopolisWeb/specs/w115-logica-fuente-puntoticket.md`.
@@ -77,11 +77,13 @@ segundo, ahora sí con algo concreto que mirar.
 
 ## Criterios de aceptación
 
-- [ ] La migración crea la fila con los cuatro valores de la Decisión 2
-- [ ] Correrla dos veces seguidas no falla (`on conflict do nothing`)
-- [ ] `select slug, nombre, home_url, pais, activa from event_sources` devuelve las dos
-      fuentes, `portaltickets` intacta
-- [ ] `supabase db push` aplicado en producción y confirmado con `supabase migration list`
+- [x] La migración crea la fila con los cuatro valores de la Decisión 2
+- [x] Correrla dos veces seguidas no falla — el mismo `insert` se corrió otra vez contra
+      producción y devolvió vacío sin error
+- [x] `select slug, nombre, home_url, pais, activa from event_sources` devuelve las dos
+      fuentes, `portaltickets` intacta (`activa = true`, `pais = CL` las dos)
+- [x] `supabase db push` aplicado en producción y confirmado con `supabase migration list`
+      (`20260908115505` local = remoto)
 
 ## Fuera de alcance
 
