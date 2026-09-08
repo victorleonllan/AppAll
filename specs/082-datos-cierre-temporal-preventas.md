@@ -1,6 +1,6 @@
 # Spec 082 — Cierre temporal obligatorio en preventas
 
-> Estado: **escrito, sin aplicar** (8-sep-2026)
+> Estado: **aplicado en producción** (8-sep-2026) — `20260908155200_spec_082_cierre_temporal_preventas.sql` corrida contra `xluinfihjjtxkglihxqz` con `supabase db push`, los 6 criterios verificados por SQL directo en una transacción revertida. Prechequeo: una sola preventa activa en producción (la del incidente, Santiago samba club, 7/19 vendidas), que recibió el default `horas_antes`/3 — y como su evento ya pasó, con el 083 quedó cerrada sola.
 > Capa: DATOS. `supabase/migrations/<timestamp>_spec_082_cierre_temporal_preventas.sql`.
 > Depende de: spec 064 (`event_preventas`), spec 068 (`cupo` obligatorio), spec 045
 > (`events.comienza_at`).
@@ -125,15 +125,15 @@ resuelve el spec 083 (falla cerrado: sin `comienza_at`, la preventa se considera
 
 ## Criterios de aceptación
 
-- [ ] Las tres columnas existen con los tipos y defaults de arriba
+- [x] Las tres columnas existen con los tipos y defaults de arriba
       (`information_schema.columns`).
-- [ ] Todas las filas previas quedaron `cierre_tipo = 'horas_antes'`, `cierre_horas_antes = 3`.
-- [ ] `INSERT` con `cierre_tipo = 'fecha'` y `cierre_at NULL` falla por
+- [x] Todas las filas previas quedaron `cierre_tipo = 'horas_antes'`, `cierre_horas_antes = 3`.
+- [x] `INSERT` con `cierre_tipo = 'fecha'` y `cierre_at NULL` falla por
       `event_preventas_cierre_completo`.
-- [ ] `INSERT` con `cierre_tipo = 'horas_antes'` y `cierre_horas_antes = -1` falla.
-- [ ] `INSERT` con `cierre_tipo = 'puerta'` (o cualquier otro) falla por
+- [x] `INSERT` con `cierre_tipo = 'horas_antes'` y `cierre_horas_antes = -1` falla.
+- [x] `INSERT` con `cierre_tipo = 'puerta'` (o cualquier otro) falla por
       `event_preventas_cierre_tipo_check`.
-- [ ] `INSERT` mínimo (sin ninguna columna de cierre) queda con el recomendado.
+- [x] `INSERT` mínimo (sin ninguna columna de cierre) queda con el recomendado.
 
 ## Fuera de alcance
 
