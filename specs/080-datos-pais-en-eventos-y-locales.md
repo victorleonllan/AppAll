@@ -1,6 +1,6 @@
 # Spec 080 — `pais` en `events` y `venues`
 
-> Estado: escrito, sin aplicar (7-sep-2026)
+> Estado: **aplicado en producción** (8-sep-2026), con la ventana del `NOT NULL` abierta a propósito — ver la addenda del 8-sep al final
 > Capa: DATOS. `supabase/migrations/<timestamp>_spec_080_pais_eventos_locales.sql`.
 > Depende de: spec 050 (`pais` en `event_sources`/`external_events`, ya aplicado).
 
@@ -76,12 +76,15 @@ evento (spec W-111 lo cablea), del mismo modo en que `pipeline.js` ya estampa
 
 ## Criterios de aceptación
 
-- [ ] `events.pais` y `venues.pais` existen, `char(2)`, `NOT NULL`, sin `DEFAULT`
-- [ ] Todas las filas existentes de las dos tablas quedaron en `'CL'`
-- [ ] Índices `events_pais_comienza_idx` y `venues_pais_idx` existen
-- [ ] Un `INSERT` en `events` sin `pais` falla (comprobado a mano, no asumido)
-- [ ] La app sigue levantando: `events` y `venues` se leen con `select *`, así que la
-      columna nueva llega sola a los mappers sin romper nada
+- [x] `events.pais` y `venues.pais` existen, `char(2)`, `NOT NULL`, sin `DEFAULT` —
+      `information_schema.columns`: `character(2)`, `is_nullable = NO`, `column_default = null`
+- [x] Todas las filas existentes de las dos tablas quedaron en `'CL'` — 2 eventos, 4 locales
+- [x] Índices `events_pais_comienza_idx` y `venues_pais_idx` existen — verificados en `pg_indexes`
+- [x] Un `INSERT` en `events` sin `pais` falla — `23502 null value in column "pais"`, probado
+      contra producción dentro de un bloque que aborta siempre (no quedó fila de prueba).
+      Mismo resultado en `venues`
+- [x] La app sigue levantando: `select *` sobre `events` y `venues` con la anon key responde
+      normal, con `pais: "CL"` en cada fila
 
 ## Fuera de alcance
 
@@ -133,3 +136,23 @@ build en llegar al dispositivo, que es más que un deploy.
 Nada de esto invalida el `char(2) NOT NULL` sin default: la alternativa —dejar el `DEFAULT
 'CL'`— es exactamente el silencio que el spec vino a cerrar. Lo que cambia es qué hay que
 tener listo antes de empujar.
+
+## Addenda — 8-sep-2026: aplicado con la ventana abierta, decisión de Victor
+
+La migración se aplicó a producción (`supabase db push`, junto con la del spec 081) **antes**
+de que existiera el frontend que manda el país, en ninguno de los dos clientes. Decisión
+explícita de Victor al ver el estado de la cadena: la ventana se acepta y se cierra después.
+
+Qué significa hoy, en concreto: **crear un evento o un local falla en producción** —web y app
+móvil— con `23502 null value in column "pais"`. Todo lo demás sigue igual: leer la cartelera,
+comprar, canjear entradas y editar lo ya creado no tocan la columna nueva.
+
+Qué la cierra, en orden:
+
+1. `sonopolisWeb` — el W-114 (formulario que elige el país), que depende del W-111 y el W-109.
+   Ninguno de los tres está implementado: los commits `feat(spec-W11x)` son los specs.
+2. AppAll — un spec FRONTEND propio, todavía sin escribir: que `mapEventoToDB` y `mapVenueToDB`
+   estampen `pais`. Sin él, la app móvil sigue rota aunque la web ya funcione.
+
+Verificación de la aplicación, contra producción el 8-sep-2026: los 5 criterios de aceptación
+de arriba, todos comprobados por SQL directo, no asumidos.
