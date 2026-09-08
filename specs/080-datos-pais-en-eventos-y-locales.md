@@ -90,3 +90,24 @@ evento (spec W-111 lo cablea), del mismo modo en que `pipeline.js` ya estampa
 - `pais` en `profiles` o `artists` — un músico puede tocar en varios países; no es el
   mismo dato ni se resuelve igual, y hoy nada lo pide
 - Aplicar la migración: el `supabase db push` lo decide Victor
+
+## Addenda — 8-sep-2026: a qué spec de la web apunta cada cosa
+
+El diseño de este spec no cambia. Se corrigen las referencias cruzadas, que estaban corridas
+un número, y se anota el spec que finalmente cierra la ventana del `NOT NULL`.
+
+- **Decisión 2, "el spec W-111 lo cablea"** y **Fuera de alcance, "que el formulario de crear
+  evento/local mande el país (spec W-111)"** → el formulario nunca fue el W-111 (ese filtra
+  la cartelera). Era el **W-112**, y el W-112 quedó **superado por el W-114** el 8-sep-2026.
+- **Fuera de alcance, "filtrar la cartelera por país (specs W-109…W-112)"** → la cadena que
+  lo hace es **W-109 → W-111 → W-113**.
+- **El spec de la web que hay que desplegar junto al `supabase db push` de esta migración es
+  el W-114.** Entre el push y ese deploy, crear un evento o un local falla por el `NOT NULL`
+  sin default: la ventana es inevitable en cualquiera de los dos órdenes, así que va migración
+  primero y deploy inmediatamente después, no separados.
+- **Fuera de alcance, "`pais` en `profiles`"** — sigue fuera, y el W-114 explica por qué no
+  hizo falta: el país se elige en el formulario del local, no se deduce de quién lo carga.
+
+Verificado el 8-sep-2026 con `supabase migration list`: la migración del spec 050, de la que
+este depende, está aplicada en producción, y la de este spec (`20260907150500`) es la única
+pendiente contra esa base.
