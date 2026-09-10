@@ -427,9 +427,12 @@ Las dos que faltan:
 Mismo patrón que el caso del spec 045: creadas a mano, sin rastro en el repo. Un `db reset` deja
 una base sin esas columnas, y el código que las lea falla.
 
-Pendiente decidir: migración retroactiva que las declare, o borrarlas si están muertas
-(`venues.avatar` no tiene ni un dato; `profiles.avatar` tiene uno, hay que ver si la app lo usa
-o si quedó de una versión vieja de la subida de imágenes).
+**No están muertas: `sonopolisWeb` las lee como fallback** (verificado 10-sep-2026) —
+`DirectorioMusicos.js` hace `m.foto ?? m.avatar` y `local/page.js` hace `venue.image ?? venue.avatar`.
+Borrarlas rompe el directorio de músicos y el panel del local.
+
+Así que el arreglo es **migración retroactiva que las declare**, no borrado. Que `venues.avatar`
+tenga 0 valores no significa que sobre: significa que hoy nadie cae en el fallback.
 
 Mientras tanto, `scripts/restaurar-local.sql` las agrega al final para que la restauración sea fiel.
 
