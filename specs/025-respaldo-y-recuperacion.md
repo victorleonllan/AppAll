@@ -1,6 +1,7 @@
 # Spec 025 — Respaldo y recuperación de la base de producción
 
-> Estado: **propuesto** (10-sep-2026)
+> Estado: **diseño validado en banco de pruebas** (10-sep-2026) — el mecanismo se probó
+> entero en el Mac y funcionó; falta montarlo en `victorwin`, que es donde tiene que vivir.
 > Capa: OPERACIÓN — no toca esquema, no genera migración. El único spec de la serie que no
 > escribe en la base: solo la lee.
 > Depende de: nada. Lo único que necesita es la credencial de producción y la PC `victorwin`.
@@ -158,6 +159,11 @@ un backup.
 
 ## Criterios de aceptación
 
+- [x] **Restauración completa probada de punta a punta** (10-sep-2026, en el Mac como banco de
+      pruebas): Postgres 17.11, andamiaje + 55 migraciones + datos → **23 tablas idénticas a
+      producción, cero diferencias**, incluidos los 15 usuarios de `auth.users`, las 15 filas de
+      `storage.objects` y los 15 archivos del bucket
+- [x] Verificación por conteos implementada y corriendo (Decisión 8)
 - [ ] Postgres 17 (PGDG) instalado en WSL, con `pg_dump`/`pg_restore`/`psql` en el PATH
 - [ ] Credencial de producción en WSL con permisos `600`, fuera del vault y fuera de git,
       apuntando al **pooler en modo sesión** (la conexión directa es IPv6-only y en Free no
@@ -185,3 +191,53 @@ un backup.
 - **Respaldo de la app, de Vercel o del repo.** Esto es la base y su contenido.
 - **`auth_leaked_password_protection`**, que el pendiente original mezclaba acá: es un toggle
   del dashboard, no tiene que ver con respaldo.
+
+
+---
+
+## Addenda — primera ejecución (10-sep-2026)
+
+Ejecutado desde el Mac como banco de pruebas, antes de montar nada en `victorwin`. El objetivo
+era validar el diseño, y de paso dejar de estar sin ninguna copia de datos.
+
+**Qué se hizo:**
+
+1. `scripts/backup-api.py` — exportador vía Management API. Vía **secundaria**: no necesita la
+   contraseña de la base (usa el token del CLI en el llavero), así que corrió hoy sin esperar
+   ninguna credencial. Salida en `~/backups/sonopolis/<fecha>/`: JSON por tabla, `datos.sql`
+   con INSERTs portables, los binarios del bucket y `conteos.json`. **6 MB en total.**
+2. `scripts/restaurar-local.sql` — el andamiaje que Supabase provee y un Postgres puro no.
+3. Restauración completa en un Postgres 17 local y verificación contra producción: **23 tablas
+   idénticas, cero diferencias**.
+
+**El dato que responde al objetivo "poder irse de Supabase":** el andamiaje son ~40 líneas de
+SQL — los esquemas `auth` y `storage`, seis roles, `auth.uid()`/`role()`/`email()`/`jwt()`, tres
+helpers de Storage y la publicación de Realtime. Fuera de eso, las 55 migraciones corren tal
+cual en Postgres puro. **La dependencia con Supabase es fina y está acotada**, no es estructural.
+
+### Dos hallazgos que la prueba destapó
+
+Ninguno se ve mirando el repo — los dos aparecieron al intentar reconstruir desde cero, que es
+justo lo que nadie había hecho desde agosto. Documentados en `PENDIENTES.md`:
+
+1. **La cadena de migraciones no reconstruye desde cero.** El spec 050
+   (`20260819144528_spec_050_pais_fuentes`) tiene timestamp **anterior** al 049
+   (`20260819164643_spec_049_eventos_externos`) del que depende: agrega `pais` a una tabla que
+   todavía no existe. En orden cronológico falla, y arrastra al 081. En producción no se notó
+   porque se aplicaron en el orden en que se pushearon.
+2. **Dos columnas viven en producción sin migración que las cree:** `profiles.avatar` (con 1
+   valor no nulo) y `venues.avatar` (con 0). Drift real, del mismo tipo que el caso del spec 045.
+   242 de 244 columnas coinciden — el drift es pequeño, pero existe.
+
+### Lo que esta vía NO cubre, y por qué la principal sigue siendo `pg_dump`
+
+El exportador por API captura **datos**, no esquema: funciones, policies, triggers y grants no
+salen ahí — se reconstruyen aplicando las migraciones. Eso funciona **solo mientras las
+migraciones reflejen producción**, y el hallazgo 2 muestra que hoy no lo hacen del todo. Por eso
+la vía principal del spec sigue siendo `pg_dump --schema-only` contra producción: captura lo que
+**está**, no lo que debería estar.
+
+### Ojo con el nuevo respaldo
+
+`~/backups/sonopolis/` contiene emails de compradores y hashes de contraseña de 15 personas
+reales. Está fuera del repo y no debe entrar a git ni subir sin cifrar a ninguna nube.
