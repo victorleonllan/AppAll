@@ -44,8 +44,8 @@ Para cerrarlo hacen falta dos specs de FRONTEND, uno por cliente, y ninguno depe
      └──▶ DOMINIO PROPIO ──▶ terceros       │                   │
                                             │                   │
 023 (borrado) ──▶ 024 (entorno local) ──────┼───────────────────┘
-       │                                    │
-       └──▶ 025 (respaldo)                  │
+       ▲                                    │
+       └── 025 (respaldo, escrito 10-sep)   │  ← flecha invertida: el respaldo va ANTES
                                             │
 030 (dashboard banda)   ─┐                  │
 031 (dashboard local)   ─┴── aforo ─────────┘
@@ -388,14 +388,25 @@ Documentación completa en el vault: `Hermes/Agentes/Base de Datos/supabase-loca
 
 ---
 
-## Spec 025 — Respaldo y recuperación 🟡
+## Spec 025 — Respaldo y recuperación ✍️ escrito, sin implementar
 
-**Por qué:** hoy un borrado accidental en producción es irreversible.
+**El spec ya existe:** `specs/025-respaldo-y-recuperacion.md` (10-sep-2026). Diseño completo y
+medición del estado actual en el vault:
+`02-PROJECTS/Sonópolis/Producto/Datos/plan-respaldo-diversificado-20260908.md`.
 
-- Plan Free: **sin PITR, sin restore self-service**
-- Definir dumps periódicos (`supabase db dump`) o evaluar el plan Pro
-- Activar `auth_leaked_password_protection` (deshabilitado; se hace desde el dashboard, no por migración)
-- Ojo: el plan Free **pausa el proyecto tras ~1 semana de inactividad**. Riesgo concreto de cara al Demo Day del 23-sep-2026
+Confirmado contra producción el 8-sep-2026: `pitr_enabled: false` y lista de backups **vacía**
+— no hay ninguna copia de datos, solo del esquema. La base son 14 MB.
+
+**Dependencia invertida respecto del mapa original.** Estaba anotado como `023 (borrado) ──▶
+025 (respaldo)`, o sea el respaldo después de habilitar borrados. Va al revés: el 023 introduce
+`CASCADE` sobre `auth.users`, y borrar un usuario pasará a arrastrar sus ventas. Habilitar eso
+sin respaldo es exactamente el escenario contra el que este spec protege.
+
+Sigue pendiente y no lo cubre el 025, porque no es respaldo sino un toggle del dashboard:
+activar `auth_leaked_password_protection` (hoy deshabilitado).
+
+Ojo aparte: el plan Free **pausa el proyecto tras ~1 semana de inactividad**. Riesgo concreto
+de cara al Demo Day del 23-sep-2026 — no lo resuelve un respaldo.
 
 ---
 
