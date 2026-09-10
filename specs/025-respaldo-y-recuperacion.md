@@ -168,13 +168,16 @@ un backup.
 - [ ] Credencial de producción en WSL con permisos `600`, fuera del vault y fuera de git,
       apuntando al **pooler en modo sesión** (la conexión directa es IPv6-only y en Free no
       hay IPv4)
-- [ ] `scripts/backup-sonopolis.sh` versionado (el script va a git; los dumps **nunca**)
-- [ ] Una corrida manual completa deja: `.sql`, `.dump`, los 14 objetos del bucket y la base
-      `sonopolis_backup` cargada
+- [x] `scripts/backup-sonopolis.sh` versionado (el script va a git; los dumps **nunca**)
+- [x] Una corrida completa deja `.sql` plano, `.dump` custom, la réplica cargada y los conteos
+      escritos — **probado de punta a punta** contra una base local (10-sep-2026). Falta probarlo
+      contra producción por el pooler, que necesita la credencial
+- [x] Un fallo forzado deja `ULTIMO_ERROR.txt` escrito y sale con código 1 — probado
+- [x] La retención está implementada: borra los diarios de más de 30 días y conserva el primero
+      de cada mes
 - [ ] La verificación de conteos coincide con producción tabla por tabla y en `auth.users`
 - [ ] El cron dispara solo, dos noches seguidas, sin intervención
-- [ ] Un fallo forzado (credencial mal puesta) produce el aviso por WhatsApp
-- [ ] La retención borra lo que pasa de 30 días y conserva el mensual
+- [ ] Hermes convierte `ULTIMO_ERROR.txt` en aviso por WhatsApp
 - [ ] La copia que sale de la PC está cifrada y se probó descifrarla
 - [ ] **Prueba de fuego:** la app local levanta contra la réplica y Sonópolis funciona. Recién
       ahí el objetivo "poder irse de Supabase" está demostrado
@@ -241,3 +244,31 @@ la vía principal del spec sigue siendo `pg_dump --schema-only` contra producci�
 
 `~/backups/sonopolis/` contiene emails de compradores y hashes de contraseña de 15 personas
 reales. Está fuera del repo y no debe entrar a git ni subir sin cifrar a ninguna nube.
+
+
+## Addenda 2 — el script, probado (10-sep-2026)
+
+`scripts/backup-sonopolis.sh` corre entero: dump en dos formatos, bucket, restauración en la
+réplica, verificación de conteos y retención. Probado apuntando a una base local en vez de
+producción — queda sin probar solo la conexión por el pooler, que necesita la credencial.
+
+**La primera corrida falló, y eso fue lo valioso.** Tres bugs que ningún repaso del código habría
+mostrado:
+
+1. **Los triggers se disparan al restaurar.** Al cargar `events`, el trigger que agrega al creador
+   como colaborador insertaba en `event_collaborators`, y después la carga de esa misma tabla
+   chocaba con su propia clave primaria. Se arregla con `pg_dump --disable-triggers`.
+2. **El dump no se basta a sí mismo.** Limitado a `public`/`auth`/`storage`, deja fuera el esquema
+   `extensions` (pgcrypto, uuid-ossp) que las funciones referencian, y los roles que las policies
+   nombran. Sin un preámbulo que los cree, el esquema se restaura a medias y tablas enteras
+   quedan sin crear.
+3. **El CLI de Supabase necesita el repo como cwd** para resolver el proyecto, o falla con
+   *Cannot find project ref*.
+
+Los tres se manifiestan **solo al restaurar**. Es el argumento del spec por escrito: si el
+respaldo se hubiera guardado sin restaurarlo nunca, estos tres errores se habrían descubierto el
+día de la emergencia, con la base caída.
+
+**Verificación deliberadamente tolerante en una tabla:** `external_events` se excluye de la
+comparación estricta porque el scraping corre solo y el conteo deriva entre el dump y la
+verificación. El resto tiene que coincidir exacto.
