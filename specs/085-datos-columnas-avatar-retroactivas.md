@@ -1,6 +1,6 @@
 # Spec 085 — Las columnas `avatar` que nunca tuvieron migración
 
-> Estado: **propuesto** (10-sep-2026)
+> Estado: **aplicado en producción** (10-sep-2026) — `20260910140000_spec_085_columnas_avatar_retroactivas.sql`
 > Capa: DATOS. `supabase/migrations/<timestamp>_spec_085_columnas_avatar_retroactivas.sql`.
 > Depende de: nada. Las columnas ya existen en producción; esto las declara.
 > Origen: hallazgo de la prueba de restauración del spec 025.
@@ -61,12 +61,14 @@ estar. Una migración retroactiva que además moviera datos dejaría de ser retr
 
 ## Criterios de aceptación
 
-- [ ] La migración corre contra producción sin cambiar nada (`db push` limpio)
-- [ ] Correrla dos veces seguidas no falla
-- [ ] En la réplica reconstruida desde cero, `profiles.avatar` y `venues.avatar` existen como
-      `text` nulables
-- [ ] La comparación de columnas réplica vs producción da **244 de 244**
-- [ ] `select count(avatar) from profiles` sigue devolviendo 1 en producción
+- [x] La migración corre contra producción sin cambiar nada — `db push` aplicó solo esta y
+      dejó 244 columnas, las mismas de antes
+- [x] Correrla dos veces seguidas no falla — `if not exists` en las dos sentencias, y contra
+      producción ya corrió sobre columnas existentes
+- [x] En la réplica reconstruida desde cero, las dos columnas existen como `text` nulables
+- [x] La comparación de columnas réplica vs producción da **244 de 244** (era 242/244)
+- [x] `count(avatar)` sigue devolviendo 1 en `profiles` y 0 en `venues`; `tickets` 25 y
+      `auth.users` 15 sin cambios
 
 ## Fuera de alcance
 
