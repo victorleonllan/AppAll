@@ -388,9 +388,59 @@ Documentación completa en el vault: `Hermes/Agentes/Base de Datos/supabase-loca
 
 ---
 
-## Spec 025 — Respaldo y recuperación ✍️ escrito, sin implementar
+## 🔴 La cadena de migraciones no reconstruye desde cero (hallado 10-sep-2026)
 
-**El spec ya existe:** `specs/025-respaldo-y-recuperacion.md` (10-sep-2026). Diseño completo y
+Encontrado al restaurar el respaldo en un Postgres limpio (spec 025). No se ve mirando el repo:
+solo aparece al reconstruir desde cero, que es lo que nadie había hecho desde agosto.
+
+**El spec 050 tiene timestamp anterior al 049 del que depende:**
+
+```
+20260819144528_spec_050_pais_fuentes.sql        ← agrega pais a event_sources
+20260819164643_spec_049_eventos_externos.sql    ← CREA event_sources
+```
+
+En orden cronológico el 050 corre primero y falla con `relation "event_sources" does not exist`,
+y arrastra al 081 (`column "pais" ... does not exist`). En producción nunca se notó porque se
+aplicaron en el orden en que se pushearon, no por timestamp — `supabase_migrations.schema_migrations`
+los tiene registrados en el orden invertido y la base quedó bien igual.
+
+**Consecuencia real:** hoy `supabase db reset` no levanta un entorno nuevo, y una restauración
+de emergencia necesita intervención manual. Es la deuda que bloquea el entorno local del spec 024.
+
+**Arreglo posible** (no hecho, decisión de Victor): renombrar el archivo del 050 a un timestamp
+posterior al 049 y `migration repair` para realinear el remoto. Toca historial de migraciones ya
+aplicado — merece su propio spec, no un arreglo al paso.
+
+---
+
+## 🟡 Dos columnas en producción sin migración que las cree (hallado 10-sep-2026)
+
+Comparando columna por columna producción contra el esquema reconstruido: **242 de 244 coinciden**.
+Las dos que faltan:
+
+| Columna | Datos en producción |
+|---|---|
+| `profiles.avatar` | 1 valor no nulo |
+| `venues.avatar` | 0 valores no nulos |
+
+Mismo patrón que el caso del spec 045: creadas a mano, sin rastro en el repo. Un `db reset` deja
+una base sin esas columnas, y el código que las lea falla.
+
+Pendiente decidir: migración retroactiva que las declare, o borrarlas si están muertas
+(`venues.avatar` no tiene ni un dato; `profiles.avatar` tiene uno, hay que ver si la app lo usa
+o si quedó de una versión vieja de la subida de imágenes).
+
+Mientras tanto, `scripts/restaurar-local.sql` las agrega al final para que la restauración sea fiel.
+
+---
+
+## Spec 025 — Respaldo y recuperación ✍️ diseño validado, falta montarlo en victorwin
+
+**El spec ya existe:** `specs/025-respaldo-y-recuperacion.md` (10-sep-2026), con addenda de la
+primera ejecución. Ya hay una primera copia de datos (`scripts/backup-api.py`, 6 MB en
+`~/backups/sonopolis/`) y la restauración se probó entera: 23 tablas idénticas a producción.
+Falta el cron en `victorwin`, la retención y el cifrado. Diseño completo y
 medición del estado actual en el vault:
 `02-PROJECTS/Sonópolis/Producto/Datos/plan-respaldo-diversificado-20260908.md`.
 
