@@ -13,8 +13,8 @@
 --   for m in supabase/migrations/*.sql; do psql -d sonopolis_backup -f "$m"; done
 --   psql -d sonopolis_backup -f ~/backups/sonopolis/<fecha>/datos.sql
 --
--- ⚠️ Ojo con el orden de las migraciones: el spec 050 tiene timestamp anterior al
--- 049 del que depende. Aplicar el 049 a mano antes del bucle. Ver PENDIENTES.md.
+-- El orden de las migraciones ya está arreglado (spec 086): el bucle de arriba corre
+-- tal cual, sin intervención manual.
 
 create schema if not exists auth;
 create schema if not exists storage;
@@ -78,7 +78,3 @@ do $$ begin
   if not exists (select from pg_publication where pubname = 'supabase_realtime')
   then create publication supabase_realtime; end if;
 end $$;
-
--- Columnas que existen en producción y que ninguna migración crea (ver PENDIENTES.md)
-alter table if exists public.profiles add column if not exists avatar text;
-alter table if exists public.venues   add column if not exists avatar text;
