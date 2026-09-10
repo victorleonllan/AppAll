@@ -388,62 +388,26 @@ Documentación completa en el vault: `Hermes/Agentes/Base de Datos/supabase-loca
 
 ---
 
-## 🔴 La cadena de migraciones no reconstruye desde cero (hallado 10-sep-2026)
+## ✅ Resueltos el 10-sep-2026 — los dos hallazgos de la prueba de restauración
 
-Encontrado al restaurar el respaldo en un Postgres limpio (spec 025). No se ve mirando el repo:
-solo aparece al reconstruir desde cero, que es lo que nadie había hecho desde agosto.
+- **La cadena de migraciones no reconstruía desde cero.** El spec 050 tenía timestamp anterior al
+  049 del que depende. Arreglado en el **spec 086**: archivo renombrado a `20260819164644` y
+  remoto realineado con `migration repair`. Validado reconstruyendo desde cero antes de tocar
+  producción — 56 migraciones, 0 fallas. Queda un paso: el clon de WSL de Hermes se realinea solo
+  en su próximo `git reset --hard origin/main`.
+- **`profiles.avatar` y `venues.avatar` sin migración.** Arreglado en el **spec 085**, aplicado en
+  producción como no-op. La comparación de columnas contra producción pasó de 242/244 a **244/244**.
 
-**El spec 050 tiene timestamp anterior al 049 del que depende:**
-
-```
-20260819144528_spec_050_pais_fuentes.sql        ← agrega pais a event_sources
-20260819164643_spec_049_eventos_externos.sql    ← CREA event_sources
-```
-
-En orden cronológico el 050 corre primero y falla con `relation "event_sources" does not exist`,
-y arrastra al 081 (`column "pais" ... does not exist`). En producción nunca se notó porque se
-aplicaron en el orden en que se pushearon, no por timestamp — `supabase_migrations.schema_migrations`
-los tiene registrados en el orden invertido y la base quedó bien igual.
-
-**Consecuencia real:** hoy `supabase db reset` no levanta un entorno nuevo, y una restauración
-de emergencia necesita intervención manual. Es la deuda que bloquea el entorno local del spec 024.
-
-**Arreglo posible** (no hecho, decisión de Victor): renombrar el archivo del 050 a un timestamp
-posterior al 049 y `migration repair` para realinear el remoto. Toca historial de migraciones ya
-aplicado — merece su propio spec, no un arreglo al paso.
-
----
-
-## 🟡 Dos columnas en producción sin migración que las cree (hallado 10-sep-2026)
-
-Comparando columna por columna producción contra el esquema reconstruido: **242 de 244 coinciden**.
-Las dos que faltan:
-
-| Columna | Datos en producción |
-|---|---|
-| `profiles.avatar` | 1 valor no nulo |
-| `venues.avatar` | 0 valores no nulos |
-
-Mismo patrón que el caso del spec 045: creadas a mano, sin rastro en el repo. Un `db reset` deja
-una base sin esas columnas, y el código que las lea falla.
-
-**No están muertas: `sonopolisWeb` las lee como fallback** (verificado 10-sep-2026) —
-`DirectorioMusicos.js` hace `m.foto ?? m.avatar` y `local/page.js` hace `venue.image ?? venue.avatar`.
-Borrarlas rompe el directorio de músicos y el panel del local.
-
-Así que el arreglo es **migración retroactiva que las declare**, no borrado. Que `venues.avatar`
-tenga 0 valores no significa que sobre: significa que hoy nadie cae en el fallback.
-
-Mientras tanto, `scripts/restaurar-local.sql` las agrega al final para que la restauración sea fiel.
-
----
-
-## Spec 025 — Respaldo y recuperación ✍️ diseño validado, falta montarlo en victorwin
+## Spec 025 — Respaldo y recuperación 🟡 script listo y probado, falta el cron en victorwin
 
 **El spec ya existe:** `specs/025-respaldo-y-recuperacion.md` (10-sep-2026), con addenda de la
 primera ejecución. Ya hay una primera copia de datos (`scripts/backup-api.py`, 6 MB en
 `~/backups/sonopolis/`) y la restauración se probó entera: 23 tablas idénticas a producción.
-Falta el cron en `victorwin`, la retención y el cifrado. Diseño completo y
+`scripts/backup-sonopolis.sh` ya está escrito y probado de punta a punta contra una base local
+(dump, restauración, verificación de conteos y retención incluidas). **Falta lo que necesita la
+máquina Windows:** Postgres 17 desde PGDG en WSL, la credencial de producción apuntando al pooler,
+la entrada del cron, el aviso de Hermes ante `ULTIMO_ERROR.txt` y el cifrado de la copia que sale
+de la PC. Diseño completo y
 medición del estado actual en el vault:
 `02-PROJECTS/Sonópolis/Producto/Datos/plan-respaldo-diversificado-20260908.md`.
 
