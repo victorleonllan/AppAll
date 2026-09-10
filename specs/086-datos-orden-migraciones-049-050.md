@@ -1,6 +1,6 @@
 # Spec 086 — El orden de las migraciones 049 y 050
 
-> Estado: **propuesto** (10-sep-2026)
+> Estado: **aplicado en producción** (10-sep-2026) — archivo renombrado y remoto realineado
 > Capa: DATOS — no cambia el esquema; cambia el **historial** de migraciones.
 > Depende de: nada. Bloquea: spec 024 (entorno local).
 > Origen: hallazgo de la prueba de restauración del spec 025.
@@ -71,13 +71,13 @@ exactamente para lo que se montó el respaldo.
 
 ## Criterios de aceptación
 
-- [ ] El archivo del 050 queda con timestamp `20260819164644`, contenido intacto
-- [ ] Una reconstrucción desde cero corre las **55 migraciones sin una sola falla**, en orden
-      cronológico puro y sin intervención manual
-- [ ] El esquema reconstruido coincide con producción columna por columna
-- [ ] `supabase migration repair` deja local y remoto en 55/55
-- [ ] `supabase db push` posterior no tiene nada que aplicar
-- [ ] El clon de WSL que usa Hermes queda realineado (`git fetch && git reset --hard origin/main`)
+- [x] El archivo del 050 queda con timestamp `20260819164644`, contenido intacto (`git mv`)
+- [x] Una reconstrucción desde cero corre las **56 migraciones sin una sola falla**, en orden
+      cronológico puro y sin intervención manual (base `sonopolis_prueba`, Postgres 17.11)
+- [x] El esquema reconstruido coincide con producción columna por columna — **244/244**
+- [x] `supabase migration repair` dejó local y remoto en **56/56, cero desalineadas**
+- [x] `supabase db push` posterior aplicó solo la migración del spec 085, sin tocar el 049/050
+- [ ] El clon de WSL que usa Hermes queda realineado — pendiente, requiere la máquina Windows
 
 ## Fuera de alcance
 
@@ -87,3 +87,23 @@ exactamente para lo que se montó el respaldo.
   sugiere que se escribió a mano o en otra máquina con reloj distinto. Vale una convención
   (`supabase migration new` siempre), pero es proceso, no esquema.
 - El drift de columnas `avatar`, que es el otro hallazgo de la misma prueba — spec 085.
+
+
+---
+
+## Addenda — ejecución (10-sep-2026)
+
+Hecho en el orden que pedía la Decisión 3: renombrar → reconstruir la réplica desde cero →
+verificar → recién entonces tocar producción.
+
+**La reconstrucción de validación:** base limpia, andamiaje, las 56 migraciones en orden
+cronológico puro. Antes del arreglo fallaban 5 (el 050, el 081 detrás de él, y tres más por
+piezas de infra de Supabase que faltaban); después, **0 fallas** y 244/244 columnas contra
+producción. Los datos del respaldo cargaron sin un solo error.
+
+**En producción** se corrieron los dos `repair` y después `db push`. Verificado que no cambió
+nada: 244 columnas, `tickets` 25, `auth.users` 15, `profiles.avatar` con su único valor.
+
+**Lo que queda:** el clon de WSL de Hermes sigue con el nombre viejo del archivo. Se arregla solo
+la próxima vez que corra su `git fetch && git reset --hard origin/main` — que es justamente el
+paso 0 del [[cron-drift-esquema-supabase]] y por eso está diseñado así.
