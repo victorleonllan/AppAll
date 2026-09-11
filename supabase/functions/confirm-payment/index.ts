@@ -14,6 +14,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const MERCADOPAGO_ACCESS_TOKEN = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+// Dominio de la web que manda el correo (spec W-123). Env var y no hardcodeado:
+// un preview de Vercel tiene que poder apuntarse a sí mismo.
+const WEB_ORIGIN = Deno.env.get('WEB_ORIGIN') ?? 'sonopolis.org';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -38,6 +41,26 @@ const ESTADO_MP: Record<string, 'completed' | 'cancelled' | 'refunded'> = {
   refunded: 'refunded',
   charged_back: 'refunded',
 };
+
+// Spec W-123. El correo con el QR sale acá, apenas las entradas existen. No se
+// espera (`waitUntil` + `catch`): si la web está caída o Resend falla, el pago
+// YA está confirmado y las entradas emitidas — el comprador no puede quedarse
+// esperando su respuesta por un correo. La idempotencia la pone
+// `tickets.entrada_enviada_at` (spec W-122), así que este disparo puede repetirse
+// sin mandar dos correos.
+function mandarCorreoDeEntrada(ticketId: string) {
+  const url = `https://${WEB_ORIGIN}/api/entradas/enviar-confirmacion`;
+  const p = fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-key': SUPABASE_SERVICE_ROLE_KEY },
+    body: JSON.stringify({ ticket_id: ticketId }),
+  })
+    .then((r) => console.log(`correo de entrada ${ticketId}: HTTP ${r.status}`))
+    .catch((e) => console.error(`correo de entrada ${ticketId} falló`, e));
+
+  // @ts-ignore EdgeRuntime es global en Supabase Edge Functions
+  if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(p);
+}
 
 async function mpGet(path: string) {
   const res = await fetch(`https://api.mercadopago.com${path}`, {
@@ -141,6 +164,7 @@ serve(async (req) => {
         return json({ status: 'completed', detail: 'emision_pendiente' }, 200);
       }
       console.log(`confirm-payment: ticket ${ticket.id} → completed, ${emitidas} entradas emitidas`);
+      mandarCorreoDeEntrada(ticket.id);
     }
 
     return json({ status: nuevoEstado }, 200);

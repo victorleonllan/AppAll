@@ -5,6 +5,8 @@ const MERCADOPAGO_ACCESS_TOKEN = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN')!;
 const MERCADOPAGO_WEBHOOK_SECRET = Deno.env.get('MERCADOPAGO_WEBHOOK_SECRET')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+// Ver confirm-payment: misma env var, mismo motivo (spec W-123).
+const WEB_ORIGIN = Deno.env.get('WEB_ORIGIN') ?? 'sonopolis.org';
 
 async function hmacSha256Hex(secret: string, mensaje: string): Promise<string> {
   const key = await crypto.subtle.importKey(
@@ -67,6 +69,26 @@ const ESTADO_MP: Record<string, 'completed' | 'cancelled' | 'refunded'> = {
   charged_back: 'refunded',
 };
 // pending, in_process y authorized no aparecen: el ticket se queda en 'pending'.
+
+// Spec W-123. El correo con el QR sale acá, apenas las entradas existen. No se
+// espera (`waitUntil` + `catch`): si la web está caída o Resend falla, el pago
+// YA está confirmado y las entradas emitidas — el comprador no puede quedarse
+// esperando su respuesta por un correo. La idempotencia la pone
+// `tickets.entrada_enviada_at` (spec W-122), así que este disparo puede repetirse
+// sin mandar dos correos.
+function mandarCorreoDeEntrada(ticketId: string) {
+  const url = `https://${WEB_ORIGIN}/api/entradas/enviar-confirmacion`;
+  const p = fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-key': SUPABASE_SERVICE_ROLE_KEY },
+    body: JSON.stringify({ ticket_id: ticketId }),
+  })
+    .then((r) => console.log(`correo de entrada ${ticketId}: HTTP ${r.status}`))
+    .catch((e) => console.error(`correo de entrada ${ticketId} falló`, e));
+
+  // @ts-ignore EdgeRuntime es global en Supabase Edge Functions
+  if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(p);
+}
 
 async function mpGet(path: string) {
   const res = await fetch(`https://api.mercadopago.com${path}`, {
@@ -185,6 +207,7 @@ serve(async (req) => {
           return new Response('emision_fallida', { status: 500 });
         }
         console.log(`Ticket ${t.id}: ${emitidas} entradas emitidas`);
+        mandarCorreoDeEntrada(t.id);
       }
     }
 
