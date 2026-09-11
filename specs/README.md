@@ -22,6 +22,7 @@
 | 025 | Respaldo y recuperación de la base de producción | Propuesto (10-sep-2026) — hoy no existe ninguna copia de datos: `pitr_enabled: false` y backups `[]` en el plan Free. Dump nocturno desde el cron de WSL, restaurado cada noche en un Postgres 17 local en `victorwin` |
 | 085 | Las columnas `avatar` que nunca tuvieron migración | Aplicado en producción (10-sep-2026) — no-op deliberado: declara `profiles.avatar` y `venues.avatar`, que existían sin migración. Columnas contra producción: 244/244 |
 | 086 | El orden de las migraciones 049 y 050 | Aplicado en producción (10-sep-2026) — el 050 tenía timestamp anterior al 049 del que depende y la cadena no reconstruía desde cero. Renombre + `migration repair`, validado reconstruyendo antes de tocar producción |
+| 087 | `description` en `events` | Aplicado en producción (11-sep-2026) — columna `text` nullable para que el organizador describa el evento; consumida por `sonopolisWeb` (w120/w121) |
 | 028 | Correo transaccional por Resend (SMTP + plantillas + dominio propio) | Aplicado y confirmado (2026-08-11) — SMTP, límites, plantilla y remitente en `sonopolis.org` (verificado en Resend). El primero con `onboarding@resend.dev` cayó en spam; con dominio propio, confirmado que ya no |
 | 029 | Correo de confirmación de compra | Propuesto — depende del 028 y del 021 |
 | 030 | Dashboard de banda: perfil completo y panel | Implementado y desplegado — falta verificar en runtime |
