@@ -1,5 +1,29 @@
 # Pendientes — specs propuestos
 
+## Detectado al escribir los specs 089-093 (16-sep-2026) — dos candidatos sin escribir
+
+Los cuatro specs de endurecimiento que salieron del Security Advisor cierran lo que estaba a
+la vista. Al escribirlos aparecieron dos agujeros de fondo que **ninguno de los cuatro
+arregla**, porque cruzan de capa y la regla es una capa por spec:
+
+1. **Nadie comprueba que quien deja un teléfono sea su dueño.** El spec 091 cierra el
+   `INSERT` directo a `whatsapp_opt_ins`, pero `crear_optin_whatsapp()` sigue —a propósito—
+   ejecutable por `anon`: el opt-in del perfil público (W-053) funciona sin cuenta. Quien
+   llame al RPC puede dar de alta un teléfono ajeno. Falta una verificación por código, o un
+   rate limit, y el lugar natural es el RPC porque el 091 lo dejó como punto único de alta.
+   Capas: DATOS + LÓGICA, y probablemente FRONTEND si hay código de verificación.
+
+2. **`pendientes/<user_id>/` debería vivir en un bucket privado.** El spec 092 quita la
+   enumeración del bucket `media`, pero `media` es `public = true`: un flyer de un evento sin
+   anunciar cuya URL se filtre se sigue descargando sin sesión. El arreglo es un bucket
+   privado con URLs firmadas de vida corta, y toca la subida (`sonopolisWeb/libs/storage.js`)
+   y el render. Capas: DATOS + LÓGICA + FRONTEND.
+
+3. **Faltan 32 warnings por identificar.** Los specs 090-093 cubren 25 de los 57 que el panel
+   mostraba el 16-sep. El resto no se deduce del repo: sale de correr
+   `supabase db lint --level warning --linked` (spec 089, criterio 4). Si aparece un tipo de
+   warning que estos cuatro no contemplan, es un spec nuevo — anotarlo acá.
+
 ## ⚠️ Bloqueante en producción (8-sep-2026) — crear evento y local está roto
 
 El spec 080 se aplicó a producción con el `pais char(2) NOT NULL` sin default y **sin
