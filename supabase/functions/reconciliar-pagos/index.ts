@@ -40,6 +40,14 @@ const DIAS_POR_DEFECTO = 7;
 // sin dejar registro de dónde quedó.
 const MAX_POR_CORRIDA = 200;
 
+// Spec 088. Holgura antes de cancelar una reserva que nadie pagó. Es cuatro
+// veces el TTL de 30 min con el que el aforo deja de contarla (`ticket_reserva_ttl()`)
+// y esa diferencia es deliberada: vencer el cupo es reversible — si el pago
+// aparece igual, `confirm-payment` lo completa y la entrada vuelve a su lugar —
+// pero cancelar la fila no se deshace desde este cron. El plazo corto es para
+// liberar cupo; el largo, para escribir en la fila.
+const HOLGURA_CANCELAR_HORAS = 2;
+
 // Comparación en tiempo constante — mismo criterio que webhook-mp (spec 022):
 // con === , el tiempo de respuesta filtra cuántos caracteres acertó quien
 // prueba claves.
@@ -90,8 +98,11 @@ serve(async (req) => {
       revisados: pendientes?.length ?? 0,
       confirmados: 0,
       sin_cambio: 0,
+      cancelados: 0,
       errores: [] as string[],
     };
+
+    const limiteCancelar = Date.now() - HOLGURA_CANCELAR_HORAS * 60 * 60 * 1000;
 
     for (const ticket of pendientes ?? []) {
       try {
@@ -113,7 +124,38 @@ serve(async (req) => {
           resumen.confirmados += 1;
           console.log(`reconciliar-pagos: ticket ${ticket.id} → ${data.status}`);
         } else if (res.ok) {
-          resumen.sin_cambio += 1;
+          // Spec 088. El orden importa: primero se pregunta, después se
+          // cancela. Cancelar sin preguntar es cómo se borra una entrada que el
+          // comprador sí pagó.
+          //
+          // Y no alcanza con "sigue pending": `confirm-payment` devuelve pending
+          // en tres casos distintos y sólo uno autoriza a cancelar.
+          //   · sin_pago_encontrado_aun  → MP no tiene ningún pago con nuestro
+          //     ticket_ref. Nadie pagó: se cancela.
+          //   · mpStatus in_process / authorized → hay un pago vivo que MP aún
+          //     no resolvió. Cancelar acá es quitarle la entrada a alguien que
+          //     la está pagando.
+          //   · guest_no_soportado_aun → el guest checkout ni siquiera se pudo
+          //     consultar. No sabemos, así que no se toca.
+          const nadiePago = data?.detail === 'sin_pago_encontrado_aun';
+          if (nadiePago && new Date(ticket.created_at).getTime() < limiteCancelar) {
+            const { error: errCancelar } = await supabase
+              .from('tickets')
+              .update({ status: 'cancelled' })
+              .eq('id', ticket.id)
+              // La condición se repite en el UPDATE y no sólo en el SELECT de
+              // arriba: entre una cosa y la otra pasó una llamada a MP, y si el
+              // webhook lo completó mientras tanto, esta escritura no debe pisarlo.
+              .eq('status', 'pending');
+            if (errCancelar) {
+              resumen.errores.push(`${ticket.id}: cancelar falló — ${errCancelar.message}`);
+            } else {
+              resumen.cancelados += 1;
+              console.log(`reconciliar-pagos: ticket ${ticket.id} → cancelled (reserva vencida)`);
+            }
+          } else {
+            resumen.sin_cambio += 1;
+          }
         } else {
           resumen.errores.push(`${ticket.id}: HTTP ${res.status}`);
         }

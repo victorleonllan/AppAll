@@ -26,6 +26,22 @@ const json = (body: unknown, status: number) =>
 // — ver la nota del spec si Victor quiere otro número.
 const MAX_CANTIDAD_POR_COMPRA = 10;
 
+// Spec 088. Los mismos 30 minutos que `ticket_reserva_ttl()` en Postgres: a esa
+// hora el aforo deja de contar este ticket, así que el link de pago tiene que
+// morir con él. Si no, alguien paga a los 45 min una entrada ya revendida —
+// sobreventa, que es el error caro. Los dos números son uno solo a propósito:
+// al cambiar este hay que cambiar la función SQL, y al revés.
+const RESERVA_TTL_MINUTOS = 30;
+
+// MP espera `yyyy-MM-dd'T'HH:mm:ss.SSSZ` con offset explícito. `toISOString()`
+// termina en 'Z' y la API lo rechaza según la versión del endpoint: se manda el
+// mismo instante con el offset escrito.
+function vencimientoMP(minutos: number): string {
+  return new Date(Date.now() + minutos * 60 * 1000)
+    .toISOString()
+    .replace('Z', '+00:00');
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS });
@@ -115,6 +131,14 @@ serve(async (req) => {
         excluded_payment_types: [{ id: 'ticket' }, { id: 'atm' }],
       },
       auto_return: 'approved',
+      // Spec 088. El checkout caduca a la misma hora que la reserva. Seguro
+      // hoy porque el spec 072 ya excluyó efectivo y cajero, los únicos medios
+      // que MP aprueba horas después: lo que queda (tarjeta, saldo) aprueba en
+      // el acto. Si se revierte aquella exclusión, revisar este plazo ANTES —
+      // un pago en efectivo aprobado al día siguiente caería sobre una reserva
+      // ya vencida y su lugar podría estar vendido.
+      expires: true,
+      expiration_date_to: vencimientoMP(RESERVA_TTL_MINUTOS),
       notification_url: `${SUPABASE_URL}/functions/v1/webhook-mp`,
       external_reference: `${evento_id}|${user_id}`,
       metadata: { ticket_ref: ticketRef },

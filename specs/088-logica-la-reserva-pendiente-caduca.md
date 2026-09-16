@@ -1,6 +1,6 @@
 # Spec 088 — La reserva pendiente caduca a los 30 minutos
 
-> Estado: **propuesto** (16-sep-2026)
+> Estado: **aplicado en producción** (16-sep-2026) — `20260916203000_spec_088_reserva_pendiente_caduca.sql` corrida contra `xluinfihjjtxkglihxqz`; `create-preference` y `reconciliar-pagos` desplegadas. Criterios 1-4 verificados antes de aplicar, con un evento clonado en un venue de aforo 2 dentro de una transacción revertida (un `pending` de 31 min deja reservar; uno de 5 min responde `sin_cupo`; un `completed` de 30 días sigue ocupando). En producción: `ticket_reserva_ttl()` = `00:30:00`, `pg_get_functiondef(_reservar_ticket_shared)` ya usa el TTL y no queda rastro del `status IN ('pending','completed')` viejo. Criterio 6 y 7: dos corridas de `reconciliar-pagos` (ventana 7 y 30 días) cancelaron 16 + 7 tickets, 0 confirmados, 0 errores — los `pending` de producción pasaron de 23 a **0**. Criterio 5 a medias: MP aceptó la preferencia con `expiration_date_to` (una compra real de prueba devolvió `init_point`, así que el formato es válido y la compra no se rompió), falta ver el link ya vencido pasados los 30 min.
 > Capa: LÓGICA. `supabase/migrations/<timestamp>_spec_088_reserva_pendiente_caduca.sql`,
 > `supabase/functions/create-preference/index.ts`, `supabase/functions/reconciliar-pagos/index.ts`.
 > Depende de: spec 083 (última versión de `_reservar_ticket_shared`), spec 072
