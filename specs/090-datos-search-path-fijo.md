@@ -1,7 +1,15 @@
 # Spec 090 — `search_path` fijo en las 7 funciones que quedaron sin él
 
-> Estado: **propuesto** (16-sep-2026)
-> Capa: DATOS. `supabase/migrations/<timestamp>_spec_090_search_path_fijo.sql`
+> Estado: **aplicado en local, pendiente de producción** (17-sep-2026) —
+> `20260917150000_spec_090_search_path_fijo.sql` corrida contra la base local del spec 089.
+> Los 5 criterios verificados: las 7 funciones tienen `search_path=public, pg_temp`, el `md5`
+> de los 7 cuerpos es idéntico al de antes (0 cambios), splinter baja de **56 a 49** warnings
+> de seguridad (−7 exactos, ningún otro warning se movió), y los triggers siguen disparando —
+> probado en una transacción revertida: `sync_venue_address_activa` copia la dirección a
+> `venues.address`, `activar_direccion_venue` desactiva la anterior, `ticket_reserva_ttl`
+> sigue en `00:30:00`, y borrar un evento con una entrada vendida sigue fallando con
+> *"El evento tiene entradas vendidas o en proceso"*.
+> Capa: DATOS. `supabase/migrations/20260917150000_spec_090_search_path_fijo.sql`
 > Depende de: spec 089 (entorno local para verificar antes de aplicar).
 > Origen: Security Advisor de Supabase, 16-sep-2026 — regla `function_search_path_mutable`.
 
