@@ -114,3 +114,20 @@ es una mejora marginal que ensucia el diff sin cerrar ningún warning.
 4. Con la base local: crear una dirección de venue, activarla, y borrar un evento con tickets
    (debe seguir fallando por la guarda). Los triggers siguen disparando igual.
 5. En producción, después de aplicar: el Security Advisor baja de 57 a 50 warnings.
+
+---
+
+## Addendum — verificado contra la base local (16-sep-2026)
+
+Con el entorno del spec 089 levantado, splinter contra la base local confirma **exactamente 7
+`function_search_path_mutable`**, y son las siete de la tabla de arriba. El inventario que
+saqué leyendo `supabase/migrations/` coincide con el catálogo: no hay ninguna octava función
+escondida ni ninguna de las siete ya arreglada.
+
+Una corrección de procedimiento, no de diseño: los criterios 2 y 5 dicen `supabase db lint`, y
+**ese comando no corre splinter** — corre `plpgsql_check`, que busca errores de compilación y
+contra esta base devuelve limpio. El spec 089 (addendum, punto 2) tiene el procedimiento
+correcto: bajar `splinter.sql` de GitHub y correrlo con `psql`, filtrando
+`categories = SECURITY` y `level = WARN`. Léanse los criterios 2 y 5 con ese reemplazo.
+
+El conteo esperado al aplicar este spec: de **56** warnings de seguridad locales a **49**.
