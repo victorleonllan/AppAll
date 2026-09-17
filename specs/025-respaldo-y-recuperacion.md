@@ -84,6 +84,20 @@ Es el mismo molde de su backup diario, que ya corre a las 6:05 desde ese cron.
 **Silencio = todo bien.** Solo avisa cuando hay algo que hacer; si no, los avisos se vuelven
 ruido que se ignora, y un aviso ignorado es peor que ninguno.
 
+## Decisión 3b — sin CLI de Supabase: solo Postgres y curl (10-sep-2026)
+
+El bucket `media` es público, así que cada objeto se alcanza por URL. El script lista los
+archivos con `psql` contra `storage.objects` y los baja con `curl`, en vez de usar
+`supabase storage cp`.
+
+**Por qué:** el CLI no hace el respaldo —eso es `pg_dump`— y sumarlo a la máquina del cron
+agregaba una pieza a instalar, mantener y actualizar para una sola tarea que `curl` ya cubre.
+Menos piezas, menos cosas que se rompan solas a las 2:30 de la mañana. Probado: 15/15 archivos,
+imágenes verificadas.
+
+Si algún día el bucket deja de ser público, el camino de vuelta es una URL firmada, no reinstalar
+el CLI.
+
 ## Decisión 3 — Postgres 17 nativo desde PGDG, no Docker
 
 Ubuntu trae Postgres 16 por defecto y **el servidor es 17.6**: un `pg_dump` de 16 falla con

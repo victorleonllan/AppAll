@@ -9,11 +9,14 @@
 # Si algo falla deja $ERR_FILE escrito y sale con código 1: eso es lo que Hermes vigila
 # para avisar por WhatsApp. Si todo sale bien no imprime nada — silencio es la señal de OK.
 #
+# Dependencias: Postgres 17 (pg_dump, psql, dropdb, createdb) y curl. Nada más — ni el CLI
+# de Supabase ni Docker. Cuantas menos piezas, menos cosas que se rompan solas de noche.
+#
 # Config esperada en ~/.config/sonopolis-backup.env (chmod 600, fuera de git):
 #   DB_URL="postgresql://postgres.<ref>:<password>@aws-0-us-west-2.pooler.supabase.com:5432/postgres"
 #   DEST_DIR="/mnt/c/Backups/Sonopolis"      # disco Windows, no el filesystem de WSL
 #   REPLICA_DB="sonopolis_backup"
-#   REPO_DIR="$HOME/projects/AppAll"          # para que el CLI encuentre el proyecto
+#   PUBLIC_URL="https://<ref>.supabase.co"    # para bajar los archivos del bucket público
 #   RETENCION_DIAS=30
 #
 # El pooler en modo sesión, no la conexión directa: db.<ref>.supabase.co resuelve solo IPv6
@@ -27,6 +30,7 @@ CONFIG="${SONOPOLIS_BACKUP_ENV:-$HOME/.config/sonopolis-backup.env}"
 source "$CONFIG"
 
 : "${DB_URL:?falta DB_URL en la config}"
+: "${PUBLIC_URL:?falta PUBLIC_URL en la config}"
 DEST_DIR="${DEST_DIR:-$HOME/backups/sonopolis}"
 REPLICA_DB="${REPLICA_DB:-sonopolis_backup}"
 RETENCION_DIAS="${RETENCION_DIAS:-30}"
@@ -73,15 +77,30 @@ pg_dump "$DB_URL" --format=custom --no-owner "${args_esquemas[@]}" \
 
 # --- 2. archivos del bucket ---------------------------------------------------
 # Los binarios no salen en ningún pg_dump: storage.objects guarda las filas, no los archivos.
-if command -v supabase >/dev/null 2>&1 && [[ -n "${REPO_DIR:-}" && -d "${REPO_DIR:-}" ]]; then
-  log "descargando bucket media"
-  # el CLI resuelve el proyecto por el supabase/ del repo: sin este cd falla con
-  # "Cannot find project ref"
-  (cd "$REPO_DIR" && supabase storage cp -r ss:///media "$DEST/media/" --experimental) >>"$LOG" 2>&1 \
-    || log "AVISO: falló la descarga del bucket (el resto del respaldo sigue siendo válido)"
-else
-  log "AVISO: sin CLI de supabase o sin REPO_DIR, no se descargó el bucket"
-fi
+# Se bajan con psql + curl, sin el CLI de Supabase: el bucket media es público, así que cada
+# objeto se alcanza por URL. Una pieza menos que instalar y mantener en la máquina del cron.
+log "descargando bucket media"
+mkdir -p "$DEST/media"
+objetos="$(psql -qtA "$DB_URL" -c \
+  "select name from storage.objects where bucket_id = 'media' order by name" 2>>"$LOG")" \
+  || fallar "listar objetos del bucket"
+
+bajados=0; fallidos=0
+while IFS= read -r obj; do
+  [[ -z "$obj" ]] && continue
+  destino="$DEST/media/${obj//\//_}"
+  url="$PUBLIC_URL/storage/v1/object/public/media/$(printf %s "$obj" | sed 's/ /%20/g')"
+  if curl -fsS --retry 2 --max-time 120 -o "$destino" "$url" 2>>"$LOG"; then
+    bajados=$((bajados+1))
+  else
+    fallidos=$((fallidos+1)); log "AVISO: no se pudo bajar media/$obj"
+  fi
+done <<< "$objetos"
+
+total_objetos="$(grep -c . <<< "$objetos")"
+log "bucket: $bajados/$total_objetos archivos ($fallidos fallidos)"
+# Un archivo que no baja no invalida el respaldo de la base, pero tiene que constar.
+[[ "$fallidos" -gt 0 ]] && echo "$fallidos archivos del bucket no se pudieron bajar el $DIA" >> "$ERR_FILE"
 
 # --- 3. restauración en la réplica --------------------------------------------
 log "restaurando en $REPLICA_DB"
