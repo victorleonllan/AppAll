@@ -115,3 +115,38 @@ es una opción realista; enumerarla sí lo era hasta esta migración.
    desaparece.
 6. En producción, después de aplicar: la cartelera de `sonopolisWeb` carga todas las imágenes
    (eventos, perfiles y locales) sin un solo 403 en la pestaña de red.
+
+---
+
+## Addendum — verificado contra la base local (16-sep-2026)
+
+### La regla no se dispara sola: hay que inyectarle los buckets
+
+`public_bucket_allows_listing` **no lee `storage.buckets`**. Lee los buckets públicos de un
+parámetro de sesión que el dashboard inyecta antes de correr la consulta, y si no está, la
+regla no encuentra nada y no reporta nada. La primera corrida local devolvió cero para esta
+regla, y eso no significaba que el problema no existiera: significaba que no se había
+preguntado. Hay que correrla así:
+
+```sql
+SET splinter.public_buckets = '[{"bucket_id":"media","bucket_name":"media"}]';
+\i splinter.sql
+```
+
+**Sin esa línea, el criterio 5 daría verde sin haber probado nada.** Es la trampa más fácil de
+pisar de las cuatro reglas que cierran estos specs.
+
+### El diagnóstico, confirmado
+
+Con el parámetro puesto aparece el hallazgo, uno solo, y su texto sostiene la decisión 1 casi
+palabra por palabra:
+
+> Public bucket `media` has 1 broad SELECT policy on `storage.objects` (`media_select`),
+> allowing clients to list all files. **Public buckets don't need this for object URL access**
+> and it may expose more data than intended.
+
+"Public buckets don't need this for object URL access" es exactamente el punto: la policy no
+es lo que hace visible la cartelera. Borrarla no puede romper una imagen.
+
+Corrección de procedimiento en el criterio 5: `supabase db lint` no corre splinter sino
+`plpgsql_check`. El procedimiento completo está en el addendum del spec 089.
