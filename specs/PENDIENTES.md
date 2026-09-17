@@ -28,7 +28,17 @@ arregla**, porque cruzan de capa y la regla es una capa por spec:
    086. Para identificarlo hay que correr splinter contra producción, y eso pide la contraseña
    de Postgres del proyecto, que no está en ningún `.env`.
 
-4. **Spec 094 — los oráculos de permiso.** Sale del addendum del spec 093, que **no se puede
+4. **⏳ Antes del 30-oct-2026 — los `GRANT` de tabla tienen que entrar al repo.** El permiso que
+   hace funcionar la app en producción **no está en ninguna migración**: lo pone un
+   `ALTER DEFAULT PRIVILEGES` que Supabase configuró cuando se creó el proyecto, y que expone
+   toda tabla nueva de `public` a `anon`/`authenticated`. Los proyectos nuevos ya no lo hacen.
+   El entorno local lo reproduce hoy con `auto_expose_new_tables = true` en `config.toml`
+   (spec 089, addendum 2), **pero ese campo se elimina el 2026-10-30**. A partir de ahí, la
+   única forma de que local iguale a producción —y de que el permiso quede versionado en vez de
+   depender de cómo estaba la plataforma en 2026— es escribir los `GRANT` explícitos en una
+   migración. Capa: DATOS. Conviene hacerlo antes de que el campo desaparezca, no después.
+
+5. **Spec 094 — los oráculos de permiso.** Sale del addendum del spec 093, que **no se puede
    aplicar sin resolver esto primero**. Cuatro funciones `SECURITY DEFINER` reciben el usuario
    como argumento, con `auth.uid()` apenas como default:
    `event_role_of(p_event, p_user)`, `is_booking_party(p_request, p_user)`,

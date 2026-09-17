@@ -221,3 +221,85 @@ contra producción, y eso pide la contraseña de Postgres del proyecto, que no e
   para repetir la prueba desde cero sin borrar los contenedores.
 - La CLI avisa que hay 2.117.0 disponible (instalada: 2.115.0). No se actualizó: cambiar la
   versión del CLI en medio de una verificación agrega una variable que nadie pidió.
+
+---
+
+## Addendum 2 — el entorno no reproducía los permisos de producción (17-sep-2026)
+
+Descubierto al empezar a verificar el spec 091, y es el hallazgo más importante de este spec:
+**la base local que levantó `supabase start` no servía para probar ningún permiso.**
+
+### El síntoma
+
+```
+GET /rest/v1/events?select=id  (anon)  →  401
+{"code":"42501","message":"permission denied for table events"}
+```
+
+En local, la cartelera pública no cargaba. En producción carga. Ninguna de las 21 tablas de
+`public` tenía `SELECT` para `anon` ni `authenticated`: solo los residuales `REFERENCES`,
+`TRIGGER`, `TRUNCATE`.
+
+### La causa
+
+`GRANT` y RLS son dos capas, y el spec las daba por sentadas juntas. El `GRANT` de tabla decide
+si el rol puede tocar la tabla; la policy decide qué filas ve una vez adentro. **Sin `GRANT`, la
+policy nunca se evalúa.**
+
+Las 59 migraciones no escriben un solo `GRANT` de tabla, y no les hizo falta: Supabase configura
+en cada proyecto un `ALTER DEFAULT PRIVILEGES` que hace nacer toda tabla nueva de `public` con
+permisos para `anon`, `authenticated` y `service_role`. Ese default cambió — los proyectos nuevos
+ya no auto-exponen — y el CLI local aplica el criterio nuevo mientras que
+`xluinfihjjtxkglihxqz`, creado antes, conserva el viejo. El permiso que sostiene la app en
+producción **no está en el repo**: lo puso la plataforma.
+
+### El arreglo
+
+`supabase/config.toml`, un campo que estaba comentado:
+
+```toml
+auto_expose_new_tables = true
+```
+
+Y `supabase db reset` a continuación, porque `ALTER DEFAULT PRIVILEGES` **solo afecta a objetos
+creados después**: las 21 tablas ya existentes no cambian, hay que volver a crearlas con el
+default activo. Después del reset: 21/21 con `SELECT` para `anon`, y `GET /events` responde 200.
+
+No se escribieron `GRANT` a mano a propósito. El objetivo no es que la base local tenga permisos,
+es que tenga **los mismos** que producción; elegirlos a mano es adivinar, y un permiso de más o
+de menos convierte cada criterio de cierre en un falso resultado.
+
+### Lo que esto invalida hacia atrás
+
+Toda prueba con la anon key hecha antes de este arreglo daba `permission denied` por el motivo
+equivocado. En particular, el criterio 2 del spec 093 —"la cartelera pública carga", el que
+decide si ese spec sale o se revierte— habría dado rojo sin que el spec tuviera nada que ver, y
+habría seguido rojo después de aplicarlo. Un criterio que da el mismo resultado con y sin el
+cambio no prueba nada.
+
+### Con el entorno arreglado, los dos agujeros son reproducibles
+
+- **Spec 091:** `POST /rest/v1/whatsapp_opt_ins` como `anon` devuelve **201** e inserta la fila
+  con `opted_in_at = 2020-01-01`, una fecha de consentimiento elegida por el cliente.
+- **Spec 092:** `POST /storage/v1/object/list/media` como `anon` devuelve **200** y el listado
+  (vacío solo porque la base local no tiene archivos).
+
+**Una trampa al probar el 091:** con `Prefer: return=representation` el mismo INSERT devuelve
+401 `"new row violates row-level security policy"`. No es que el insert falle — PostgREST
+intenta devolver la fila recién creada y ahí sí choca contra la policy de `SELECT`, que para
+`anon` no existe (W-049 la cerró bien). Probado así, el agujero parece no existir. Hay que usar
+`Prefer: return=minimal` y verificar la fila por `psql`.
+
+### Fecha de vencimiento: 2026-10-30
+
+El propio comentario del `config.toml` dice que `auto_expose_new_tables` está **deprecado y se
+elimina el 2026-10-30**. Después de esa fecha el entorno local vuelve a divergir de producción y
+la única forma de igualarlos es escribir los `GRANT` explícitos en una migración — que además es
+hacia donde empuja Supabase. Anotado en PENDIENTES.
+
+### El conteo, actualizado
+
+Con el spec 090 ya aplicado y los grants restaurados, splinter da **49** warnings de seguridad
+(eran 56 antes del 090). Los grants de tabla **no movieron el conteo**: no activaron ninguna
+regla nueva. La diferencia de 1 contra los 57 de producción sigue sin explicarse y sigue
+apuntando a drift.
