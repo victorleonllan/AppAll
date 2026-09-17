@@ -1,7 +1,7 @@
 # Spec 089 — Entorno local: la base reconstruida desde migraciones, antes de tocar producción
 
 > Estado: **aplicado** (16-sep-2026) — OrbStack instalado, `supabase start` levantado y las
-> 88 migraciones aplicadas desde cero **sin un solo error**: la cadena reconstruye. Criterios
+> 59 migraciones aplicadas desde cero **sin un solo error**: la cadena reconstruye. Criterios
 > 1-3 y 5 verificados. El criterio 4 se cumplió pero **corrigiendo la decisión 3, que era
 > falsa** — ver el addendum al final. Resultado del linter real: **56 warnings de seguridad
 > en local contra 57 en producción**.
@@ -12,7 +12,7 @@
 
 > **En una frase:** hoy no existe forma de probar una migración sin correrla contra la base
 > de producción, y los tres specs de endurecimiento que vienen pueden romper la app entera si
-> se equivocan — así que primero se levanta un Postgres local con las 88 migraciones
+> se equivocan — así que primero se levanta un Postgres local con las 59 migraciones
 > aplicadas desde cero, y recién ahí se prueban.
 
 ## El problema
@@ -53,7 +53,7 @@ docker` sirve igual y el resto del spec no cambia.
 
 ## Decisión 2 — la base local se reconstruye desde cero, no se clona producción
 
-`supabase db reset` borra el Postgres local y **corre las 88 migraciones en orden desde la
+`supabase db reset` borra el Postgres local y **corre las 59 migraciones en orden desde la
 primera**. Es la diferencia que importa: clonar producción con un dump probaría contra el
 estado actual, que ya trae el drift que los specs 045 y 086 tuvieron que corregir a mano.
 Reconstruir desde migraciones prueba **la cadena**, que es lo que el próximo entorno (una
@@ -118,7 +118,7 @@ RLS y tiene todos los grants. El spec 046 falló exactamente por ahí.
 
 1. `docker info` responde sin error en el Mac.
 2. `supabase start` levanta y devuelve las URLs y llaves locales.
-3. `supabase db reset` aplica las 88 migraciones desde cero **sin un solo error** — o, si
+3. `supabase db reset` aplica las 59 migraciones desde cero **sin un solo error** — o, si
    falla, el error queda anotado acá como hallazgo (sería la primera evidencia de que la
    cadena no reconstruye).
 4. `supabase db lint --level warning` contra local devuelve un listado comparable al de
@@ -202,7 +202,7 @@ verde sin haber probado nada.**
 Más 1 `rls_enabled_no_policy` de nivel `INFO`, que coincide con el "1 suggestions" del panel.
 
 **Queda 1 warning de diferencia contra los 57 de producción**, y eso es un hallazgo, no un
-redondeo: la base local se construyó con las 88 migraciones del repo, así que un warning de más
+redondeo: la base local se construyó con las 59 migraciones del repo, así que un warning de más
 en producción apunta a un objeto que existe allá y no está en la cadena — el mismo tipo de
 drift que los specs 045 y 086 tuvieron que corregir. Para identificarlo hay que correr splinter
 contra producción, y eso pide la contraseña de Postgres del proyecto, que no está en ningún
