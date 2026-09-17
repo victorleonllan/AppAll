@@ -1,6 +1,10 @@
 # Spec 089 — Entorno local: la base reconstruida desde migraciones, antes de tocar producción
 
-> Estado: **propuesto** (16-sep-2026)
+> Estado: **aplicado** (16-sep-2026) — OrbStack instalado, `supabase start` levantado y las
+> 88 migraciones aplicadas desde cero **sin un solo error**: la cadena reconstruye. Criterios
+> 1-3 y 5 verificados. El criterio 4 se cumplió pero **corrigiendo la decisión 3, que era
+> falsa** — ver el addendum al final. Resultado del linter real: **56 warnings de seguridad
+> en local contra 57 en producción**.
 > Capa: INFRA (no toca esquema ni código de la app). `supabase/config.toml` si hace falta ajuste.
 > Depende de: nada. **Bloquea a los specs 090, 091, 092 y 093** — los cuatro arreglos de
 > seguridad que salieron del Security Advisor, que no deben aplicarse a ciegas contra
@@ -121,3 +125,99 @@ RLS y tiene todos los grants. El spec 046 falló exactamente por ahí.
    producción. La diferencia entre ambas cuentas queda anotada en este spec.
 5. Una consulta como `anon` contra la API local devuelve la cartelera pública (prueba de que
    PostgREST y RLS locales funcionan como en producción, antes de tocar ningún permiso).
+
+---
+
+## Addendum — lo que mostró aplicarlo (16-sep-2026)
+
+### 1. La decisión 3 era falsa: `supabase db lint` **no** es splinter
+
+Está escrita arriba y se deja escrita, porque el error es útil: el pie del panel dice que las
+sugerencias las genera splinter, y de ahí saqué —sin verificar— que el subcomando homónimo del
+CLI corría lo mismo. No es así. `supabase db lint` corre **`plpgsql_check`**: busca errores de
+compilación en cuerpos de funciones plpgsql, no problemas de seguridad. Contra la base local
+devuelve exactamente esto, y es un resultado correcto:
+
+```
+Linting schema: public
+No schema errors found
+{"results":[],"message":"db lint"}
+```
+
+Un `db lint` limpio no dice nada sobre los 57 warnings. Cualquier spec que use ese comando
+como criterio de cierre de seguridad —los 090, 091, 092 y 093 lo hacen— está midiendo otra
+cosa. **Sus criterios se leen reemplazando `supabase db lint` por el procedimiento de abajo.**
+
+### 2. Cómo se corre splinter de verdad
+
+Splinter es una consulta SQL sola, pública, que el dashboard ejecuta contra la base. Se baja y
+se corre con `psql`:
+
+```bash
+curl -sSL -o splinter.sql https://raw.githubusercontent.com/supabase/splinter/main/splinter.sql
+psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -At -f splinter.sql
+```
+
+Devuelve una fila por hallazgo, con `|` de separador: `name|title|level|facing|categories|
+description|detail|remediation|metadata|cache_key`. Para contar como cuenta el panel hay que
+filtrar por las dos primeras columnas que importan — **el Security Advisor muestra solo
+`categories` = `SECURITY` y `level` = `WARN`**:
+
+```bash
+awk -F'|' 'NF>5 && $5 ~ /SECURITY/ && $3=="WARN" {print $1}' salida.txt | sort | uniq -c | sort -rn
+```
+
+Sin ese filtro la cuenta no cierra ni de cerca: la corrida local devuelve **119 WARN en
+total**, de los cuales 64 son de categoría `PERFORMANCE` (40 `multiple_permissive_policies` +
+24 `auth_rls_initplan`) y van al Performance Advisor, que es otra pestaña del panel.
+
+### 3. La regla del bucket no se dispara en local sin un ajuste
+
+`public_bucket_allows_listing` (la del spec 092) **no puede leer `storage.buckets`**: la regla
+lee los buckets públicos de un parámetro de sesión que el dashboard inyecta antes de correr la
+consulta. Sin él, la regla no encuentra ningún bucket público y no reporta nada — que fue el
+primer resultado local, y parecía significar que el problema no existía.
+
+Hay que inyectarlo a mano:
+
+```sql
+SET splinter.public_buckets = '[{"bucket_id":"media","bucket_name":"media"}]';
+\i splinter.sql
+```
+
+Con eso aparece el warning, idéntico al del panel. **Sin esto, el criterio 5 del spec 092 daría
+verde sin haber probado nada.**
+
+### 4. El resultado: 56 en local, 57 en producción
+
+| Regla | Local | Spec que la cierra |
+|---|---|---|
+| `authenticated_security_definer_function_executable` | 26 | 093 (parcialmente — ver su addendum) |
+| `anon_security_definer_function_executable` | 21 | 093 (parcialmente) |
+| `function_search_path_mutable` | 7 | 090 |
+| `rls_policy_always_true` | 1 | 091 |
+| `public_bucket_allows_listing` | 1 | 092 |
+| **Total WARN de SECURITY** | **56** | |
+
+Más 1 `rls_enabled_no_policy` de nivel `INFO`, que coincide con el "1 suggestions" del panel.
+
+**Queda 1 warning de diferencia contra los 57 de producción**, y eso es un hallazgo, no un
+redondeo: la base local se construyó con las 88 migraciones del repo, así que un warning de más
+en producción apunta a un objeto que existe allá y no está en la cadena — el mismo tipo de
+drift que los specs 045 y 086 tuvieron que corregir. Para identificarlo hay que correr splinter
+contra producción, y eso pide la contraseña de Postgres del proyecto, que no está en ningún
+`.env` del repo (solo hay anon key y service role key, que sirven para PostgREST, no para
+`psql`). **Pendiente hasta tener esa contraseña.**
+
+### 5. Dos detalles de la instalación
+
+- **El PATH.** OrbStack pone sus binarios en `~/.orbstack/bin`, y la instalación no los agrega
+  a la sesión de terminal que ya estaba abierta: `docker info` sigue fallando con "command not
+  found" aunque el demonio esté corriendo. Hay que abrir una terminal nueva o hacer
+  `export PATH="$HOME/.orbstack/bin:$PATH"`. Cuesta cinco minutos de creer que el arranque
+  falló cuando ya había terminado.
+- **`supabase start` ya aplica las migraciones** al crear la base por primera vez, así que el
+  `db reset` de la decisión 2 no hizo falta en esta corrida. Sigue siendo el comando correcto
+  para repetir la prueba desde cero sin borrar los contenedores.
+- La CLI avisa que hay 2.117.0 disponible (instalada: 2.115.0). No se actualizó: cambiar la
+  versión del CLI en medio de una verificación agrega una variable que nadie pidió.
