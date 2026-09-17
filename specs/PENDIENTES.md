@@ -19,10 +19,27 @@ arregla**, porque cruzan de capa y la regla es una capa por spec:
    privado con URLs firmadas de vida corta, y toca la subida (`sonopolisWeb/libs/storage.js`)
    y el render. Capas: DATOS + LÓGICA + FRONTEND.
 
-3. **Faltan 32 warnings por identificar.** Los specs 090-093 cubren 25 de los 57 que el panel
-   mostraba el 16-sep. El resto no se deduce del repo: sale de correr
-   `supabase db lint --level warning --linked` (spec 089, criterio 4). Si aparece un tipo de
-   warning que estos cuatro no contemplan, es un spec nuevo — anotarlo acá.
+3. ~~Faltan 32 warnings por identificar.~~ **Resuelto el 16-sep-2026** con el entorno local del
+   spec 089: son las dos reglas de `SECURITY DEFINER` ejecutable, que splinter cuenta por rol
+   (21 `anon` + 26 `authenticated`). El desglose completo está en el addendum del spec 089.
+   Lo que queda de esto: **1 warning de diferencia** entre local (56) y producción (57). La
+   base local se armó con las 88 migraciones del repo, así que ese warning de más apunta a un
+   objeto que existe en producción y no está en la cadena — drift, como el de los specs 045 y
+   086. Para identificarlo hay que correr splinter contra producción, y eso pide la contraseña
+   de Postgres del proyecto, que no está en ningún `.env`.
+
+4. **Spec 094 — los oráculos de permiso.** Sale del addendum del spec 093, que **no se puede
+   aplicar sin resolver esto primero**. Cuatro funciones `SECURITY DEFINER` reciben el usuario
+   como argumento, con `auth.uid()` apenas como default:
+   `event_role_of(p_event, p_user)`, `is_booking_party(p_request, p_user)`,
+   `is_booking_recipient(p_request, p_user)` y `es_admin_sonopolis(p_user)`.
+   Como saltan RLS, cualquiera que pueda ejecutarlas pregunta por el permiso **de otro**: un
+   `anon` lee el rol de cualquier persona en cualquier evento, o descubre quién es admin de la
+   plataforma. Ya pasa hoy por el `EXECUTE` implícito de `PUBLIC`; el problema es que el 093,
+   tal como está, lo firmaría como decisión.
+   Tres caminos en el addendum del 093 (otorgar igual / `to authenticated` en las policies /
+   wrapper de un argumento), **recomendado el wrapper**. La elección es de Victor: la segunda
+   opción cambia qué ve el público. Capa: DATOS.
 
 ## ⚠️ Bloqueante en producción (8-sep-2026) — crear evento y local está roto
 
