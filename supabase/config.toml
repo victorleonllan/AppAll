@@ -21,7 +21,14 @@ max_rows = 1000
 # without explicit GRANTs. When unset, new entities are NOT auto-exposed, matching the new cloud
 # default. Set to `true` to keep the legacy behaviour of auto-exposing new entities; this is
 # deprecated and the field is removed on 2026-10-30 once the always-revoked behaviour is permanent.
-# auto_expose_new_tables = true
+# Spec 089 (17-sep-2026). En `true` para que la base LOCAL reproduzca los permisos de
+# producción: el proyecto `xluinfihjjtxkglihxqz` es anterior al cambio de default de Supabase y
+# auto-expone las tablas de `public` a anon/authenticated. Sin esto, `anon` no puede ni leer
+# `events` en local —la cartelera no cargaría— y todo criterio de cierre que pruebe con la anon
+# key da "permission denied" por el motivo equivocado.
+# OJO: el campo se elimina el 2026-10-30. Cuando eso pase, la única forma de igualar producción
+# es escribir los GRANT explícitos en una migración. Anotado en specs/PENDIENTES.md.
+auto_expose_new_tables = true
 
 [api.tls]
 # Enable HTTPS endpoints locally using a self-signed certificate.
