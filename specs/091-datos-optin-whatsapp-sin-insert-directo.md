@@ -109,3 +109,20 @@ teléfono sea su dueño**, y eso es un spec aparte: va a PENDIENTES, no acá.
    `whatsapp_opt_ins` desaparece.
 6. En producción, después de aplicar: el flujo de opt-in del perfil público
    (`sonopolisWeb`, W-053) da de alta un teléfono real de prueba sin error en consola.
+
+---
+
+## Addendum — verificado contra la base local (16-sep-2026)
+
+Splinter contra la base del spec 089 devuelve **un solo `rls_policy_always_true`**, y apunta a
+esta policy con el mismo diagnóstico del spec:
+
+> Table `public.whatsapp_opt_ins` has an RLS policy `whatsapp_opt_ins_insert` for `INSERT` that
+> allows unrestricted access (WITH CHECK clause is always true). This effectively bypasses
+> row-level security for anon, authenticated.
+
+Ninguna otra tabla del esquema tiene una policy permisiva sin condición: es un caso aislado, no
+un patrón repetido en el repo.
+
+Corrección de procedimiento en el criterio 5: `supabase db lint` no corre splinter sino
+`plpgsql_check`. El procedimiento correcto está en el addendum del spec 089.
