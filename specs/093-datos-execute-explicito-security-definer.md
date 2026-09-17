@@ -192,3 +192,101 @@ Los primeros cinco se verifican **en la base local del spec 089**, antes de toca
 7. Después de aplicar: recorrer a mano, con sesión, crear evento → subir flyer → publicar →
    comprar una entrada → canjear el QR. Es el camino que cruza la mayor cantidad de funciones
    tocadas, y ninguna prueba de catálogo lo reemplaza.
+
+---
+
+## Addendum — lo que mostró el catálogo local (16-sep-2026)
+
+El spec 089 quedó aplicado y esto se verificó contra la base local, no contra el repo. Tres
+correcciones de dato y un hallazgo que **cambia la decisión 2**. El spec no se aplica tal como
+está escrito arriba.
+
+### 1. Cuatro firmas están mal, y la migración habría fallado
+
+El `GRANT` de la decisión 2 nombra funciones que no existen con esa firma. El catálogo dice:
+
+| En el spec | En la base |
+|---|---|
+| `public.es_admin()` | **no existe** — el spec 077 la renombró a `es_admin_sonopolis` |
+| `public.es_admin_sonopolis()` | `es_admin_sonopolis(uuid)` |
+| `public.event_role_of(uuid)` | `event_role_of(uuid, uuid)` |
+| `public.is_booking_party(uuid)` / `is_booking_recipient(uuid)` | ambas `(uuid, uuid)` |
+
+`GRANT EXECUTE ON FUNCTION` sobre una firma inexistente es un error, no un no-op: la migración
+aborta entera. Cuatro de ocho estaban mal, y el único motivo por el que se detectó antes de
+producción es que existió una base local donde probar.
+
+### 2. Son 14, no 16 — y el linter marca 47, no 16
+
+Dos cuentas distintas que el spec mezclaba. Contra `pg_proc.proacl` local hay **30 funciones
+`SECURITY DEFINER`**, de las cuales **14 tienen el `EXECUTE` implícito de `PUBLIC`** (las de la
+tabla de grupos, menos `es_admin` que no existe): 4 cuerpos de trigger, 7 guardas de policy y
+3 RPC. Esas 14 son lo que este spec arregla.
+
+Splinter, en cambio, marca **21 `anon_security_definer_function_executable` + 26
+`authenticated_…`**: cuenta toda función `SECURITY DEFINER` alcanzable por esos roles, sin
+distinguir si el permiso es un descuido o un `GRANT` deliberado de un spec anterior
+(`crear_optin_whatsapp`, `guest_ticket_items`, `precio_vigente_de`, `preventa_abierta`,
+`reservar_ticket_pending_guest`, `redeem_ticket_item`, `set_my_role`…). Esas seguirán marcadas
+después de este spec, y **deben seguirlo**: son el contrato público de la app.
+
+**El criterio 5 de arriba es inalcanzable y queda anulado.** El número correcto: los warnings
+de seguridad bajan de **56 a 33** entre los cuatro specs (−7 `search_path`, −1 `rls_policy_
+always_true`, −1 `public_bucket_allows_listing`, −14 de estas dos reglas). Un panel en cero
+significaría que ningún RPC es llamable desde el cliente, o sea que la app no funciona.
+
+### 3. El hallazgo: cuatro de las guardas son oráculos, y la decisión 2 no las cubre
+
+La decisión 2 otorga las guardas a `anon` argumentando que "todas deciden a partir de
+`auth.uid()`, que para `anon` es `NULL`". Eso es cierto **solo para tres de ellas**:
+
+```
+can_edit_event(p_event uuid)      -- sin parámetro de usuario
+can_delete_event(p_event uuid)    -- sin parámetro de usuario
+can_manage_team(p_event uuid)     -- sin parámetro de usuario
+```
+
+Las otras cuatro aceptan el usuario como argumento, con `auth.uid()` apenas como default:
+
+```
+event_role_of(p_event uuid, p_user uuid DEFAULT auth.uid())
+is_booking_party(p_request uuid, p_user uuid DEFAULT auth.uid())
+is_booking_recipient(p_request uuid, p_user uuid DEFAULT auth.uid())
+es_admin_sonopolis(p_user uuid DEFAULT auth.uid())
+```
+
+Son `SECURITY DEFINER`, así que **saltan RLS**, y el default se pisa pasando el argumento. Un
+`anon` con `EXECUTE` sobre `event_role_of` pregunta `event_role_of('<evento>', '<usuario>')` y
+recibe el rol de cualquier persona en cualquier evento, sin sesión: es un oráculo de lectura
+sobre `event_collaborators`, que es exactamente la tabla que RLS protege. `es_admin_sonopolis`
+responde quién es admin de la plataforma.
+
+**Esto ya pasa hoy**, por el `EXECUTE` implícito de `PUBLIC` — el spec no lo crea. Lo que hace
+mal es perpetuarlo: la decisión 2 las otorgaría a `anon` **explícitamente**, convirtiendo un
+descuido heredado en una decisión escrita, y con una justificación que para estas cuatro es
+falsa.
+
+### 4. Qué falta decidir antes de aplicar
+
+Las tres sin parámetro de usuario se otorgan a `anon` como dice la decisión 2, sin reparos. Para
+las otras cuatro hay tres caminos, y **la elección es de Victor porque la segunda cambia el
+producto**:
+
+1. **Otorgarlas igual a `anon`.** Cierra el warning, deja el oráculo como está hoy. Es no
+   arreglar nada y dejarlo firmado.
+2. **Agregar `to authenticated` a las policies que las usan** (`booking_requests`,
+   `event_payouts`, `event_collaborators`). Cierra el oráculo para el público, pero hay que
+   verificar una por una que ninguna sirva una lectura sin sesión — `events_select` sí lo hace,
+   aunque usa `can_edit_event`, que es de las seguras.
+3. **Un wrapper de un argumento para uso en policy** (`event_role_of(p_event)` que llame a la de
+   dos con `auth.uid()` fijo), otorgar solo el wrapper a `anon`, y dejar la de dos argumentos
+   para `authenticated` o `service_role`. Es el que cierra el agujero sin tocar el producto, y
+   el que más código agrega.
+
+**Recomendación: la 3.** Es la única que separa "evaluar mi propio permiso" —lo que las policies
+necesitan— de "preguntar por el permiso de otro", que es lo que no debería estar abierto. La 2
+arriesga romper lecturas públicas por un problema que no es de las policies sino de la firma de
+la función.
+
+Sea cual sea, **es un spec nuevo (094) que supera la decisión 2 de este**, no una edición de
+este archivo. Anotado en PENDIENTES.
