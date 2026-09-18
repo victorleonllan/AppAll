@@ -1,6 +1,15 @@
 # Spec 090 — `search_path` fijo en las 7 funciones que quedaron sin él
 
-> Estado: **aplicado en local, pendiente de producción** (17-sep-2026) —
+> Estado: **aplicado en producción** (17-sep-2026) — corrida contra `xluinfihjjtxkglihxqz` por
+> Management API y registrada en `supabase_migrations.schema_migrations` (versión
+> `20260917150000`, 7 statements; el registro pasó de 59 a 60 migraciones). Verificado ahí
+> mismo: las 7 con `search_path=public, pg_temp`, los 7 `md5(prosrc)` **idénticos** a los de
+> antes de aplicar, splinter de **56 a 49** warnings de seguridad (−7 exactos, ninguna otra
+> regla se movió), `ticket_reserva_ttl()` sigue devolviendo `00:30:00`, la cartelera pública
+> responde 200 con la anon key real, y ya no queda **ninguna** función `SECURITY DEFINER` sin
+> `search_path` (0 de 30). Los `md5` de producción coincidían con los de local antes de aplicar,
+> así que la verificación previa valía exactamente.
+> Antes, en local —
 > `20260917150000_spec_090_search_path_fijo.sql` corrida contra la base local del spec 089.
 > Los 5 criterios verificados: las 7 funciones tienen `search_path=public, pg_temp`, el `md5`
 > de los 7 cuerpos es idéntico al de antes (0 cambios), splinter baja de **56 a 49** warnings
