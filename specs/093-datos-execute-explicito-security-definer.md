@@ -290,3 +290,87 @@ la función.
 
 Sea cual sea, **es un spec nuevo (094) que supera la decisión 2 de este**, no una edición de
 este archivo. Anotado en PENDIENTES.
+
+---
+
+## Addendum 2 — `REVOKE FROM PUBLIC` no revoca nada acá (17-sep-2026)
+
+Probado en la base local del spec 089, ya con los permisos de producción reproducidos
+(addendum 2 del 089), aplicando el 094 y este spec completos en una transacción revertida.
+**La decisión 1 de este spec está equivocada en su punto central.**
+
+### El error
+
+La decisión 1 dice, y lo presenta como la propiedad que vuelve segura a la migración:
+
+> **`REVOKE … FROM PUBLIC` no toca los grants directos a un rol.** Es la propiedad que hace
+> segura a esta migración.
+
+La propiedad de Postgres es cierta. La conclusión es al revés: **precisamente porque no los
+toca, no revoca nada**. Corrido el `DO` sobre las 30 funciones `SECURITY DEFINER`, `anon` seguía
+ejecutando `transfer_event_ownership` sin problema.
+
+El ACL explica por qué:
+
+```
+=X/postgres  postgres=X/postgres  anon=X/postgres  authenticated=X/postgres  service_role=X/postgres
+```
+
+El `=X/postgres` inicial es el permiso de `PUBLIC` — lo único que el `REVOKE` se lleva. Los
+otros son **grants explícitos a cada rol**, y sobreviven intactos.
+
+### De dónde salen esos grants
+
+Del mismo `ALTER DEFAULT PRIVILEGES` del addendum 2 del spec 089. No otorga solo tablas: el
+propio comentario del `config.toml` dice *"new tables, views, sequences **and functions**"*. Cada
+función creada en `public` nace con `EXECUTE` explícito para `anon`, `authenticated` y
+`service_role`.
+
+Esto ya estaba documentado en el repo y no lo leí bien. El README, sobre el spec 046:
+
+> 2 bugs encontrados y corregidos al aplicar: […] `_reservar_ticket_shared`,
+> `claim_guest_tickets` y `set_my_role` ejecutables por `anon`/`authenticated` de más
+> (**grant por defecto de Supabase, no por el `REVOKE FROM PUBLIC` del archivo**).
+
+Es exactamente este problema, descrito hace un mes. Este spec citó esa línea en su
+introducción y aun así repitió el error que describe.
+
+### La corrección
+
+```sql
+EXECUTE format('REVOKE EXECUTE ON FUNCTION %s FROM PUBLIC, anon, authenticated', f.sig);
+```
+
+Con `anon, authenticated` en el `REVOKE`, `transfer_event_ownership` pasa a devolver
+`permission denied (42501)` para `anon`, que es lo que el criterio 3 pedía.
+
+### La consecuencia: la lista blanca pasa de 10 a 22 funciones
+
+Al revocar también de los roles, **las 15 funciones que specs anteriores ya habían resuelto
+pierden su grant igual**. Sus `GRANT` originales viven en migraciones viejas, y esas no se
+vuelven a correr. Hay que re-otorgarlas en esta misma migración o se rompen la compra como
+invitado, el canje de QR y el opt-in.
+
+| Grupo | A quién | Funciones |
+|---|---|---|
+| Guardas de policy | `anon`, `authenticated` | `can_edit_event`, `can_delete_event`, `can_manage_team`, `event_role_of`, `es_admin_sonopolis`, `is_booking_party`, `is_booking_recipient` |
+| RPC con sesión | `authenticated` | `transfer_event_ownership`, `monto_a_transferir`, `search_collaborator_candidates` |
+| **Abiertas a propósito por specs previos** | `anon`, `authenticated` | `crear_optin_whatsapp`, `guest_ticket_items`, `guest_ticket_status`, `precio_vigente_de`, `preventa_abierta`, `preventa_cierra_at`, `reservar_ticket_pending_guest` |
+| **Ídem, solo con sesión** | `authenticated` | `comprador_de`, `peek_ticket_item`, `redeem_ticket_item`, `reservar_ticket_pending`, `set_my_role` |
+| Cuerpos de trigger | nadie | `events_claim_owner`, `events_guard_protected_columns`, `tickets_track_preventa_vendidos`, `claim_event_collaborator_invites`, `handle_new_user` |
+
+Las dos filas en negrita son nuevas respecto del cuerpo del spec, y son la mitad de la lista. Un
+`REVOKE` sin ellas deja la app rota en los caminos de pago.
+
+### Los cuatro criterios, verificados
+
+Con el 094 y esta versión corregida, en transacción revertida:
+
+| Criterio | Resultado |
+|---|---|
+| 2 · la cartelera como `anon` | **1 evento visible** — no se rompió |
+| 3 · `transfer_event_ownership` como `anon` | **`permission denied (42501)`** |
+| 4 · `events_claim_owner` al crear evento | reclama **`owner`**, con `EXECUTE` revocado a todos |
+| 4 · `search_collaborator_candidates` como `authenticated` | ejecuta sin error de permiso |
+
+El criterio 2 era el que decidía si este spec salía o se revertía. Sale.
