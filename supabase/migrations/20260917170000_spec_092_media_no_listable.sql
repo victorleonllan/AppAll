@@ -1,0 +1,36 @@
+-- Spec 092 — El bucket `media` deja de ser listable por cualquiera.
+-- Ver specs/092-datos-bucket-media-no-listable.md
+--
+-- El comentario del spec 053 atribuye a esta policy un efecto que no tiene. En
+-- Storage hay dos caminos de lectura:
+--
+--   GET /object/public/media/<ruta>  -> NO consulta storage.objects. Sirve el
+--                                       archivo porque el bucket es public.
+--   POST /object/list/media          -> SÍ consulta storage.objects, con RLS.
+--
+-- O sea: las imágenes de la cartelera no se ven gracias a `media_select`, se ven
+-- porque el bucket es público. Lo único que `media_select` habilita es el
+-- inventario — y como no declara `to`, aplica a PUBLIC, `anon` incluido.
+-- El propio linter lo dice: "Public buckets don't need this for object URL
+-- access". Comprobado con la anon key local: el listado devuelve 200.
+--
+-- Enumerar eventos/, perfiles/ y locales/ no revela nada que la cartelera no
+-- muestre. `pendientes/<user_id>/` (spec 062) sí: es el flyer subido antes de
+-- que el evento exista, agrupado por usuario — el arte de un show sin anunciar y
+-- quién lo está preparando.
+--
+-- Se borra en vez de acotarse a las carpetas públicas: con el bucket público,
+-- recortar la policy no protegería el contenido de `pendientes/` —quien tenga la
+-- URL lo descarga igual— solo daría la sensación de haberlo hecho. Lo que se
+-- gana es que la URL haya que conocerla, y el nombre de archivo es un
+-- `crypto.randomUUID()` (sonopolisWeb/libs/storage.js).
+--
+-- Verificado que ningún cliente llama `.list()`: en sonopolisWeb solo hay
+-- `.upload()` y una URL armada por convención de string; en AppAll,
+-- `grep -rn "\.storage\." src` no devuelve nada.
+--
+-- Sin policy de select, el listado queda solo para service_role (que salta RLS)
+-- y el Studio. Si algún día un panel necesita mostrar "tus imágenes", es una
+-- policy nueva acotada al dueño de la carpeta, con su propio spec.
+
+drop policy if exists media_select on storage.objects;

@@ -1,7 +1,14 @@
 # Spec 092 — El bucket `media` deja de ser listable por cualquiera
 
-> Estado: **propuesto** (16-sep-2026)
-> Capa: DATOS. `supabase/migrations/<timestamp>_spec_092_media_no_listable.sql`
+> Estado: **aplicado en producción** (17-sep-2026) — `20260917170000_spec_092_media_no_listable.sql`,
+> aplicada en local y después contra `xluinfihjjtxkglihxqz` por Management API, registrada en
+> `schema_migrations`. En producción el bucket tenía **18 objetos, 5 de ellos en `pendientes/`**.
+> Con la anon key real, antes: el listado devolvía 4 entradas y `prefix=pendientes` devolvía 2.
+> Después: **0 y 0**. Las imágenes siguen sirviéndose por URL —probadas una de `perfiles/` y una
+> de `pendientes/`, las dos HTTP 200— que es exactamente lo que la decisión 1 anticipaba: la
+> policy no era lo que las hacía visibles. Las 8 policies de `insert`/`update` intactas, los 18
+> objetos intactos, y splinter baja de **48 a 47**.
+> Capa: DATOS. `supabase/migrations/20260917170000_spec_092_media_no_listable.sql`
 > Depende de: spec 089 (entorno local). Toca la policy `media_select` nacida en el spec 053
 > (= W-010); las de `insert`/`update` de los specs 053 y 062 no se tocan.
 > Origen: Security Advisor de Supabase, 16-sep-2026 — regla `Public Bucket Allows Listing`
