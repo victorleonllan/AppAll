@@ -1,7 +1,15 @@
 # Spec 091 — El opt-in de WhatsApp deja de aceptar inserts directos del cliente
 
-> Estado: **propuesto** (16-sep-2026)
-> Capa: DATOS. `supabase/migrations/<timestamp>_spec_091_optin_sin_insert_directo.sql`
+> Estado: **aplicado en producción** (17-sep-2026) — `20260917160000_spec_091_optin_sin_insert_directo.sql`,
+> aplicada primero en local y después contra `xluinfihjjtxkglihxqz` por Management API, registrada
+> en `schema_migrations`. Verificado en producción, con las pruebas de escritura dentro de
+> transacciones revertidas para no ensuciar una tabla de consentimientos reales: `anon` que
+> intenta un `INSERT` directo recibe **`42501 new row violates row-level security policy`**
+> (antes: 201 con `opted_in_at` a elección), el RPC `crear_optin_whatsapp()` llamado como `anon`
+> **sigue creando la fila**, la única fila real de la tabla quedó intacta, y splinter baja de
+> **49 a 48** (se va `rls_policy_always_true`, ninguna otra regla se mueve). En local, además:
+> reoptar dos veces deja una sola fila con `source` actualizado y `opted_in_at` de hoy.
+> Capa: DATOS. `supabase/migrations/20260917160000_spec_091_optin_sin_insert_directo.sql`
 > Depende de: spec 089 (entorno local). Toca una policy nacida en W-049 y el RPC de W-103,
 > ninguno de los dos se modifica.
 > Origen: Security Advisor de Supabase, 16-sep-2026 — regla `RLS Policy Always True` sobre

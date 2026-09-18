@@ -1,0 +1,26 @@
+-- Spec 091 — El opt-in de WhatsApp deja de aceptar inserts directos del cliente.
+-- Ver specs/091-datos-optin-whatsapp-sin-insert-directo.md
+--
+-- W-049 creó esta policy para que el público pudiera optar sin cuenta, y en su
+-- momento era correcta. El addendum del propio W-049 (29-ago-2026) movió el alta
+-- a `crear_optin_whatsapp()`, que es SECURITY DEFINER y salta RLS: desde
+-- entonces la policy no sostiene nada. Verificado que no hay un solo `.insert()`
+-- contra la tabla en sonopolisWeb ni en AppAll — el único camino es el RPC.
+--
+-- Lo que sí habilita mientras siga abierta, comprobado contra la base local:
+-- un POST con la anon key —que viaja en el bundle— devuelve 201 e inserta la
+-- fila con `opted_in_at` elegido por el cliente. En una tabla cuyo contenido es
+-- la prueba de que alguien aceptó recibir mensajes, y con un único número de
+-- Kapso para toda la plataforma, eso es consentimiento fabricado a costa del
+-- número de todos.
+--
+-- Se borra en vez de acotarse: el caso legítimo —alguien sin cuenta deja su
+-- teléfono— no tiene nada que validar a nivel de fila, que es por lo que W-049
+-- puso `true`. Una policy con una condición inventada seguiría aceptando todo,
+-- con más código.
+--
+-- Sin policy de insert, RLS deniega por defecto: la tabla queda escribible solo
+-- por el RPC y por service_role. Mismo criterio que W-049 ya aplicó a
+-- update/delete y a whatsapp_broadcasts entero.
+
+drop policy if exists whatsapp_opt_ins_insert on public.whatsapp_opt_ins;
