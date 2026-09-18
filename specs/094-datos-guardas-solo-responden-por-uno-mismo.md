@@ -1,6 +1,13 @@
 # Spec 094 — Las guardas de permiso solo responden por uno mismo
 
-> Estado: **propuesto** (17-sep-2026)
+> Estado: **diseño verificado en local, migración sin escribir** (17-sep-2026) — los criterios
+> 1 a 4 probados contra la base del spec 089 en una transacción revertida, con las cuatro
+> funciones reescritas. Antes: `anon` pregunta el rol de un ajeno y recibe `owner`, pregunta si
+> un uuid es admin y recibe `true`. Después: `NULL` y `false` — y también para un
+> `authenticated` preguntando por un tercero, así que el filtro no es solo contra `anon`. El uso
+> legítimo intacto: el dueño por sí mismo sigue dando `owner`, el admin `true`.
+> La migración se escribe recién cuando el spec 090 esté aplicado en producción: dos migraciones
+> pendientes viajan juntas en el mismo `db push` y se pierde el 1:1 entre spec y aplicación.
 > Capa: DATOS. `supabase/migrations/<timestamp>_spec_094_guardas_solo_por_uno_mismo.sql`
 > Depende de: spec 089 (entorno local). **Bloquea al spec 093** — su decisión 2 otorga estas
 > funciones a `anon` explícitamente, y no debe aplicarse antes que esto.
