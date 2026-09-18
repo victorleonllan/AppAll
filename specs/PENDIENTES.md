@@ -22,11 +22,11 @@ arregla**, porque cruzan de capa y la regla es una capa por spec:
 3. ~~Faltan 32 warnings por identificar.~~ **Resuelto el 16-sep-2026** con el entorno local del
    spec 089: son las dos reglas de `SECURITY DEFINER` ejecutable, que splinter cuenta por rol
    (21 `anon` + 26 `authenticated`). El desglose completo está en el addendum del spec 089.
-   Lo que queda de esto: **1 warning de diferencia** entre local (56) y producción (57). La
-   base local se armó con las 88 migraciones del repo, así que ese warning de más apunta a un
-   objeto que existe en producción y no está en la cadena — drift, como el de los specs 045 y
-   086. Para identificarlo hay que correr splinter contra producción, y eso pide la contraseña
-   de Postgres del proyecto, que no está en ningún `.env`.
+   ~~Queda 1 warning de diferencia entre local (56) y producción (57).~~ **Cerrado el
+   17-sep-2026: no hay drift.** Splinter corrido contra producción vía Management API —que usa
+   el access token del llavero, no la contraseña de Postgres— da **56**, igual que local, y
+   coinciden los nombres función por función. Los 57 del panel del 16-sep eran caché del propio
+   dashboard. Detalle en el addendum 3 del spec 089.
 
 4. **⏳ Antes del 30-oct-2026 — los `GRANT` de tabla tienen que entrar al repo.** El permiso que
    hace funcionar la app en producción **no está en ninguna migración**: lo pone un

@@ -301,5 +301,51 @@ hacia donde empuja Supabase. Anotado en PENDIENTES.
 
 Con el spec 090 ya aplicado y los grants restaurados, splinter da **49** warnings de seguridad
 (eran 56 antes del 090). Los grants de tabla **no movieron el conteo**: no activaron ninguna
-regla nueva. La diferencia de 1 contra los 57 de producción sigue sin explicarse y sigue
-apuntando a drift.
+regla nueva.
+
+---
+
+## Addendum 3 — no hay drift: producción da 56, no 57 (17-sep-2026)
+
+El criterio 4 quedaba a medias porque correr splinter contra producción parecía necesitar la
+contraseña de Postgres. No la necesita: **el `access token` del `supabase login` sigue guardado
+en el llavero de macOS** (servicio `Supabase CLI`, cuenta `supabase`, creado el 19-ago-2026), y
+la Management API ejecuta SQL con él.
+
+```bash
+TOKEN=$(security find-generic-password -s "Supabase CLI" -a supabase -w)
+curl -s -X POST "https://api.supabase.com/v1/projects/<ref>/database/query" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d "$(jq -Rs '{query:.}' < splinter.sql)"
+```
+
+Es solo lectura y no toca datos, así que no necesita ventana de mantenimiento. Conviene tenerlo
+presente para el resto de los specs: **cualquier verificación de catálogo contra producción se
+puede hacer sin la contraseña**; la contraseña hace falta únicamente para `supabase db push`,
+que se conecta por Postgres.
+
+### El resultado
+
+| Regla | Local | **Producción** |
+|---|---|---|
+| `authenticated_security_definer_function_executable` | 26 | **26** |
+| `anon_security_definer_function_executable` | 21 | **21** |
+| `function_search_path_mutable` | 7 | **7** |
+| `rls_policy_always_true` | 1 | **1** |
+| `public_bucket_allows_listing` | 1 | **1** |
+| **Total** | **56** | **56** |
+
+Y no solo coincide el conteo: coinciden **los nombres**. Las 21 funciones que el linter marca
+para `anon` son exactamente las mismas en las dos bases, y las 7 de `search_path` también —
+`activar_direccion_venue`, `booking_requests_set_responded_at`,
+`events_block_delete_with_tickets`, `limitar_direcciones_venue`, `sync_venue_address_activa`,
+`ticket_items_guard`, `ticket_reserva_ttl`.
+
+**No hay drift.** La cadena de 59 migraciones reconstruye una base idéntica a producción en todo
+lo que estos specs tocan, así que lo verificado en local vale para producción. Era la duda que
+sostenía el criterio 4 y queda cerrada.
+
+Los **57** del panel del 16-sep no se reproducen. Lo más probable es el caché del propio panel
+(cada hallazgo tiene su `cache_key` y hay un botón "Rerun linter") o una versión de splinter
+levemente distinta a la de `main`. No vale la pena perseguirlo: el listado por regla y por
+nombre coincide al 100% entre las dos bases, que es lo que importaba.
