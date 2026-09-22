@@ -210,8 +210,12 @@ Una sola migración, en este orden:
 4. `DROP` + `CREATE` de `precio_vigente_de` con grants.
 5. `CREATE OR REPLACE` de `_reservar_ticket_shared`.
 
-Funciones nuevas con `SET search_path = public` (spec 090) y sin `EXECUTE` a `PUBLIC`
-(spec 093).
+La función del trigger va `SECURITY DEFINER` con `SET search_path = public` (spec 090): la
+guarda de la Decisión 3 cuenta tickets del evento, y con los permisos de quien edita la RLS
+de `tickets` podría esconderle ventas ajenas (las de un colaborador, spec 038) y dejar
+pasar el cambio de país. Como toda `SECURITY DEFINER`, `REVOKE EXECUTE … FROM PUBLIC, anon,
+authenticated` **por rol**: revocar solo de `PUBLIC` no alcanza en este proyecto, porque
+los grants por defecto de Supabase van a cada rol (lección de los specs 046 y 093).
 
 **Capa DATOS de a una:** antes del `db push`, confirmar que no hay otra migración local sin
 pushear (como en el 097: locales = remotas + 1).
