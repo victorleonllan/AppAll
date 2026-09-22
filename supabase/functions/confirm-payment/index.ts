@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { cuentaMP } from '../_shared/cuentasMP.ts';
 
 // Spec 022-addendum (2-sep-2026). El webhook-mp no confirma pagos: la firma
 // x-signature nunca coincide contra tráfico real (raíz aún sin diagnosticar
@@ -11,7 +12,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // nosotros preguntamos. Si el webhook se arregla más adelante, ambos caminos
 // conviven sin conflicto: los dos hacen el mismo UPDATE idempotente.
 
-const MERCADOPAGO_ACCESS_TOKEN = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 // Dominio de la web que manda el correo (spec W-123). Env var y no hardcodeado:
@@ -62,9 +62,9 @@ function mandarCorreoDeEntrada(ticketId: string) {
   if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(p);
 }
 
-async function mpGet(path: string) {
+async function mpGet(path: string, token: string) {
   const res = await fetch(`https://api.mercadopago.com${path}`, {
-    headers: { Authorization: `Bearer ${MERCADOPAGO_ACCESS_TOKEN}` },
+    headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) {
     throw new Error(`MP ${path} → ${res.status}: ${await res.text()}`);
@@ -96,7 +96,7 @@ serve(async (req) => {
 
     const consulta = supabase
       .from('tickets')
-      .select('id, evento_id, user_id, status, preference_id');
+      .select('id, evento_id, user_id, status, preference_id, pais_cobro');
 
     const { data: ticket, error: ticketError } = await (
       ticket_id ? consulta.eq('id', ticket_id) : consulta.eq('preference_id', ticket_ref)
@@ -118,9 +118,22 @@ serve(async (req) => {
       return json({ status: 'pending', detail: 'guest_no_soportado_aun' }, 200);
     }
 
+    // Spec 101. Se pregunta con la cuenta que CREÓ la preferencia
+    // (`tickets.pais_cobro`, spec 100), no con la del evento: el evento pudo
+    // editarse después (spec 100, D3 lo impide si ya hay ventas, pero un
+    // ticket viejo puede seguir apuntando a una cuenta que hoy es otra).
+    let cuenta;
+    try {
+      cuenta = cuentaMP(ticket.pais_cobro);
+    } catch (err) {
+      console.error('confirm-payment: cuentaMP falló', ticket.pais_cobro, err);
+      return json({ error: 'cuenta_mp_no_configurada' }, 500);
+    }
+
     const externalReference = `${ticket.evento_id}|${ticket.user_id}`;
     const busqueda = await mpGet(
       `/v1/payments/search?external_reference=${encodeURIComponent(externalReference)}&sort=date_created&criteria=desc`,
+      cuenta.token,
     );
 
     // Puede haber más de un intento de pago para el mismo evento+usuario

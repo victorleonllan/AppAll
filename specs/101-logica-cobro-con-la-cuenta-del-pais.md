@@ -1,6 +1,16 @@
 # Spec 101 — Mercado Pago cobra con la cuenta y la moneda del país del evento
 
-> Estado: **propuesto** (22-sep-2026).
+> Estado: **desplegado en producción** (22-sep-2026) — `supabase functions deploy
+> create-preference webhook-mp confirm-payment`, las tres en estado `ACTIVE` sin error de
+> bundling. Criterios de código verificados: `rg -n "'CLP'" supabase/functions` da cero;
+> `MERCADOPAGO_ACCESS_TOKEN`/`MERCADOPAGO_WEBHOOK_SECRET` solo aparecen en `_shared/cuentasMP.ts`.
+> Sanity check contra producción (sin dinero real): `create-preference` con un token inválido
+> responde 401 `unauthorized` sin crashear (el import de `_shared/cuentasMP.ts` cargó bien);
+> `webhook-mp` con `?cuenta=XX` responde 401, y sin `?cuenta=` (default `CL`) también 401 por
+> firma inválida — ambos casos esperados sin una notificación real de MP. **Criterio 6
+> (compra mexicana real) sigue pendiente de la cuenta mexicana, como dice el spec. Criterio 1
+> (compra chilena real de punta a punta) queda pendiente de que Victor la corra — cuesta
+> dinero real y no es algo para automatizar sin su confirmación.**
 > Capa: LÓGICA. `supabase/functions/_shared/cuentasMP.ts` (nuevo),
 > `supabase/functions/create-preference/index.ts`, `supabase/functions/webhook-mp/index.ts`,
 > `supabase/functions/confirm-payment/index.ts`.

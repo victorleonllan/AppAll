@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { cuentaMP } from '../_shared/cuentasMP.ts';
 
-const MERCADOPAGO_ACCESS_TOKEN = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 // Deploy web de Sonópolis. Las back_urls deben ser HTTPS: MP las valida al crear la
@@ -93,6 +93,23 @@ serve(async (req) => {
       return json({ error: 'precio_no_disponible', detail: cotizError?.message }, 500);
     }
 
+    // Spec 101. Antes de crear nada en MP: si el país no vende, no hay preferencia
+    // cobrable esperando un ticket que nunca va a existir. `_reservar_ticket_shared`
+    // (spec 100) también lo valida, pero ahí ya sería tarde para MP.
+    if (!cotizacion.se_vende) {
+      return json({ error: 'pais_sin_cobro', pais: evento.pais }, 409);
+    }
+
+    // Una cuenta de Mercado Pago por país (spec 101): `throw` si faltan los
+    // secrets, nunca cobrar con la cuenta de otro país.
+    let cuenta;
+    try {
+      cuenta = cuentaMP(evento.pais);
+    } catch (err) {
+      console.error('cuentaMP falló:', err);
+      return json({ error: 'cuenta_mp_no_configurada', pais: evento.pais }, 500);
+    }
+
     // Bug encontrado 2-sep-2026: GET /v1/payments/{id} ya no trae `preference_id`
     // como campo propio (MP lo movió/quitó al migrar a la Orders API por dentro).
     // webhook-mp no tenía con qué encontrar el ticket — nunca se completó uno real.
@@ -108,7 +125,7 @@ serve(async (req) => {
         title: `Entrada: ${evento.artist_name} - ${evento.venue_name}`,
         quantity: cantidad,
         unit_price: cotizacion.monto,
-        currency_id: 'CLP',
+        currency_id: cotizacion.moneda,
       }],
       payer: { email: user.email },
       back_urls: {
@@ -139,7 +156,10 @@ serve(async (req) => {
       // ya vencida y su lugar podría estar vendido.
       expires: true,
       expiration_date_to: vencimientoMP(RESERVA_TTL_MINUTOS),
-      notification_url: `${SUPABASE_URL}/functions/v1/webhook-mp`,
+      // `?cuenta=` (spec 101): webhook-mp lo lee para saber con qué secreto
+      // validar la firma y con qué token preguntarle a MP. Sin el parámetro
+      // (preferencias creadas antes de este spec) cae a CL.
+      notification_url: `${SUPABASE_URL}/functions/v1/webhook-mp?cuenta=${cuenta.pais}`,
       external_reference: `${evento_id}|${user_id}`,
       metadata: { ticket_ref: ticketRef },
     };
@@ -149,7 +169,7 @@ serve(async (req) => {
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${MERCADOPAGO_ACCESS_TOKEN}`,
+          'Authorization': `Bearer ${cuenta.token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(preference),
@@ -179,11 +199,21 @@ serve(async (req) => {
 
     if (ticketError) {
       const sinCupo = ticketError.message?.includes('sin_cupo');
+      const paisSinCobro = ticketError.message?.includes('pais_sin_cobro');
       console.error('reservar_ticket_pending falló:', ticketError);
       return json({
-        error: sinCupo ? 'sin_cupo' : 'ticket_insert_failed',
+        error: sinCupo ? 'sin_cupo' : paisSinCobro ? 'pais_sin_cobro' : 'ticket_insert_failed',
         detail: ticketError.message,
-      }, sinCupo ? 409 : 500);
+      }, sinCupo || paisSinCobro ? 409 : 500);
+    }
+
+    // Spec 101. El evento pudo cambiar de país entre el chequeo de arriba y esta
+    // llamada (dos consultas separadas, sin lock entre ellas). No se cancela a
+    // mano: el ticket queda `pending` y caduca solo a los 30 minutos (spec 088),
+    // igual que el checkout de MP.
+    if (ticket.pais_cobro !== cuenta.pais) {
+      console.error('cuenta_inconsistente: ticket', ticket.id, 'pais_cobro', ticket.pais_cobro, 'vs cuenta', cuenta.pais);
+      return json({ error: 'cuenta_inconsistente' }, 500);
     }
 
     return json({
