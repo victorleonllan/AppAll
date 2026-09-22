@@ -914,6 +914,27 @@ mismo motivo.
 
 ---
 
+## Venta en México 🟡 specs 100-101 propuestos (22-sep-2026)
+
+Lo que falta para **encender** la venta en México después de aplicar 100, 101, W-167 y W-168:
+
+1. **La cuenta mexicana de Mercado Pago.** No existe. Con ella: `supabase secrets set
+   MERCADOPAGO_ACCESS_TOKEN_MX=… MERCADOPAGO_WEBHOOK_SECRET_MX=…`, verificando antes con
+   `GET /users/me` que `site_id` sea `MLM` (spec 101).
+2. **Los datos bancarios del creador mexicano.** `FormEvento` (W-082) pide RUT y Cuenta RUT:
+   sin CLABE no hay a dónde transferir lo cobrado. Spec propio en la web, antes de encender.
+3. **Un spec DATOS de una línea:** `UPDATE paises_cobro SET activo = true WHERE pais = 'MX'`.
+4. **V (criterio 6 del 101):** una compra mexicana real — cobra en MXN en la cuenta
+   mexicana, el webhook la confirma con `?cuenta=MX`, `confirm-payment` la encuentra.
+
+Deuda que queda declarada:
+
+- `src/context/EventosContext.tsx:57` — la copia móvil de `montoDesdePrecio` tiene el error
+  de 100× con precios mexicanos (`"$1,200.00"` → 132.000). La web lo arregla en el W-167 con
+  una regla sin rama por país; copiarla cuando se implemente el 095.
+- `crm_contactos.total_gastado` suma `tickets.monto` sin moneda. Hoy nadie compró en dos
+  países; el día que pase, el total mezcla CLP y MXN.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs
