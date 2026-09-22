@@ -1,8 +1,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { cuentaMP } from '../_shared/cuentasMP.ts';
 
-const MERCADOPAGO_ACCESS_TOKEN = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN')!;
-const MERCADOPAGO_WEBHOOK_SECRET = Deno.env.get('MERCADOPAGO_WEBHOOK_SECRET')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 // Ver confirm-payment: misma env var, mismo motivo (spec W-123).
@@ -30,7 +29,7 @@ function igualesEnTiempoConstante(a: string, b: string): boolean {
 // Spec 022, problema 1. MP manda X-Signature: ts=...,v1=<hmac>. El manifest se
 // arma con data.id (del query string, no del body), x-request-id y ts — si
 // data.id o x-request-id no vienen, esa línea se omite del manifest.
-async function firmaValida(req: Request, url: URL): Promise<boolean> {
+async function firmaValida(req: Request, url: URL, webhookSecret: string): Promise<boolean> {
   const xSignature = req.headers.get('x-signature') ?? '';
   const xRequestId = req.headers.get('x-request-id') ?? '';
   const dataId = (url.searchParams.get('data.id') ?? '').toLowerCase();
@@ -49,7 +48,7 @@ async function firmaValida(req: Request, url: URL): Promise<boolean> {
   partes.push(`ts:${ts}`);
 
   const manifest = partes.join(';') + ';';
-  const esperado = await hmacSha256Hex(MERCADOPAGO_WEBHOOK_SECRET, manifest);
+  const esperado = await hmacSha256Hex(webhookSecret, manifest);
   // El log de diagnóstico que vivía acá (2-sep-2026) se quitó antes de pasar a
   // producción: imprimía el manifest, el `v1` recibido y el hash esperado en
   // cada notificación, o sea un oráculo de firma para cualquiera con acceso a
@@ -90,9 +89,9 @@ function mandarCorreoDeEntrada(ticketId: string) {
   if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(p);
 }
 
-async function mpGet(path: string) {
+async function mpGet(path: string, token: string) {
   const res = await fetch(`https://api.mercadopago.com${path}`, {
-    headers: { Authorization: `Bearer ${MERCADOPAGO_ACCESS_TOKEN}` },
+    headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) {
     throw new Error(`MP ${path} → ${res.status}: ${await res.text()}`);
@@ -103,10 +102,25 @@ async function mpGet(path: string) {
 serve(async (req) => {
   const url = new URL(req.url);
 
+  // Spec 101. `?cuenta=` lo pone create-preference al crear la preferencia
+  // (con qué cuenta se cobró, con esa se valida). Sin el parámetro —
+  // preferencias creadas antes de este spec, reembolsos y contracargos que
+  // llegan días después— se asume CL: todas las de antes lo son. Un valor
+  // desconocido hace que cuentaMP() lance, y eso también cae a 401: el
+  // parámetro elige QUÉ secreto se exige, nunca SI se exige.
+  const paisCuenta = url.searchParams.get('cuenta') ?? 'CL';
+  let cuenta;
+  try {
+    cuenta = cuentaMP(paisCuenta);
+  } catch (err) {
+    console.error('cuentaMP falló en webhook:', err);
+    return new Response('Invalid signature', { status: 401 });
+  }
+
   // Spec 022, problema 1. 401 y no 500: una firma inválida no es un error
   // transitorio que valga la pena reintentar, es una notificación que no
   // confiamos en procesar. MP no reintenta sobre 401.
-  if (!(await firmaValida(req, url))) {
+  if (!(await firmaValida(req, url, cuenta.webhookSecret))) {
     console.error('Firma x-signature inválida, notificación rechazada', { url: req.url });
     return new Response('Invalid signature', { status: 401 });
   }
@@ -138,7 +152,7 @@ serve(async (req) => {
     let estadoMp: string | null = null;
 
     if (topic === 'payment') {
-      const pago = await mpGet(`/v1/payments/${id}`);
+      const pago = await mpGet(`/v1/payments/${id}`, cuenta.token);
       // Bug encontrado 2-sep-2026: `pago.preference_id` ya no existe en la
       // respuesta actual de MP (verificado contra un pago real) y `pago.order.id`
       // es un id de otro concepto (Orders API) que nunca coincide con el
@@ -151,7 +165,7 @@ serve(async (req) => {
       paymentId = pago.id?.toString() ?? id;
       estadoMp = pago.status;
     } else if (topic === 'merchant_order') {
-      const order = await mpGet(`/merchant_orders/${id}`);
+      const order = await mpGet(`/merchant_orders/${id}`, cuenta.token);
       preferenceId = order.preference_id ?? null;
       // El pago vive dentro de la orden; el id de la orden NO es el del pago.
       paymentId = order.payments?.[0]?.id?.toString() ?? null;
