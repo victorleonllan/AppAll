@@ -1,7 +1,7 @@
 # Spec 100 — Cada evento se cobra en la moneda de su país
 
-> Estado: **propuesto** (22-sep-2026).
-> Capa: DATOS. `supabase/migrations/<timestamp>_spec_100_moneda_por_pais_de_cobro.sql`.
+> Estado: **aplicado en producción** (22-sep-2026) — `20260922120000_spec_100_moneda_por_pais_de_cobro.sql` (`supabase db push --linked`, sin otra migración pendiente). Los 6 criterios verificables por SQL (3, 4, 6, 7) corridos dentro de una transacción revertida contra producción: evento `MX` nace con `moneda = 'MXN'`; `_reservar_ticket_shared` sobre un evento `MX` falla con `pais_sin_cobro`; sobre uno `CL` crea el ticket con `moneda = 'CLP', pais_cobro = 'CL'`; cambiar el país de un evento con un ticket `completed` falla con `pais_con_ventas`, sin ventas sí cambia (y su moneda con él); `precio_vigente_de` de un evento mexicano da `moneda = 'MXN', se_vende = false`. Backfill real: 4 eventos y 54 tickets existentes, todos `CL`/`CLP`. Grants verificados: `precio_vigente_de` ejecutable por `anon`/`authenticated`, `_reservar_ticket_shared` y `events_set_moneda` no. Criterios 1, 2, 5 y 8 verificados por lectura directa (`paises_cobro` con `CL` activo y `MX` inactivo; sin evento fuera de `CL`/`CLP` hoy).
+> Capa: DATOS. `supabase/migrations/20260922120000_spec_100_moneda_por_pais_de_cobro.sql`.
 > Depende de: spec 080 (`events.pais`), spec 083 (última versión de `precio_vigente_de`),
 > spec 088 (última versión de `_reservar_ticket_shared`).
 > Habilita: spec 101 (las Edge Functions eligen cuenta y moneda),
