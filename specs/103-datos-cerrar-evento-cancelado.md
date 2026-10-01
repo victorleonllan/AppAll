@@ -1,7 +1,7 @@
 # Spec 103 — Un evento cancelado también se cierra, sin marcar pago
 
-> Estado: **propuesto** (30-sep-2026).
-> Capa: DATOS. `supabase/migrations/<timestamp>_spec_103_cerrar_evento_cancelado.sql`.
+> Estado: **aplicado en producción** (30-sep-2026) — `20260930140000_spec_103_cerrar_evento_cancelado.sql` (`supabase db push --linked`). Antes del push, criterios dentro de una transacción revertida contra producción: Flerk se cierra y su payout sigue `pendiente`/`monto_pagado NULL` (1); un evento futuro cancelado (por su owner dentro de la transacción) se cierra (2); futuro no cancelado → `El evento todavía no ocurre`, pasado con ventas → `pagado 17000` + cerrado (3); colaborador no admin → `Solo un admin…` (4). Después del push: `cerrar_evento` es la versión 103; Flerk sigue abierto.
+> Capa: DATOS. `supabase/migrations/20260930140000_spec_103_cerrar_evento_cancelado.sql`.
 > Supera: la guarda 4 de la Decisión 3 del **spec 102** (`'Un evento cancelado no se
 > cierra'`). El resto del 102 sigue vigente.
 > Habilita: `sonopolisWeb/specs/w174-logica-pagos-sin-cerrados.md`,
