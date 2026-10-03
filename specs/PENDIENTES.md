@@ -935,7 +935,7 @@ Deuda que queda declarada:
 - `crm_contactos.total_gastado` suma `tickets.monto` sin moneda. Hoy nadie compró en dos
   países; el día que pase, el total mezcla CLP y MXN.
 
-## Flow 🟡 specs 104-105 propuestos (3-oct-2026)
+## Flow 🟡 specs 104-105 en producción, Flow apagado (3-oct-2026)
 
 Decisión de Victor: Chile cobra con Mercado Pago **y** Flow (elige el comprador), México solo
 con Flow. Specs 104 (DATOS) y 105 (LÓGICA), más `sonopolisWeb` W-189 y W-190.

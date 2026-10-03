@@ -1,6 +1,6 @@
 # Spec 105 — Flow cobra, confirma y reconcilia en las Edge Functions, al lado de Mercado Pago
 
-> Estado: **propuesto**.
+> Estado: **desplegado en producción, Flow apagado** (03-oct-2026) — `create-payment-flow` y `webhook-flow` (v1), `confirm-payment` (v7) y `create-preference` (v20) `ACTIVE`, sin errores de bundling (6). Antes de escribir, la firma, las URLs, los parámetros de `/payment/create`, `getStatusByCommerceId` y la tabla de estados 1-4 se compararon con developers.flow.cl: coinciden con el spec. **El sandbox no se probó**: no hay credenciales cargadas (queda en las V de `PENDIENTES.md`). Criterios: `rg "FLOW_"` solo en `_shared/flow.ts` (1); `firmar` = `openssl dgst -sha256 -hmac` sobre los mismos parámetros (2); `create-payment-flow` sobre un evento `CL` → 409 `pasarela_inactiva`, 0 tickets nuevos (3); `create-preference` → 200 con `init_point`, ticket `pasarela = mercadopago`, `CLP`, `CL` — ese ticket de prueba se canceló a mano para devolver el cupo (4); `confirm-payment` con un MP `completed` → `{status: completed}` y con el MP `pending` recién creado → `sin_pago_encontrado_aun`, igual que antes (5). Sesión de prueba: cuenta de Victor vía `generate_link` de admin, cerrada al terminar. `deno check`: las funciones nuevas y `confirm-payment` sin errores; `create-preference` conserva los 7 de tipos que ya tenía en HEAD.
 > Capa: LÓGICA. `supabase/functions/_shared/flow.ts` (nuevo),
 > `supabase/functions/_shared/finalizarTicket.ts` (nuevo),
 > `supabase/functions/create-payment-flow/index.ts` (nueva),
