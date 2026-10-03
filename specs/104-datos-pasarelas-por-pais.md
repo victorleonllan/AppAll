@@ -4,7 +4,7 @@
 > Capa: DATOS. `supabase/migrations/20261003120000_spec_104_pasarelas_por_pais.sql`.
 > Depende de: spec 100 (`paises_cobro`, `tickets.pais_cobro`, `_reservar_ticket_shared` con la
 > guarda de país), spec 088 (reserva que caduca), spec 046 (wrappers con sesión e invitado).
-> Habilita: spec 105 (Flow en las Edge Functions), `sonopolisWeb/specs/w189-logica-pagar-con-flow.md`,
+> Alimenta: spec 105 (Flow en las Edge Functions), `sonopolisWeb/specs/w189-logica-pagar-con-flow.md`,
 > `w190-frontend-elegir-pasarela-al-comprar.md`.
 
 > **En una frase:** hoy "el país cobra" significa "el país cobra con Mercado Pago"; este spec
