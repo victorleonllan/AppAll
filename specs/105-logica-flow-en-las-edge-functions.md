@@ -9,7 +9,7 @@
 > `supabase/config.toml`.
 > Depende de: spec 104 (`pasarelas_cobro`, `tickets.pasarela`, reserva con `p_pasarela`).
 > **No se despliega antes de que el 104 esté en producción.**
-> Habilita: `sonopolisWeb/specs/w189-logica-pagar-con-flow.md`.
+> Alimenta: `sonopolisWeb/specs/w189-logica-pagar-con-flow.md`.
 
 > **En una frase:** dos Edge Functions nuevas (`create-payment-flow` crea el cobro en Flow,
 > `webhook-flow` recibe su aviso) y una rama de Flow en `confirm-payment`, para que un
