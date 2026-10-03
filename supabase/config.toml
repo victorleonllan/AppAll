@@ -431,6 +431,19 @@ entrypoint = "./functions/create-preference/index.ts"
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/create-preference/*.html" ]
 
+[functions.create-payment-flow]
+enabled = true
+verify_jwt = false
+import_map = "./functions/create-payment-flow/deno.json"
+entrypoint = "./functions/create-payment-flow/index.ts"
+
+[functions.webhook-flow]
+enabled = true
+# Flow no manda un JWT de Supabase: el aviso se verifica preguntándole a Flow (spec 105).
+verify_jwt = false
+import_map = "./functions/webhook-flow/deno.json"
+entrypoint = "./functions/webhook-flow/index.ts"
+
 [functions.webhook-mp]
 enabled = true
 verify_jwt = false

@@ -1,6 +1,8 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { cuentaMP } from '../_shared/cuentasMP.ts';
+import { cuentaFlow, ESTADO_FLOW, flowGet } from '../_shared/flow.ts';
+import { finalizarTicket } from '../_shared/finalizarTicket.ts';
 
 // Spec 022-addendum (2-sep-2026). El webhook-mp no confirma pagos: la firma
 // x-signature nunca coincide contra tráfico real (raíz aún sin diagnosticar
@@ -96,7 +98,7 @@ serve(async (req) => {
 
     const consulta = supabase
       .from('tickets')
-      .select('id, evento_id, user_id, status, preference_id, pais_cobro');
+      .select('id, evento_id, user_id, status, preference_id, pais_cobro, pasarela, monto, moneda');
 
     const { data: ticket, error: ticketError } = await (
       ticket_id ? consulta.eq('id', ticket_id) : consulta.eq('preference_id', ticket_ref)
@@ -110,6 +112,54 @@ serve(async (req) => {
     // function) — nada que hacer, y no vale la pena gastar la consulta a MP.
     if (ticket.status !== 'pending') {
       return json({ status: ticket.status }, 200);
+    }
+
+    // Spec 105, Decisión 4. Un ticket de Flow se le pregunta a Flow, por nuestra
+    // referencia (commerceOrder = preference_id), con la cuenta que lo cobró. Va
+    // antes de la guarda de invitado: la búsqueda no necesita user_id, así que con
+    // Flow el invitado sí se puede confirmar.
+    if (ticket.pasarela === 'flow') {
+      let cuentaF;
+      try {
+        cuentaF = cuentaFlow(ticket.pais_cobro);
+      } catch (err) {
+        console.error('confirm-payment: cuentaFlow falló', ticket.pais_cobro, err);
+        return json({ error: 'cuenta_flow_no_configurada' }, 500);
+      }
+
+      let estado;
+      try {
+        estado = await flowGet(cuentaF, '/payment/getStatusByCommerceId', {
+          commerceId: ticket.preference_id,
+        });
+      } catch (err) {
+        // Red o 5xx de Flow: reconciliar-pagos lo cuenta como error y reintenta
+        // en la próxima corrida, sin cancelar.
+        console.error('confirm-payment: Flow getStatusByCommerceId falló', ticket.id, err);
+        return json({ error: 'flow_status_failed', detail: String(err) }, 502);
+      }
+
+      const nuevoEstadoFlow = ESTADO_FLOW[estado.status];
+      if (!nuevoEstadoFlow) {
+        // Estado 1, pendiente de pago. `sin_pago_encontrado_aun` a propósito: es el
+        // texto exacto con el que reconciliar-pagos cancela un ticket abandonado de
+        // más de 2 horas. Con otro, los de Flow quedarían pending para siempre.
+        return json({ status: 'pending', detail: 'sin_pago_encontrado_aun', flowStatus: estado.status }, 200);
+      }
+
+      const resultado = await finalizarTicket(supabase, ticket, {
+        nuevoEstado: nuevoEstadoFlow,
+        paymentId: String(estado.flowOrder),
+        monto: Number(estado.amount),
+        moneda: estado.currency,
+      });
+      if (resultado.detail === 'update_fallido') {
+        return json({ error: 'update_fallido' }, 500);
+      }
+      return json(
+        resultado.detail ? { status: resultado.status, detail: resultado.detail } : { status: resultado.status },
+        200,
+      );
     }
 
     if (!ticket.user_id) {
