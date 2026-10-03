@@ -1,6 +1,6 @@
 # Spec 104 — Cada país cobra con una o más pasarelas, y cada ticket recuerda con cuál se pagó
 
-> Estado: **propuesto**.
+> Estado: **aplicado en el repo, sin `db push`** (03-oct-2026) — `20261003120000_spec_104_pasarelas_por_pais.sql` escrita partiendo de `pg_get_functiondef` en producción (lectura; idéntica a la versión del spec 100). **No se aplicó contra la base**: falta el `supabase db push --linked` con Victor. Verificado en un Postgres 17 local desechable con stub del esquema: la migración corre entera en una transacción y pasan los criterios 1-6 (semilla de 3 filas; backfill sin nulos, solo `mercadopago`; una firma por función; 3 argumentos → ticket `mercadopago`, `p_pasarela => 'flow'` → `pasarela_inactiva`; `anon` sin `EXECUTE` en `_reservar_ticket_shared`/`reservar_ticket_pending` y con él en `_guest`; invariante sin filas). También: `INSERT` directo sin `pasarela` falla por `NOT NULL`, y `p_pasarela NULL` falla con `pasarela_inactiva`. En producción no hay otra función que inserte en `tickets`. `npx tsc --noEmit`: sin errores fuera de `supabase/functions/` (los 30 que reporta son de Deno, previos).
 > Capa: DATOS. `supabase/migrations/20261003120000_spec_104_pasarelas_por_pais.sql`.
 > Depende de: spec 100 (`paises_cobro`, `tickets.pais_cobro`, `_reservar_ticket_shared` con la
 > guarda de país), spec 088 (reserva que caduca), spec 046 (wrappers con sesión e invitado).
