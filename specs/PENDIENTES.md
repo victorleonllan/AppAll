@@ -935,6 +935,41 @@ Deuda que queda declarada:
 - `crm_contactos.total_gastado` suma `tickets.monto` sin moneda. Hoy nadie compró en dos
   países; el día que pase, el total mezcla CLP y MXN.
 
+## Flow 🟡 specs 104-105 propuestos (3-oct-2026)
+
+Decisión de Victor: Chile cobra con Mercado Pago **y** Flow (elige el comprador), México solo
+con Flow. Specs 104 (DATOS) y 105 (LÓGICA), más `sonopolisWeb` W-189 y W-190.
+
+Lo que falta para **encender** Flow, después de aplicar los cuatro:
+
+1. **Credenciales.** Sandbox primero: cuenta en `sandbox.flow.cl`, y
+   `supabase secrets set FLOW_API_URL=https://sandbox.flow.cl/api FLOW_API_KEY_CL=… FLOW_SECRET_KEY_CL=…`.
+   Después las de producción de la cuenta chilena (la registrada el 30-sep-2026).
+2. **Verificaciones en sandbox** (spec 105):
+   - Crear, pagar y confirmar una orden, por `webhook-flow` y por `confirm-payment`.
+   - Una orden abandonada queda `cancelled` en la reconciliación (más de 2 h).
+   - Una orden anulada (estado 4) queda `cancelled`.
+   - Un voucher en efectivo **no** se puede pagar después de los 30 minutos (`timeout`). Si
+     se puede, hay que pasar a un `paymentMethod` solo con medios inmediatos.
+3. **Un spec DATOS de una línea:**
+   `UPDATE pasarelas_cobro SET activo = true WHERE pais = 'CL' AND pasarela = 'flow'`.
+4. **México**, además: cuenta de Flow México (alta en el SAT), datos bancarios del creador
+   (CLABE, pendiente #30 de la web) y el spec DATOS que encienda `paises_cobro` MX y
+   `pasarelas_cobro` MX/flow.
+
+Deuda que queda declarada:
+
+- **La app nativa compra solo con Mercado Pago.** Con un país solo-Flow (México encendido),
+  `create-preference` responde 409 `pasarela_inactiva` y la app muestra su error genérico.
+  Además la app no mira `se_vende`: muestra el botón de compra en eventos de cualquier país.
+- **`webhook-mp` y la rama MP de `confirm-payment` no usan `finalizarTicket`.** El camino de
+  MP sigue sin la guarda de monto, y `webhook-mp` sin la guarda de `pending`.
+- **El TTL de 30 minutos vive en tres lugares:** `ticket_reserva_ttl()`,
+  `RESERVA_TTL_MINUTOS` en `create-preference` y el `timeout` de `create-payment-flow`.
+- **La comisión de Flow no está en `monto_a_transferir`.** Igual que la de MP: el 10% de
+  recargo la cubre, pero nadie lo verificó con las tarifas de Flow (Chile, y México
+  3,25% + $2,50 + IVA).
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs
