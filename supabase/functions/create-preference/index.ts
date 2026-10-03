@@ -100,6 +100,21 @@ serve(async (req) => {
       return json({ error: 'pais_sin_cobro', pais: evento.pais }, 409);
     }
 
+    // Spec 105, Decisión 6. Mercado Pago activo para el país (`pasarelas_cobro`,
+    // spec 104). Sin esto, el día que un país cobre solo con Flow, la app nativa
+    // (que siempre llama acá) crearía una preferencia que después la reserva rechaza.
+    const { data: pasarelaMP } = await supabase
+      .from('pasarelas_cobro')
+      .select('pasarela')
+      .eq('pais', evento.pais)
+      .eq('pasarela', 'mercadopago')
+      .eq('activo', true)
+      .maybeSingle();
+
+    if (!pasarelaMP) {
+      return json({ error: 'pasarela_inactiva', pais: evento.pais, pasarela: 'mercadopago' }, 409);
+    }
+
     // Una cuenta de Mercado Pago por país (spec 101): `throw` si faltan los
     // secrets, nunca cobrar con la cuenta de otro país.
     let cuenta;
@@ -194,6 +209,8 @@ serve(async (req) => {
         p_evento_id: evento_id,
         p_cantidad: cantidad,
         p_preference_id: ticketRef,
+        // Spec 105: explícito, en vez de depender del DEFAULT del spec 104.
+        p_pasarela: 'mercadopago',
       })
       .single();
 
