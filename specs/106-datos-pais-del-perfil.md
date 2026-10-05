@@ -105,3 +105,17 @@ El dueño lo puede cambiar con la policy «Users can update own profile», pero 
   5-oct-2026).
 - `events.pais` sigue heredándose del local (W-114): este spec no lo toca.
 - Que la base deje de crear el perfil como `fan` provisional al entrar con Google.
+
+## Bugs encontrados al aplicar (05-oct-2026)
+
+- **"Sin `DEFAULT`" (Decisión 1) rompía la app nativa.** `EditarPerfilBandaScreen` y
+  `PerfilMusicoScreen` guardan el perfil con `supabase.from('profiles').upsert(...)` sin `pais`.
+  En un `INSERT … ON CONFLICT DO UPDATE`, Postgres revisa el `NOT NULL` de la fila propuesta
+  antes de resolver el conflicto (verificado en un Postgres 17 local: `null value in column
+  "pais"` aunque la fila ya exista). Sin default, ningún músico podría volver a guardar su perfil
+  desde la app, y las versiones instaladas no se pueden corregir a tiempo. La migración agrega
+  `DEFAULT 'CL'` (la app nativa solo opera en Chile). El `UPDATE` del upsert no toca `pais`
+  porque no viaja en el payload, así que no pisa el país de nadie. `handle_new_user` lo sigue
+  escribiendo explícito. Criterio agregado: un `upsert` sin `pais` sobre un perfil existente
+  guarda y conserva su país.
+
