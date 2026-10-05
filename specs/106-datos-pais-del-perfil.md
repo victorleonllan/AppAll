@@ -1,6 +1,6 @@
 # Spec 106 — Todo perfil tiene país desde que nace
 
-> Estado: **propuesto**.
+> Estado: **aplicado en producción** (05-oct-2026) — `20261005210000_spec_106_pais_del_perfil.sql` (`supabase db push --linked`, única migración pendiente), con `DEFAULT 'CL'` por la addenda. Antes del push, criterios 1-5 y el `upsert` de la addenda en un Postgres 17 local con stub. Después del push, contra producción: 40 perfiles, 0 nulos, todos `CL` (1); dentro de un bloque revertido, cuenta nueva con `pais: MX` → `musician/MX`, sin país → `CL`, con `AR` → `CL` (2); `pais = 'AR'` falla por FK (23503) y `NULL` por `NOT NULL` (23502) (3); como `anon`, los 7 músicos con país y ningún fan ni local visible (4); `set_my_role('musician')` deja el país en `CL` (5); el `upsert` de la app nativa (`mapProfileToDB` siempre manda `role: 'musician'`) sobre un perfil en `MX` guarda y conserva `MX` (addenda). Ningún dato de prueba quedó.
 > Capa: DATOS. `supabase/migrations/20261005210000_spec_106_pais_del_perfil.sql`.
 > Depende de: spec 100 (`paises_cobro`, el catálogo de países donde Sonópolis opera), spec 046
 > (`handle_new_user` con los roles `fan`/`musician`/`local`).
