@@ -1,6 +1,6 @@
 # Spec 107 — El registro de banda de Santiago Samba Club pasa a la cuenta de la banda
 
-> Estado: pendiente.
+> Estado: **aplicado en producción** (05-oct-2026). `20261005220000` (`supabase db push --linked`, única migración pendiente). Antes del push se probó en producción dentro de una transacción revertida. Después del push, criterios 1-4 verificados: el registro apunta a `s.sambacluboficial`, 0 filas de `artists` y 0 de `event_collaborators` con la cuenta de prueba, y `cuentasDelEvento` incluye a la banda en los 2 eventos.
 > Capa: DATOS (corrección de filas, sin cambio de esquema).
 > `supabase/migrations/20261005220000_spec_107_santiago_samba_club_a_su_cuenta.sql`.
 > Depende de: spec 061 (`artists`, el backfill que creó el enlace mal puesto), spec 033
