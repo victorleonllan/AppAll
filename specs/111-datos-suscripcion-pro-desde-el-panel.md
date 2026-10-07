@@ -1,6 +1,6 @@
 # Spec 111 — El dueño de un local o banda se suscribe a Pro desde su panel, sin código del admin
 
-> Estado: diseño (06-oct-2026).
+> Estado: **aplicado en producción** (06-oct-2026) — `20261007010000_spec_111_pro_desde_el_panel.sql` (`db push --linked`, única pendiente). Antes del push, los 5 criterios verificados en producción dentro de una transacción revertida; después, `paises_cobro`: CL = 20000, MX = null.
 > Capa: DATOS. `supabase/migrations/<timestamp>_spec_111_pro_desde_el_panel.sql`.
 > Depende de: spec 110 (`pro_suscripciones`, `pro_cuenta_del_tenant`), spec 100
 > (`paises_cobro`).
