@@ -1,6 +1,6 @@
 # Spec 108 — La base guarda los códigos de suscripción a Sonópolis Pro y los cobros mensuales de Mercado Pago
 
-> Estado: diseño (06-oct-2026).
+> Estado: **superado por spec 110** (06-oct-2026), sin implementar. Victor pidió que la suscripción quede atada a la cuenta de Sonópolis del tenant.
 > Capa: DATOS. `supabase/migrations/<timestamp>_spec_108_suscripcion_pro.sql`.
 > Depende de: `sonopolisWeb` W-048 (`sonopolis_pro_hasta`, trigger `guard_sonopolis_pro`),
 > W-211 (`pro_cambios`, `admin_dar_pro`), spec 100 (`paises_cobro`), spec 077
