@@ -132,3 +132,17 @@ El ciclo con un cobro real (suscribirse, ver la fecha correr, cancelar) queda co
 - Cancelar, pausar o cambiar el monto de una suscripción desde Sonópolis.
 - México: el código funciona igual con `MERCADOPAGO_ACCESS_TOKEN_MX` cuando `paises_cobro`
   active MX; hoy `admin_crear_codigo_pro` lo rechaza.
+
+## Addenda (06-oct-2026) — depende del 110, no del 108
+
+El 108 quedó superado por el **spec 110** antes de implementarse (la suscripción se ata a la
+cuenta de Sonópolis del tenant). Para este spec cambia poco:
+
+- **Depende del 110.** `admin_crear_codigo_pro` y `pro_registrar_pago` conservan nombre y
+  parámetros. `admin_crear_codigo_pro` además devuelve `correo_cuenta` y rechaza un tenant
+  sin cuenta («este local no tiene cuenta en Sonópolis…»): ese error vuelve tal cual como
+  400, igual que cualquier otro error del RPC, **sin crear plan en Mercado Pago**.
+- `crear-suscripcion-pro` agrega `correo_cuenta` a su respuesta.
+- `back_url` y `webhook-mp-pro` no cambian. El link de pago ya no lo entrega esta función a
+  la página pública: lo entrega `pro_link_de_pago` (110) a la cuenta dueña con sesión. La
+  función sigue devolviendo `init_point` al admin, que lo necesita solo para verificar.
