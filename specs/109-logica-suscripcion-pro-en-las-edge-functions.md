@@ -1,6 +1,10 @@
 # Spec 109 — Las Edge Functions crean el plan de Sonópolis Pro en Mercado Pago y reciben sus cobros
 
-> Estado: diseño (06-oct-2026).
+> Estado: aplicado en código (06-oct-2026), **sin desplegar**. Verificado: `deno check` limpio en las
+> dos funciones y `_shared/firmaMP.ts` (criterio 1); `npx tsc --noEmit` sin errores nuevos fuera
+> de los de entorno Deno que ya tienen todas las Edge Functions; `git diff` vacío en `webhook-mp`
+> (criterio 5). Criterios 2-4 piden la función desplegada contra la base con el 110 pusheado:
+> pendientes. Ver «Bugs encontrados al aplicar».
 > Capa: LÓGICA. `supabase/functions/_shared/firmaMP.ts` (nuevo),
 > `supabase/functions/crear-suscripcion-pro/index.ts` (nueva),
 > `supabase/functions/webhook-mp-pro/index.ts` (nueva), `supabase/config.toml`.
@@ -146,3 +150,22 @@ cuenta de Sonópolis del tenant). Para este spec cambia poco:
 - `back_url` y `webhook-mp-pro` no cambian. El link de pago ya no lo entrega esta función a
   la página pública: lo entrega `pro_link_de_pago` (110) a la cuenta dueña con sesión. La
   función sigue devolviendo `init_point` al admin, que lo necesita solo para verificar.
+
+## Bugs encontrados al aplicar (06-oct-2026)
+
+Comparado contra la referencia de Mercado Pago (`/reference/online-payments/subscriptions/
+get-authorized-payment/get` y `get-preapproval/get`; las rutas `_authorized_payments_id/get`
+del spec ya responden 404):
+
+- **`canceled`, no `cancelled`.** La referencia de `GET /preapproval/{id}` lista los estados
+  `pending`, `authorized`, `paused` y `canceled` (una L). `webhook-mp-pro` mapea las dos
+  grafías a `cancelada`: con solo la del spec, una cancelación real no cambiaba nada.
+- **El cobro no trae fecha de aprobación.** `GET /authorized_payments/{id}` devuelve
+  `debit_date` (fecha en que MP cobra o reintenta), `date_created` y `last_modified`; `payment`
+  trae solo `id`, `status` y `status_detail`. `p_pagado_at` usa `debit_date`, y si falta
+  `last_modified`. El desfase con la aprobación real es de minutos a horas, menor que los 3
+  días de gracia de `pro_registrar_pago`.
+- **`transaction_amount` viene como string** en el ejemplo de la referencia (`"25"`). Se
+  convierte con `Number()` antes de `p_monto`.
+- `preapproval_id`, `payment.status` y `preapproval_plan_id` coinciden con el spec.
+
