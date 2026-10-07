@@ -454,3 +454,12 @@ entrypoint = "./functions/webhook-mp/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/webhook-mp/*.html" ]
+
+[functions.crear-suscripcion-pro]
+enabled = true
+verify_jwt = true
+
+[functions.webhook-mp-pro]
+enabled = true
+# Mercado Pago no manda JWT: se verifica la firma x-signature (spec 022).
+verify_jwt = false
