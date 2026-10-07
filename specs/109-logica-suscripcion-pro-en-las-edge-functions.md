@@ -1,6 +1,6 @@
 # Spec 109 — Las Edge Functions crean el plan de Sonópolis Pro en Mercado Pago y reciben sus cobros
 
-> Estado: aplicado en código (06-oct-2026), **sin desplegar**. Verificado: `deno check` limpio en las
+> Estado: aplicado y **desplegado en producción** (06-oct-2026): `crear-suscripcion-pro` y `webhook-mp-pro` deployadas; criterio 4 verificado en producción (sin firma → 401) y criterio 3 (con `anon` → «permission denied for function admin_crear_codigo_pro», sin plan). Criterio 2 sin verificar: crea un plan real. Falta el webhook en el panel de MP (paso manual). Verificado antes: `deno check` limpio en las
 > dos funciones y `_shared/firmaMP.ts` (criterio 1); `npx tsc --noEmit` sin errores nuevos fuera
 > de los de entorno Deno que ya tienen todas las Edge Functions; `git diff` vacío en `webhook-mp`
 > (criterio 5). Criterios 2-4 piden la función desplegada contra la base con el 110 pusheado:
