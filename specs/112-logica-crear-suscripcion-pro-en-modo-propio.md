@@ -1,6 +1,6 @@
 # Spec 112 — `crear-suscripcion-pro` también crea el plan cuando lo pide el dueño del local o banda
 
-> Estado: diseño (06-oct-2026).
+> Estado: **aplicado y desplegado** (06-oct-2026) — `deno check` limpio (criterio 1); en producción, modo propio con `anon` → «permission denied for function pro_crear_mi_codigo» sin plan (criterio 2); modo admin con `anon` responde igual que antes (criterio 3). Pagar de verdad: V40 de sonopolisWeb.
 > Capa: LÓGICA. `supabase/functions/crear-suscripcion-pro/index.ts`.
 > Depende de: spec 111 (`pro_crear_mi_codigo`), spec 109 (la función).
 > Alimenta: `sonopolisWeb` W-221.

@@ -5,6 +5,10 @@ import { cuentaMP } from '../_shared/cuentasMP.ts';
 // Spec 109 (con la addenda del 110). El admin genera un código de Sonópolis Pro
 // para un tenant: esta función lo convierte en un plan mensual de Mercado Pago
 // (`preapproval_plan`) y guarda su link de pago.
+//
+// Spec 112 — con `propio: true` lo pide la cuenta dueña del local o banda desde su
+// panel: el código sale de `pro_crear_mi_codigo` (spec 111) con el precio de la
+// base, y el link de pago vuelve directo en la respuesta.
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -28,6 +32,10 @@ interface CodigoPro {
   moneda: string;
   nombre: string;
   correo_cuenta: string;
+  // Solo en modo propio (spec 111): el monto sale de la base, y `init_point` viene
+  // lleno cuando se reusa un código que ya tenía plan.
+  monto?: number;
+  init_point?: string | null;
 }
 
 const json = (body: unknown, status: number) =>
@@ -58,7 +66,7 @@ serve(async (req) => {
   let sinPlan: string | null = null;
 
   try {
-    const { tenant_type, tenant_id, monto } = await req.json();
+    const { tenant_type, tenant_id, monto, propio } = await req.json();
 
     // 1. El permiso lo decide Postgres (spec 110, `admin_crear_codigo_pro`), no
     // esta función: el RPC corre con la sesión del que llama y rechaza a quien no
@@ -67,20 +75,35 @@ serve(async (req) => {
       global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
     });
 
+    // Spec 112 — un flag explícito y no "sin monto = propio": un admin que olvida
+    // el monto no debe terminar creando un código a precio de lista sin enterarse.
+    const rpc = propio === true ? 'pro_crear_mi_codigo' : 'admin_crear_codigo_pro';
+    const args = propio === true
+      ? { p_tenant_type: tenant_type, p_tenant_id: tenant_id }
+      : { p_tenant_type: tenant_type, p_tenant_id: tenant_id, p_monto: monto };
+
     const { data: codigo, error: rpcError } = await usuario
-      .rpc('admin_crear_codigo_pro', {
-        p_tenant_type: tenant_type,
-        p_tenant_id: tenant_id,
-        p_monto: monto,
-      })
+      .rpc(rpc, args)
       .single<CodigoPro>();
 
     if (rpcError || !codigo) {
-      const mensaje = rpcError?.message ?? 'admin_crear_codigo_pro no devolvió el código';
-      const noEsAdmin = mensaje.includes('solo el admin');
-      return json({ error: mensaje }, noEsAdmin ? 403 : 400);
+      const mensaje = rpcError?.message ?? `${rpc} no devolvió el código`;
+      const sinPermiso = mensaje.includes('solo el admin') || mensaje.includes('solo la cuenta');
+      return json({ error: mensaje }, sinPermiso ? 403 : 400);
+    }
+
+    // Spec 112 — código reusado: ya tiene plan en Mercado Pago, no se crea otro.
+    if (propio === true && codigo.init_point) {
+      return json({
+        codigo: codigo.codigo,
+        url: `${APP_WEB_URL}/pro/${codigo.codigo}`,
+        init_point: codigo.init_point,
+      }, 200);
     }
     sinPlan = codigo.id;
+
+    // En modo propio el monto es el de la fila (precio de la base), nunca el del body.
+    const montoPlan = propio === true ? Number(codigo.monto) : Number(monto);
 
     // 2. Una cuenta de Mercado Pago por país (spec 101). `throw` si faltan los
     // secrets: nunca crear el plan con la cuenta de otro país.
@@ -100,7 +123,7 @@ serve(async (req) => {
       auto_recurring: {
         frequency: 1,
         frequency_type: 'months',
-        transaction_amount: Number(monto),
+        transaction_amount: montoPlan,
         currency_id: codigo.moneda,
       },
       back_url: `${APP_WEB_URL}/pro/${codigo.codigo}/listo`,
@@ -128,7 +151,12 @@ serve(async (req) => {
     // nadie, ni al admin.
     const { error: updError } = await admin
       .from('pro_suscripciones')
-      .update({ mp_plan_id: mpPlan.id, init_point: mpPlan.init_point })
+      .update({
+        mp_plan_id: mpPlan.id,
+        init_point: mpPlan.init_point,
+        // Spec 112 — en modo propio el link sale en esta misma respuesta.
+        ...(propio === true ? { link_pedido_at: new Date().toISOString() } : {}),
+      })
       .eq('id', codigo.id);
 
     if (updError) {
@@ -141,8 +169,8 @@ serve(async (req) => {
 
     sinPlan = null;
 
-    // 5. `init_point` vuelve solo al admin, para verificar. A la cuenta dueña se lo
-    // entrega `pro_link_de_pago` (spec 110), nunca la página pública.
+    // 5. `init_point` vuelve al admin, para verificar, y a la cuenta dueña en modo
+    // propio (spec 112). Nunca a la página pública.
     return json({
       codigo: codigo.codigo,
       url: `${APP_WEB_URL}/pro/${codigo.codigo}`,
