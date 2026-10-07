@@ -1,6 +1,6 @@
 # Spec 110 — La suscripción a Sonópolis Pro queda atada a la cuenta de Sonópolis del local o banda
 
-> Estado: aplicado en código (06-oct-2026), **sin push a producción** — `20261006222008_spec_110_suscripcion_pro.sql`. Los 7 criterios verificados en la base local (migraciones 091→110 en una transacción revertida). **Supera al spec 108**, que no se implementó.
+> Estado: aplicado y **pusheado a producción** (06-oct-2026) — `20261006222008_spec_110_suscripcion_pro.sql`, única migración pendiente. En producción: `pro_codigo` como `anon` con código inexistente → `[]`; `pro_link_de_pago` como `anon` → permission denied (criterio 4-5 parcial). Los 7 criterios verificados en la base local (migraciones 091→110 en una transacción revertida). **Supera al spec 108**, que no se implementó.
 > Capa: DATOS. `supabase/migrations/<timestamp>_spec_110_suscripcion_pro.sql`.
 > Depende de: `sonopolisWeb` W-048 (`sonopolis_pro_hasta`, trigger `guard_sonopolis_pro`),
 > W-211 (`pro_cambios`, `admin_dar_pro`), spec 100 (`paises_cobro`), spec 077
