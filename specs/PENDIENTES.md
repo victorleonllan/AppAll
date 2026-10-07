@@ -970,6 +970,28 @@ Deuda que queda declarada:
   recargo la cubre, pero nadie lo verificó con las tarifas de Flow (Chile, y México
   3,25% + $2,50 + IVA).
 
+## Sonópolis Pro con Mercado Pago 🟡 spec 109 en código, sin desplegar (6-oct-2026)
+
+`crear-suscripcion-pro` y `webhook-mp-pro` existen en el repo; nada está desplegado. En orden:
+
+1. `db push` del spec 110 (sus RPC son los que llaman las dos funciones).
+2. `supabase functions deploy crear-suscripcion-pro webhook-mp-pro`.
+3. **Paso manual en el panel de Mercado Pago** (spec 109): Webhooks de la aplicación de Chile,
+   modo productivo, URL `…/functions/v1/webhook-mp-pro?cuenta=CL`, solo eventos **Planes y
+   suscripciones**. No marcar «Pagos»: duplicaría hacia esta función los avisos de entradas.
+4. Criterios 2-4 del 109: código con sesión de admin, con sesión no admin, firma inválida.
+5. **V — ciclo con un cobro real:** suscribirse, ver correr `sonopolis_pro_hasta`, cancelar y
+   ver `cancelada`. Cuesta un mes de Pro real.
+
+Deuda que queda declarada:
+
+- **La verificación de firma está duplicada.** `_shared/firmaMP.ts` es copia de la de
+  `webhook-mp`, que no se tocó para no arriesgar la confirmación de entradas. Unificarlas es
+  un spec aparte.
+- **`monto_menor_al_plan` devuelve 500** en `webhook-mp-pro` (regla del spec: todo error del
+  RPC salvo `suscripcion_desconocida`). Reintentar no lo arregla; MP insistirá hasta agotar
+  sus reintentos y el cobro quedará sin registrar, visible solo en los logs.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs
