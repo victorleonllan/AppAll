@@ -1,6 +1,6 @@
 # Spec 113 — Redes sociales del CRM: cuentas conectadas, publicaciones y su cola (datos)
 
-> Estado: **Diseño**.
+> Estado: **Aplicado (07-oct-2026) — migración escrita, NO pusheada a producción.** `20261007180000_spec_113_redes_sociales_del_crm.sql`. Verificado en un Postgres local con stubs de `auth`, `storage`, `vault`, `cron` y `net`: los 7 criterios pasan (5 tablas con RLS y 0 policies; `authenticated` ve 0 filas y no ejecuta `redes_tomar_destinos`; check `x`+`meta` rechazado; estados `programada`→`parcial`→`cancelada`; dos sesiones concurrentes toman destinos distintos y el colgado de 11 min queda `fallida`; bucket 100 MB; 2 jobs y `redes_tick()` sin `cron_secret` no encola nada). Falta: `supabase db push` y crear `cron_secret` en el vault.
 > Capa: DATOS. `supabase/migrations/<timestamp>_spec_113_redes_sociales_del_crm.sql`.
 > Depende de: `events` (para `evento_id`), `vault` y las extensiones `pg_cron` y `pg_net` de Supabase.
 > Alimenta: `sonopolisWeb` W-233 (núcleo), W-234 (Meta), W-235 (Zernio), W-236 (orquestador), W-237/W-238/W-239 (pantallas).
