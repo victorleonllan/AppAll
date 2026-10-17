@@ -1,6 +1,6 @@
 # Spec 116 — El precio se lee bien en cualquier moneda, y el evento guarda `comienza_at`
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` sin errores, `expo export --platform web` OK, los 7 casos de `montoDesdePrecio` y el ida y vuelta de `armarFechaHora`/`separarFechaHora` verificados con `npx tsx` (script no commiteado). Pendientes manuales: V (116-a) y V (116-b).
 > Capa: LÓGICA. `src/context/EventosContext.tsx`, `src/types/index.ts`, `src/lib/precio.ts` (nuevo), `src/lib/fecha.ts` (nuevo).
 > Depende de: spec 095, spec 115.
 > Alimenta: spec 120 (detalle con moneda), spec 136 (formulario de evento con fecha y hora reales).
