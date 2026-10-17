@@ -68,7 +68,7 @@
 | 130 | Editar perfil de músico al nivel de la web: país, avatar, foto y disponibilidad — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 131 | Hooks de solicitudes de bolo y conexiones entre músicos — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 132 | Pantalla de solicitudes para músico y local, y «Solicitar» desde la ficha del músico — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
-| 133 | Hook de direcciones del local: hasta 3, una activa — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
+| 133 | Hook de direcciones del local: hasta 3, una activa — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | **Aplicado** (17-oct-2026) — `src/hooks/useDireccionesVenue.ts`; tsc y `expo export` limpios. Desbloquea 134 |
 | 134 | Editar local al nivel de la web: direcciones, avatar, foto y estilos — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 135 | Lógica para gestionar un evento como en la web: preventas, banco, cobro, artistas e invitaciones — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 136 | Crear y editar un evento con todo lo que pide la web — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
