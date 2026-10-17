@@ -1,6 +1,6 @@
 # Spec 118 — Pago nativo con el navegador del sistema, y la confirmación le pregunta a `confirm-payment`
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `tsc --noEmit` sin errores fuera de `supabase/functions`, `expo export --platform web` OK, criterios 3-7 revisados en el código. Pendiente verificación manual V (118-a..d) en dispositivo.
 > Capa: FRONTEND. `src/screens/DetalleEventoScreen.tsx`, `src/screens/ConfirmacionCompraScreen.tsx`.
 > Depende de: spec 114, spec 117.
 > Alimenta: spec 126 (el botón «Ver mis entradas» de la confirmación lleva a esa pantalla).

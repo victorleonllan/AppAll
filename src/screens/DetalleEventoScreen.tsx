@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
@@ -152,6 +153,49 @@ export default function DetalleEventoScreen() {
 
   // ────────────── FLUJO: usuario logueado ──────────────
 
+  /**
+   * Spec 118 — pide la preferencia a create-preference. Común a web y nativo; en
+   * nativo manda `origen: 'app'` para que el pago vuelva a la app por la página
+   * puente (spec 117) en vez de a sonopolis.org/mis-entradas.
+   */
+  const pedirPreferencia = async (desdeApp: boolean) => {
+    // create-preference identifica al comprador con supabase.auth.getUser().
+    // Con la anon key eso devuelve null y la function corta en 401: hay que
+    // mandar el access_token de la sesión.
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('Sesión no encontrada');
+
+    const res = await fetch(
+      `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/create-preference`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
+        },
+        body: JSON.stringify({
+          evento_id: evento.id,
+          user_id: user!.id,
+          cantidad: 1,
+          ...(desdeApp ? { origen: 'app' } : {}),
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      const detalle = await res.text();
+      throw new Error(`create-preference ${res.status}: ${detalle}`);
+    }
+
+    return res.json() as Promise<{
+      init_point?: string;
+      sandbox_init_point?: string;
+      ticket_id?: string;
+      ticket_ref?: string;
+    }>;
+  };
+
   const handleComprarLogueado = async () => {
     if (monto <= 0) {
       Alert.alert('Sin precio', 'Este evento no tiene un precio definido');
@@ -161,48 +205,47 @@ export default function DetalleEventoScreen() {
     setStep('comprando');
     setLoading(true);
     try {
-      // create-preference identifica al comprador con supabase.auth.getUser().
-      // Con la anon key eso devuelve null y la function corta en 401: hay que
-      // mandar el access_token de la sesión.
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Sesión no encontrada');
+      if (Platform.OS === 'web') {
+        const data = await pedirPreferencia(false);
 
-      const res = await fetch(
-        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/create-preference`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-            'apikey': process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
-          },
-          body: JSON.stringify({
-            evento_id: evento.id,
-            user_id: user!.id,
-            cantidad: 1,
-          }),
-        }
+        // Con credenciales de prueba, init_point ya opera en modo test.
+        // sandbox_init_point es el flujo viejo y no siempre resuelve.
+        const checkoutUrl = data.init_point || data.sandbox_init_point;
+        window.open(checkoutUrl, '_blank');
+
+        navigation.replace('ConfirmacionCompra', {
+          eventoId: evento.id,
+          ticketId: data.ticket_id,
+          status: 'pending',
+        });
+        return;
+      }
+
+      // Nativo: `window` no tiene `open`. openAuthSessionAsync espera a que el
+      // navegador vuelva por appall://compra y lo cierra solo.
+      const { init_point, sandbox_init_point, ticket_id, ticket_ref } = await pedirPreferencia(true);
+      const resultado = await WebBrowser.openAuthSessionAsync(
+        (init_point || sandbox_init_point)!,
+        'appall://compra',
       );
 
-      if (!res.ok) {
-        const detalle = await res.text();
-        throw new Error(`create-preference ${res.status}: ${detalle}`);
+      // Si cerró el navegador sin volver, el ticket existe y pudo haberse pagado:
+      // se va igual a la confirmación como 'pending' y ella lo resuelve preguntando.
+      let status: 'success' | 'failure' | 'pending' = 'pending';
+      if (resultado.type === 'success' && resultado.url) {
+        const s = new URL(resultado.url).searchParams.get('status');
+        if (s === 'success' || s === 'failure' || s === 'pending') status = s;
       }
 
-      const data = await res.json();
-
-      // Con credenciales de prueba, init_point ya opera en modo test.
-      // sandbox_init_point es el flujo viejo y no siempre resuelve.
-      const checkoutUrl = data.init_point || data.sandbox_init_point;
-      if (typeof window !== 'undefined') {
-        window.open(checkoutUrl, '_blank');
-      }
-
-      navigation.replace('ConfirmacionCompra', {
+      // navigate y no replace: ConfirmacionCompra tiene getId por `ref` (spec 114),
+      // así el retorno que además llega por el linking cae en la misma pantalla.
+      navigation.navigate('ConfirmacionCompra', {
         eventoId: evento.id,
-        ticketId: data.ticket_id,
-        status: 'pending',
+        ticketId: ticket_id,
+        ref: ticket_ref,
+        status,
       });
+      setStep('idle');
     } catch (err) {
       console.error('Error al comprar:', err);
       Alert.alert('Error', 'No se pudo procesar la compra');
@@ -282,8 +325,15 @@ export default function DetalleEventoScreen() {
     if (cancelado) return;
     if (user) {
       handleComprarLogueado();
-    } else {
+    } else if (Platform.OS === 'web') {
       setStep('email');
+    } else {
+      // Spec 118 — en nativo el enlace mágico abre la sesión en la web, no en la
+      // app: se manda a iniciar sesión en la pestaña de cuenta.
+      Alert.alert('Inicia sesión para comprar', undefined, [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Iniciar sesión', onPress: () => navigation.getParent()?.navigate('Sonópolis') },
+      ]);
     }
   };
 
