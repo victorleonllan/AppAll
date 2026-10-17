@@ -7,6 +7,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { musicosMock } from '../data/mock/musicos';
 import { useAuth } from '../context/AuthContext';
 import { useVenues } from '../context/VenuesContext';
+import { usePais } from '../context/PaisContext';
+import { PAISES } from '../constants/paises';
 import { colors, spacing, fontSize, borderRadius } from '../theme';
 import { venueEmoji, venueLabel } from '../lib/venues';
 import { LocalesStackParamList } from '../navigation/LocalesStack';
@@ -23,7 +25,9 @@ export default function LocalesScreen() {
   const navigation = useNavigation<NavigationProp>();
   // Un solo listado de locales (spec 018): la separación por tipo venía de
   // usar `type` como si fuera un tier de asociación, que nunca fue.
-  const { allVenues: locales } = useVenues();
+  // Spec 096 — solo los locales del país activo (el que se elige en Cartelera).
+  const { venuesDelPais: locales } = useVenues();
+  const { pais } = usePais();
   const [generoSeleccionado, setGeneroSeleccionado] = useState<string | null>(null);
 
   const musicosFiltrados = generoSeleccionado
@@ -93,6 +97,9 @@ export default function LocalesScreen() {
           <Text style={styles.textoBotonMapa}>🗺️ Ver mapa</Text>
         </TouchableOpacity>
       </View>
+      {locales.length === 0 && (
+        <Text style={styles.vacio}>Todavía no hay locales en {PAISES[pais]?.nombre ?? pais}.</Text>
+      )}
       {locales.map((venue) => (
         <TouchableOpacity
           key={venue.id}
@@ -171,4 +178,5 @@ const styles = StyleSheet.create({
   },
   nombreVenue: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary },
   infoVenue: { fontSize: fontSize.sm, color: colors.secondary, marginTop: 2 },
+  vacio: { textAlign: 'center', color: colors.muted, marginTop: spacing.md },
 });

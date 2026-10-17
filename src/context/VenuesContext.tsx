@@ -1,10 +1,14 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, ReactNode, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Venue } from '../types';
 import { allVenues as mockVenues } from '../data/mock/venues';
+import { usePais } from './PaisContext';
 
 interface VenuesState {
+  // Spec 096 — `allVenues` son todos los países ("mi local" y el resto de las
+  // pantallas privadas); `venuesDelPais` es lo que lista LocalesScreen.
   allVenues: Venue[];
+  venuesDelPais: Venue[];
   loading: boolean;
   refresh: () => Promise<void>;
   createVenue: (venue: Omit<Venue, 'id'> & { ownerId: string }) => Promise<Venue>;
@@ -82,6 +86,14 @@ export function VenuesProvider({ children }: { children: ReactNode }) {
   const [allVenues, setAllVenues] = useState<Venue[]>(mockVenues);
   const [loading, setLoading] = useState(true);
   const [useMock, setUseMock] = useState(true);
+  const { pais } = usePais();
+
+  // Spec 096 — mismo criterio que `eventosDelPais` en EventosContext: derivado,
+  // y el mock (sin `pais`) se muestra completo.
+  const venuesDelPais = useMemo(
+    () => (useMock ? allVenues : allVenues.filter((v) => v.pais === pais)),
+    [allVenues, pais, useMock]
+  );
 
   const loadFromSupabase = useCallback(async () => {
     try {
@@ -154,7 +166,7 @@ export function VenuesProvider({ children }: { children: ReactNode }) {
   }, [useMock]);
 
   return (
-    <VenuesContext.Provider value={{ allVenues, loading, refresh, createVenue, updateVenue }}>
+    <VenuesContext.Provider value={{ allVenues, venuesDelPais, loading, refresh, createVenue, updateVenue }}>
       {children}
     </VenuesContext.Provider>
   );
