@@ -1,6 +1,6 @@
 # Spec 143 — El detalle del evento deja de duplicar cancelar y borrar
 
-> Estado: propuesto (17-oct-2026)
+> Estado: aplicado (17-oct-2026) — `tsc --noEmit` limpio, grep de `handleCancelar`/«🚫 Cancelar» vacío, `expo export --platform web` sin error. Criterios 3-5 y V-candidata 143-a sin probar en dispositivo.
 > Capa: FRONTEND. `src/screens/DetalleEventoScreen.tsx`.
 > Depende de: spec 137 (aplicado)
 > Hermano en la web: `app/(marketing)/cartelera/[id]/BotonBorrarEvento.js` (W-047).
