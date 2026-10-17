@@ -1,6 +1,6 @@
 # Spec 127 — Ficha del local y mapa de locales con `react-native-maps`
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `react-native-maps` 1.27.2 vía `expo install`; tsc limpio; export web limpio y sin `react-native-maps` en el bundle; `expo config --type prebuild` con y sin la clave (sin ella no falla). Criterios 6, 7, 9, 10 y V-127a/b pendientes en dispositivo con sesión real.
 > Capa: FRONTEND. `src/screens/DetalleLocalScreen.tsx` (reemplaza el placeholder del spec 114), `src/screens/MapaLocalesScreen.tsx` (reemplaza el placeholder del spec 114), `src/components/MapaLocales.tsx` (nuevo), `src/components/MapaLocales.web.tsx` (nuevo), `src/lib/mapa.ts` (nuevo), `src/hooks/useEventosDelLocal.ts` (nuevo), `src/screens/LocalesScreen.tsx`, `app.config.js` (nuevo), `package.json`, `package-lock.json`.
 > Depende de: spec 114, spec 115, spec 124
 > Alimenta: un spec posterior de pines de locales externos (los de eventos scrapeados) sobre el mismo `MapaLocales`.
@@ -312,3 +312,23 @@ Cambio mínimo, sin tocar la sección de músicos (la cambia otro spec de esta f
   Build **sin** la clave: la pantalla muestra el aviso y la lista, sin cerrarse.
 - **V-127b** — Crear la clave en Google Cloud Console restringida al paquete Android y su
   SHA-1, y anotar dónde quedó guardada (paso de Victor).
+
+## Bugs encontrados al aplicar (17-oct-2026)
+
+- **§7 — `allVenues` no viene filtrado por país.** El 096 no filtró `allVenues`: agregó
+  `venuesDelPais` y dejó `allVenues` con todos los países (`src/context/VenuesContext.tsx:6-10`).
+  Usar `allVenues` en el mapa mostraría locales de otros países que `LocalesScreen` no
+  lista. `MapaLocalesScreen` usa `venuesDelPais`; la ficha sigue con `allVenues`, porque
+  debe abrir cualquier id (deep link, feed del fan).
+- **§8 — ya estaba hecho por el 114.** Las tarjetas de `LocalesScreen` ya eran
+  `TouchableOpacity` a `DetalleLocal` y el botón al mapa ya existía («🗺️ Ver mapa»). Solo
+  se cambió el texto a «🗺 Ver mapa de locales», el que nombra el criterio 8.
+- **§2 / criterio 5 — dónde se ve la clave.** `react-native-maps` 1.27.2 trae plugin de
+  Expo (`app.plugin.js`), así que quedó el plugin y no el campo `android.config.googleMaps`.
+  `expo config --type prebuild` muestra `androidGoogleMapsApiKey` en `plugins`, no
+  `com.google.android.geo.API_KEY`: esa entrada la escribe el mod del plugin en el
+  `AndroidManifest.xml` recién al correr `expo prebuild` (`plugin/build/android.js:48`).
+- **§6 — navegación a `DetalleEvento`.** La ficha está montada en `LocalesStack` y en
+  `CarteleraStack`; para que funcione igual desde ambas se sube al Tab y se navega a
+  `Cartelera › DetalleEvento`, mismo patrón que `PanelFanScreen` (spec 114).
+
