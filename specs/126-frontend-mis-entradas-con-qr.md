@@ -1,6 +1,6 @@
 # Spec 126 — Pantalla «Mis entradas»: un talón con su QR por cada entrada
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `tsc --noEmit` sin errores fuera de `supabase/functions`, `expo export --platform web` limpio, `src/navigation/` sin cambios. `PerfilScreen` no se tocó: el botón «🎟️ Mis entradas» arriba de «Cerrar sesión» ya lo dejó el spec 114. Criterios 4-10 y V-126a/b quedan para prueba manual con cuenta real.
 > Capa: FRONTEND. `src/screens/MisEntradasScreen.tsx` (reemplaza el placeholder del spec 114), `src/components/TalonEntrada.tsx` (nuevo), `src/screens/ConfirmacionCompraScreen.tsx`, `src/screens/PerfilScreen.tsx`.
 > Depende de: spec 114, spec 125, spec 118
 > Alimenta: el panel de fan (spec 124) puede enlazar a esta ruta; el canje en puerta (`EscanerQRScreen`, spec 041) lee los mismos tokens.
