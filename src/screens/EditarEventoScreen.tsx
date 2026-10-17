@@ -16,6 +16,7 @@ import PaisPicker from '../components/PaisPicker';
 import PreventasEvento from '../components/PreventasEvento';
 import DatosPagoEvento, { DATOS_PAGO_VACIOS } from '../components/DatosPagoEvento';
 import CampoImagen from '../components/CampoImagen';
+import { CampoFecha, CampoHora } from '../components/CampoFecha';
 import AccionesEvento from '../components/AccionesEvento';
 import { PAIS_POR_DEFECTO, etiquetaPais } from '../constants/paises';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
@@ -171,21 +172,19 @@ export default function EditarEventoScreen() {
         {!evento.comienzaAt && (
           <Text style={styles.ayuda}>Este evento no tiene fecha exacta: complétala</Text>
         )}
-        <TextInput
+        <CampoFecha
           style={styles.input}
           value={fecha}
-          onChangeText={setFecha}
+          onChange={setFecha}
           placeholder="2026-11-28"
-          placeholderTextColor={colors.muted}
         />
 
         <Text style={styles.label}>Hora *</Text>
-        <TextInput
+        <CampoHora
           style={styles.input}
           value={hora}
-          onChangeText={setHora}
+          onChange={setHora}
           placeholder="21:00"
-          placeholderTextColor={colors.muted}
         />
 
         <Text style={styles.label}>País *</Text>

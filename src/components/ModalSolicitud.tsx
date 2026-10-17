@@ -3,6 +3,7 @@ import {
   Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert,
   KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
+import { CampoFecha, CampoHora } from './CampoFecha';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 interface ModalSolicitudProps {
@@ -39,9 +40,11 @@ function armarFecha(fecha: string, hora: string): string | null | undefined {
   return d.toISOString();
 }
 
-// Spec 132 — equivalente a ModalSolicitud.js de la web. La fecha es texto y
-// opcional: no hay date picker instalado y el primer contacto no debe
-// convertirse en una negociación.
+// Spec 132 — equivalente a ModalSolicitud.js de la web. La fecha es opcional:
+// el primer contacto no debe convertirse en una negociación. Spec 144 — en el
+// teléfono se elige con el selector del sistema (`CampoFecha`), que deja el
+// mismo texto AAAA-MM-DD / HH:MM; en web se sigue escribiendo, por eso el
+// `Alert` de formato inválido se queda.
 export default function ModalSolicitud({
   visible,
   destino,
@@ -56,6 +59,7 @@ export default function ModalSolicitud({
   const [fecha, setFecha] = useState('');
   const [hora, setHora] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [hoy] = useState(() => new Date());
 
   // Cada apertura parte limpia, con el mensaje del destino actual.
   useEffect(() => {
@@ -109,23 +113,22 @@ export default function ModalSolicitud({
               <>
                 <Text style={styles.label}>Fecha propuesta (opcional)</Text>
                 <View style={styles.filaFecha}>
-                  <TextInput
-                    style={[styles.input, styles.inputFecha]}
+                  <CampoFecha
+                    style={styles.input}
                     value={fecha}
-                    onChangeText={setFecha}
+                    onChange={setFecha}
                     placeholder="AAAA-MM-DD"
-                    placeholderTextColor={colors.muted}
-                    autoCapitalize="none"
-                    editable={!enviando}
+                    minimo={hoy}
+                    opcional
+                    disabled={enviando}
                   />
-                  <TextInput
-                    style={[styles.input, styles.inputHora]}
+                  <CampoHora
+                    style={styles.input}
                     value={hora}
-                    onChangeText={setHora}
+                    onChange={setHora}
                     placeholder="HH:MM"
-                    placeholderTextColor={colors.muted}
-                    autoCapitalize="none"
-                    editable={!enviando}
+                    opcional
+                    disabled={enviando}
                   />
                 </View>
               </>
@@ -182,9 +185,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   inputMensaje: { minHeight: 90 },
-  filaFecha: { flexDirection: 'row', gap: spacing.sm },
-  inputFecha: { flex: 2 },
-  inputHora: { flex: 1 },
+  // Uno bajo el otro: en iOS el calendario se abre debajo del campo y en media
+  // fila no cabe.
+  filaFecha: { gap: spacing.sm },
   botones: { flexDirection: 'row', justifyContent: 'flex-end', gap: spacing.sm, marginTop: spacing.lg },
   boton: {
     paddingVertical: spacing.sm,

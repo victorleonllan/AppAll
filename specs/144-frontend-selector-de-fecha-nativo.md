@@ -1,6 +1,6 @@
 # Spec 144 — Selector de fecha y hora nativo en vez de escribir AAAA-MM-DD
 
-> Estado: propuesto (17-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` sin errores fuera de `supabase/functions`, `npx expo export --platform web` termina sin error, `@react-native-community/datetimepicker` 9.1.0 vía `expo install`; criterio 4 comprobado con la conversión en `TZ=America/Santiago` (28-nov 23:30 → `2026-11-29T02:30Z`). Falta la prueba en teléfono (V-candidata 144-a).
 > Capa: FRONTEND. `src/components/CampoFecha.tsx` (nuevo), `src/components/ModalSolicitud.tsx`,
 > `src/screens/CrearEventoScreen.tsx`, `src/screens/EditarEventoScreen.tsx`, `package.json`
 > y lockfile (dependencia nueva).
