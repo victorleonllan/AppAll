@@ -1,6 +1,6 @@
 # Spec 131 — Hooks de solicitudes de bolo y conexiones entre músicos
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — tsc sin errores en los dos hooks (los únicos errores del repo son de pantallas sin commitear de otros specs), sin `catch {}`, los 3 `.update()` seguidos de `.select('id')`, funciones puras sin `supabase`, `npx expo export --platform web` OK.
 > Capa: LÓGICA. `src/hooks/useSolicitudes.ts` (nuevo), `src/hooks/useConexiones.ts` (nuevo).
 > Depende de: ninguno pendiente. Las tablas y sus policies ya están en producción (migraciones `20260820183953_spec_051_disponibilidad_y_solicitudes.sql` y `20260829000003_spec_w058_collab_requests.sql`).
 > Alimenta: spec 132 (pantalla de solicitudes y botón en la ficha del músico).

@@ -52,7 +52,7 @@
 | 114 | Las rutas nuevas de la app quedan registradas de antemano — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 115 | Los contextos dicen la verdad: sin `catch {}` silencioso ni datos mock de reemplazo — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 116 | El precio se lee bien en cualquier moneda, y el evento guarda `comienza_at` — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
-| 117 | `create-preference` sabe cuándo la llama la app y la devuelve a la app — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
+| 117 | `create-preference` sabe cuándo la llama la app y la devuelve a la app — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Aplicado y desplegado (17-oct-2026) — falta criterio 4 y V (117-a/b), ver PENDIENTES |
 | 118 | Pago nativo con el navegador del sistema, y la confirmación le pregunta a `confirm-payment` — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 119 | La cartelera de la app muestra los eventos externos y destaca los de Sonópolis — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 120 | El detalle del evento muestra moneda, preventa, descripción, compartir, flyer y la cancelación en vivo — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
@@ -66,7 +66,7 @@
 | 128 | Perfil: cambiar la contraseña, y elegir rol al entrar sin uno — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 129 | La app sube imágenes al bucket `media` desde la galería del teléfono — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Aplicado (17-oct-2026) |
 | 130 | Editar perfil de músico al nivel de la web: país, avatar, foto y disponibilidad — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
-| 131 | Hooks de solicitudes de bolo y conexiones entre músicos — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
+| 131 | Hooks de solicitudes de bolo y conexiones entre músicos — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | **Aplicado** (17-oct-2026) — `src/hooks/useSolicitudes.ts`, `src/hooks/useConexiones.ts`; tsc y `expo export` limpios. Desbloquea 132 |
 | 132 | Pantalla de solicitudes para músico y local, y «Solicitar» desde la ficha del músico — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 133 | Hook de direcciones del local: hasta 3, una activa — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | **Aplicado** (17-oct-2026) — `src/hooks/useDireccionesVenue.ts`; tsc y `expo export` limpios. Desbloquea 134 |
 | 134 | Editar local al nivel de la web: direcciones, avatar, foto y estilos — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
