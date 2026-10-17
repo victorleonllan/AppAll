@@ -1,6 +1,6 @@
 # Spec 121 — `useMusicos`: los músicos de la app salen de `profiles`, por país
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` limpio (criterio 1), `rg musicosMock src/hooks src/lib` vacío (6), `git diff src/lib/profiles.ts` solo toca `mapProfileFromDB` (7). Criterios 2–5 y V-a sin verificar en ejecución: requieren la app corriendo contra Supabase.
 > Capa: LÓGICA. `src/hooks/useMusicos.ts` (nuevo), `src/lib/profiles.ts`, `src/types/index.ts`.
 > Depende de: spec 106
 > Alimenta: spec 122 (directorio y perfil público), spec 123 (`mapProfileFromDB` con `avatar` y `pais`), spec 124, spec 130.
