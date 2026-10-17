@@ -81,6 +81,7 @@
 | 143 | El detalle del evento deja de duplicar cancelar y borrar: solo queda «Borrar» para un cancelado (W-047) — pendientes de paridad, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Pendiente |
 | 144 | Selector de fecha y hora nativo (`@react-native-community/datetimepicker`) en solicitud de bolo, crear y editar evento; el estado sigue siendo `AAAA-MM-DD`/`HH:MM` — pendientes de paridad, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Pendiente |
 | 145 | «¿Olvidaste tu contraseña?» en el login: manda el enlace implícito de la web (W-228) hacia `/perfil/contrasena` — pendientes de paridad, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Pendiente |
+| 146 | El filtro de género de la cartelera ofrece solo los géneros de los eventos que hay (addendum del 056, como la web) — pendientes de paridad, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Pendiente |
 | 028 | Correo transaccional por Resend (SMTP + plantillas + dominio propio) | Aplicado y confirmado (2026-08-11) — SMTP, límites, plantilla y remitente en `sonopolis.org` (verificado en Resend). El primero con `onboarding@resend.dev` cayó en spam; con dominio propio, confirmado que ya no |
 | 029 | Correo de confirmación de compra | Propuesto — depende del 028 y del 021 |
 | 030 | Dashboard de banda: perfil completo y panel | Implementado y desplegado — falta verificar en runtime |
