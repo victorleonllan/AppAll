@@ -1,6 +1,6 @@
 # Spec 120 — El detalle del evento muestra moneda, preventa, descripción, compartir, flyer y la cancelación en vivo
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` sin errores y `npx expo export --platform web` OK (criterios 1 y 11). Criterios 2-10 y V-a/V-b quedan para prueba manual en teléfono.
 > Capa: FRONTEND. `src/screens/DetalleEventoScreen.tsx`, `src/hooks/useEstadoEventoEnVivo.ts` (nuevo), `src/components/AvisoCancelacion.tsx` (nuevo), `src/constants/web.ts` (nuevo).
 > Depende de: spec 116, spec 118, spec 119
 > Alimenta: spec 126 (puede reusar `AvisoCancelacion` en Mis entradas).
