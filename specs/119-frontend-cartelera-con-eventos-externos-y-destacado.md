@@ -1,6 +1,6 @@
 # Spec 119 — La cartelera de la app muestra los eventos externos y destaca los de Sonópolis
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` sin errores fuera de `supabase/functions`, `expo export --platform web` OK, criterio 10 OK (`external_events` solo en `useEventosExternos.ts`); criterio 8 verificado por script (`$5.000 CLP`, `$1,320 MXN`, `$5.000` sin moneda) y `claveDiaLocal`/`formatearDiaLargo` con un evento a las 23:30 en `America/Santiago` (V-b, en Node). La pantalla lee `eventosDelPais` (lo que expone el 096) en vez de `eventos`. Criterios 2-7 y 9 sin probar en ejecución; faltan V-a/V-b/V-c en dispositivo. Ver «Bugs encontrados al aplicar»
 > Capa: FRONTEND. `src/screens/CarteleraScreen.tsx`, `src/components/TarjetaEvento.tsx`, `src/components/EventoDestacado.tsx` (nuevo), `src/components/TarjetaEventoExterno.tsx` (nuevo), `src/components/PrecioEvento.tsx` (nuevo), `src/hooks/useEventosExternos.ts` (nuevo), `src/hooks/usePrecioVigente.ts` (nuevo), `src/lib/precio.ts` (lo crea el spec 116; acá se le agrega `formatearMonto`), `src/lib/fechaCartelera.ts` (nuevo), `src/context/EventosContext.tsx`, `src/types/index.ts`.
 > Depende de: spec 095, spec 096, spec 115, spec 116
 > Alimenta: spec 120 (usa `PrecioEvento`, `usePrecioVigente`, `formatearMonto` y los campos nuevos de `Evento`), spec 123 (usa `mapEventoFromDB` exportado y `Evento.createdAt`), spec 124 (usa `TarjetaEvento` con moneda).
@@ -305,3 +305,12 @@ Decisión 2): un externo no se vende acá, así que **no tiene precio ni botón 
 - V-b: un evento creado hoy a las 23:30 aparece bajo el día correcto, no bajo mañana.
 - V-c: los precios en `MXN` se leen con coma de miles en el dispositivo (prueba de que no se
   depende de `Intl`).
+
+## Bugs encontrados al aplicar (17-oct-2026)
+
+- **Vacío con eventos pasados o en borrador.** El punto 11 decide el mensaje vacío con
+  «`eventos` del país y `externos` están los dos vacíos». Con el filtro de visibilidad del
+  mismo punto, un país con solo eventos pasados, borradores u ocultos tiene `eventos` no
+  vacío pero cero filas visibles: sin ningún filtro activo la pantalla diría «Ningún evento
+  calza con estos filtros.», que es falso. Se aplicó con los **visibles** (después del
+  filtro de visibilidad, antes de búsqueda/fecha/género) en lugar de `eventos` del país.
