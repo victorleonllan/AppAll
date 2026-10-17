@@ -1011,6 +1011,29 @@ Deuda que queda declarada:
 2. **V (115-b):** con la red cortada al abrir la app, la cartelera queda vacía (no muestra
    eventos de muestra) y `useEventos().error` trae el mensaje.
 
+## Paridad con la web 🟢 cadena 114–142 aplicada, falta todo en runtime (17-oct-2026)
+
+Los specs 095, 096 y 114–142 se cerraron con `tsc` y `expo export`: ninguno se probó en un
+teléfono. Detalle y porqué en el vault: `02-PROJECTS/Sonópolis/Producto/App/Planes/2026-10-16
+Plan — la app al nivel de la web.md` («Pendientes después de la orquestación»).
+
+1. **V (paridad-a):** compra de punta a punta desde un teléfono: Mercado Pago → `/app/volver`
+   (W245) → `appall://compra?ref=…` → `confirm-payment` (117, 118).
+2. **V (paridad-b):** `appall://invitacion/<token>` abre la app y reclama el local (141).
+3. **Build:** no existe `eas.json`; falta la clave de Google Maps para Android (127, paso
+   manual de Victor).
+4. **Specs candidatos, sin escribir:**
+   - DATOS (seguridad, primero): `monto_a_transferir` no comprueba quién llama; cualquier
+     sesión ve lo recaudado de cualquier evento.
+   - DATOS (después del anterior): recalcular el `monto` con el recargo del 10 % de los
+     eventos creados desde la app antes del 116.
+   - FRONTEND: botones cancelar/borrar duplicados en `DetalleEventoScreen` tras el 137.
+   - FRONTEND (web): «Abrir en la app» en `/invitacion/<token>`, o Universal Links.
+   - LÓGICA: entradas sin conexión (tokens guardados en el teléfono).
+   - FRONTEND: selector de fecha nativo (hoy `AAAA-MM-DD` a mano en `ModalSolicitud`, 132).
+   - FRONTEND: «¿Olvidaste tu contraseña?» directo, como W-228 (hoy se llega por enlace por
+     correo + 128).
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs
