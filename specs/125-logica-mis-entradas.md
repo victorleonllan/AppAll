@@ -1,6 +1,6 @@
 # Spec 125 — `useMisEntradas`: las entradas propias, con su token QR, para la app
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `tsc --noEmit` sin errores en el hook (los 6 restantes son de pantallas sin commitear de otros specs en curso); filtros por dueño revisados en código (criterio 3). Criterios 4-8 y V-125a/b quedan para probar con la pantalla del spec 126.
 > Capa: LÓGICA. `src/hooks/useMisEntradas.ts` (nuevo).
 > Depende de: — (lee `tickets` y `ticket_items`, que ya están en producción con su RLS).
 > Alimenta: la pantalla `MisEntradas` (spec 126) y la «próxima entrada» del panel de fan (spec 124), si la quiere reusar.
