@@ -9,6 +9,7 @@ import { useVenues } from '../context/VenuesContext';
 import { useSolicitudes, contrapartesConSolicitudViva } from '../hooks/useSolicitudes';
 import { useConexiones, musicosYaConectados } from '../hooks/useConexiones';
 import ModalSolicitud from '../components/ModalSolicitud';
+import BotonSeguir from '../components/BotonSeguir';
 import { MENSAJES_SOLICITUD } from '../constants/solicitudes';
 import { etiquetaPais } from '../constants/paises';
 import { TIPO_PROYECTO_LABEL } from '../lib/profiles';
@@ -122,9 +123,10 @@ export default function VerMusicoScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {imagen && <Image source={{ uri: imagen }} style={styles.imagen} resizeMode="cover" />}
       <View style={styles.card}>
-        {/* Fila preparada: el spec 124 pone el botón de seguir a la derecha del nombre. */}
+        {/* Spec 124 — seguir, a la derecha del nombre (no aparece en el perfil propio). */}
         <View style={styles.filaNombre}>
           <Text style={styles.nombre}>{musico.nombre}</Text>
+          <BotonSeguir tipo="musico" targetId={musico.id} />
         </View>
         <Text style={styles.genero}>
           {[
