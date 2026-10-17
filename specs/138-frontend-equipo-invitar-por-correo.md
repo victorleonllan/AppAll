@@ -1,6 +1,6 @@
 # Spec 138 — Equipo del evento: invitar por correo, invitaciones pendientes y correos del equipo
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` limpio. Criterios 2, 3, 5 y 6 (contra la base y con/sin W-246) y V-candidata 138-a pendientes de prueba manual.
 > Capa: FRONTEND. `src/screens/EquipoEventoScreen.tsx`.
 > Depende de: spec 135
 > Hermano en la web: `app/(private)/eventos/[id]/equipo/PanelEquipo.js` (W-032–034, W-088, W-094, W-095). Necesita **W-246 desplegado en producción** antes de publicar el build (sin él, invitar por correo y ver correos responden `401`).
