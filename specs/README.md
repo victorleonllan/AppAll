@@ -60,7 +60,7 @@
 | 122 | Directorio de músicos y perfil público con datos reales — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 123 | `useSeguir`: seguir músicos y locales, y el feed de lo que anuncian — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 124 | Botón «Seguir» y panel del fan: próxima entrada, feed y a quién sigo — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
-| 125 | `useMisEntradas`: las entradas propias, con su token QR, para la app — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
+| 125 | `useMisEntradas`: las entradas propias, con su token QR, para la app — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Aplicado (17-oct-2026) |
 | 126 | Pantalla «Mis entradas»: un talón con su QR por cada entrada — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 127 | Ficha del local y mapa de locales con `react-native-maps` — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 128 | Perfil: cambiar la contraseña, y elegir rol al entrar sin uno — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
