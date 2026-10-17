@@ -1,6 +1,6 @@
 # Spec 123 — `useSeguir`: seguir músicos y locales, y el feed de lo que anuncian
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `follows.ts`, `useSeguir`, `useSeguidos`, `useFeedFan` y tipos. Verificado: `npx tsc --noEmit` limpio (criterio 1) y `rg "follows_" src/` solo en `src/lib/follows.ts` (criterio 8). Criterios 2-7 y V-a pendientes de prueba con sesión real (sin pantalla hasta el 124)
 > Capa: LÓGICA. `src/lib/follows.ts` (nuevo), `src/hooks/useSeguir.ts` (nuevo), `src/hooks/useSeguidos.ts` (nuevo), `src/hooks/useFeedFan.ts` (nuevo), `src/types/index.ts`.
 > Depende de: spec 047, spec 119, spec 121
 > Alimenta: spec 124 (botón de seguir y panel de fan), spec 127 (botón de seguir en el detalle del local).
