@@ -11,7 +11,7 @@ src/
 ├── components/     → Componentes UI reutilizables (TarjetaEvento, etc.)
 ├── context/        → Providers: AuthContext, VenuesContext, EventosContext
 ├── data/
-│   └── mock/       → Datos mock y constantes (fallback cuando Supabase no está configurado)
+│   └── mock/       → Datos mock de músicos (hasta los specs 121-122)
 ├── lib/            → Supabase client
 ├── navigation/     → Configuración de navegación (tabs, stacks)
 ├── screens/        → Pantallas de la app (Cartelera, Locales, Perfil...)
@@ -37,7 +37,7 @@ Colores del branding:
 1. **ESPAÑOL**: Nombres de componentes, archivos, variables y comentarios en español
 2. **Importaciones relativas**: Usar `../` desde el archivo
 3. **Estilos**: Usar `StyleSheet.create()` con theme tokens, NO estilos inline
-4. **Data flow**: Screens usan hooks (`useVenues()`, `useEventos()`, `useAuth()`). Los providers intentan Supabase primero, fallback a mock si no hay conexión.
+4. **Data flow**: Screens usan hooks (`useVenues()`, `useEventos()`, `useAuth()`). Los providers leen y escriben siempre en Supabase; un error se expone en `error` (lectura) o se lanza (escritura). Nunca se reemplaza por datos de muestra.
 5. **Tipos**: TODAS las interfaces en `src/types/index.ts`. Los providers mapean snake_case (DB) a camelCase (frontend).
 6. **Componentes**: Un archivo por componente, export default
 7. **Pantallas**: Cada screen recibe sus datos por hooks, no importa mock directamente

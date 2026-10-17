@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Evento, EventoStatus, EventRole, Colaborador, Ticket, TicketStatus } from '../types';
-import { eventos as mockEventos } from '../data/mock/eventos';
 import { useAuth } from './AuthContext';
 import { usePais } from './PaisContext';
 
@@ -12,6 +11,8 @@ interface EventosState {
   eventos: Evento[];
   eventosDelPais: Evento[];
   loading: boolean;
+  // Spec 115 — mensaje de la última carga fallida de `events`; null si salió bien.
+  error: string | null;
   refresh: () => Promise<void>;
   createEvento: (evento: Omit<Evento, 'id'>) => Promise<Evento>;
   updateEvento: (id: string, cambios: Partial<Pick<Evento, 'artista' | 'fecha' | 'hora' | 'genero' | 'precio' | 'imagen' | 'pais'>>) => Promise<void>;
@@ -101,9 +102,9 @@ function mapColaboradorFromDB(db: any, nombre?: string): Colaborador {
 
 export function EventosProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [eventos, setEventos] = useState<Evento[]>(mockEventos);
+  const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
-  const [useMock, setUseMock] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [misColaboraciones, setMisColaboraciones] = useState<Colaborador[]>([]);
   const { pais } = usePais();
@@ -111,25 +112,26 @@ export function EventosProvider({ children }: { children: ReactNode }) {
   // Spec 096 — derivado de la consulta sin filtrar, no una segunda consulta con
   // `.eq('pais', pais)`: las pantallas privadas necesitan todos los países, y la
   // lista del país es un subconjunto de esa misma lista. Cambiar de país recalcula
-  // al instante sin ir a la red. El mock no tiene `pais` y se muestra tal cual
-  // (Decisión 3): filtrarlo dejaría la app vacía justo cuando algo ya falló.
+  // al instante sin ir a la red.
   const eventosDelPais = useMemo(
-    () => (useMock ? eventos : eventos.filter((e) => e.pais === pais)),
-    [eventos, pais, useMock]
+    () => eventos.filter((e) => e.pais === pais),
+    [eventos, pais]
   );
 
+  // Spec 115 — antes: con 0 filas o con error quedaban los eventos mock (ids
+  // "1", "2"… que dan 404 al comprar). Ahora 0 filas es lista vacía y el error
+  // se expone en `error`. Ante un error la lista NO se vacía: si ya había datos
+  // de una carga anterior siguen siendo la mejor información disponible (un
+  // `refresh()` que falla por red no borra la cartelera). En la primera carga, [].
   const loadFromSupabase = useCallback(async () => {
+    setError(null);
     try {
       const { data, error } = await supabase.from('events').select('*');
       if (error) throw error;
-      if (data && data.length > 0) {
-        const mapped = data.map(mapEventoFromDB);
-        setEventos(mapped);
-        setUseMock(false);
-      }
-    } catch {
-      setEventos([...mockEventos]);
-      setUseMock(true);
+      setEventos((data ?? []).map(mapEventoFromDB));
+    } catch (e: any) {
+      console.error('[EventosContext] no se pudo cargar events:', e);
+      setError(e?.message ?? 'No se pudieron cargar los eventos');
     } finally {
       setLoading(false);
     }
@@ -146,8 +148,8 @@ export function EventosProvider({ children }: { children: ReactNode }) {
 
   // Spec 033 — "mis eventos" ya no es solo `createdBy === user.id`: incluye
   // los eventos donde soy admin/editor (dueño de local, artista vinculado).
-  // Lectura sola; si la tabla todavía no existe (migración sin aplicar) se
-  // degrada a lista vacía, igual que loadFromSupabase se degrada a mock.
+  // Lectura sola; si la consulta falla queda lista vacía y el error va a la
+  // consola (spec 115: antes un catch vacío lo hacía invisible al depurar).
   const cargarMisColaboraciones = useCallback(async () => {
     if (!user) {
       setMisColaboraciones([]);
@@ -160,7 +162,8 @@ export function EventosProvider({ children }: { children: ReactNode }) {
         .eq('user_id', user.id);
       if (error) throw error;
       setMisColaboraciones((data ?? []).map((r: any) => mapColaboradorFromDB(r)));
-    } catch {
+    } catch (e) {
+      console.error('[EventosContext] no se pudo cargar event_collaborators:', e);
       setMisColaboraciones([]);
     }
   }, [user]);
@@ -169,26 +172,22 @@ export function EventosProvider({ children }: { children: ReactNode }) {
     cargarMisColaboraciones();
   }, [cargarMisColaboraciones]);
 
+  // Spec 115 — antes: un insert rechazado caía a un evento inventado en memoria
+  // (`event-<timestamp>`) y el usuario veía «publicado» sin nada en la base.
+  // Ahora el error se lanza sin try/catch propio: quien llama decide qué mostrar,
+  // igual que deleteEvento y createVenue.
   const createEvento = useCallback(async (evento: Omit<Evento, 'id'>): Promise<Evento> => {
-    if (!useMock) {
-      try {
-        const { data, error } = await supabase
-          .from('events')
-          .insert(mapEventoToDB(evento))
-          .select()
-          .single();
-        if (!error && data) {
-          const newEvento = mapEventoFromDB(data);
-          setEventos((prev) => [...prev, newEvento]);
-          cargarMisColaboraciones(); // events_claim_owner_trg me acaba de agregar como owner
-          return newEvento;
-        }
-      } catch {}
-    }
-    const newEvento: Evento = { ...evento, id: `event-${Date.now()}` };
+    const { data, error } = await supabase
+      .from('events')
+      .insert(mapEventoToDB(evento))
+      .select()
+      .single();
+    if (error) throw error;
+    const newEvento = mapEventoFromDB(data);
     setEventos((prev) => [...prev, newEvento]);
+    cargarMisColaboraciones(); // events_claim_owner_trg me acaba de agregar como owner
     return newEvento;
-  }, [useMock, cargarMisColaboraciones]);
+  }, [cargarMisColaboraciones]);
 
   // Spec 034 — cualquiera del equipo (owner/admin/editor) corrige fecha, hora,
   // género, precio, imagen o el nombre del artista. venueId y artistId no son
@@ -207,10 +206,6 @@ export function EventosProvider({ children }: { children: ReactNode }) {
     id: string,
     cambios: Partial<Pick<Evento, 'artista' | 'fecha' | 'hora' | 'genero' | 'precio' | 'imagen' | 'pais'>>
   ) => {
-    if (useMock) {
-      setEventos((prev) => prev.map((e) => (e.id === id ? { ...e, ...cambios } : e)));
-      return;
-    }
     const cambiosDB: Record<string, any> = {};
     if (cambios.artista !== undefined) cambiosDB.artist_name = cambios.artista;
     if (cambios.fecha !== undefined) cambiosDB.fecha = cambios.fecha;
@@ -232,33 +227,23 @@ export function EventosProvider({ children }: { children: ReactNode }) {
       .single();
     if (error) throw error;   // RLS rechaza sin permiso; el mensaje llega tal cual al Alert
     setEventos((prev) => prev.map((e) => (e.id === id ? mapEventoFromDB(data) : e)));
-  }, [useMock]);
+  }, []);
 
-  // Spec 033 — antes: `catch {}` vacío + borrado optimista del estado local
+  // Spec 033 — antes: `catch` vacío + borrado optimista del estado local
   // pase lo que pase. Si RLS rechazaba el delete (por ejemplo, alguien sin
   // permiso), el evento desaparecía de la pantalla igual y volvía a aparecer
   // al recargar — el mismo patrón de "error disfrazado de éxito" que el spec
   // 030 encontró en PerfilMusicoScreen. Ahora el error se propaga: quien
   // llama (la pantalla) decide qué mostrar.
   const deleteEvento = useCallback(async (id: string) => {
-    if (!useMock) {
-      const { error } = await supabase.from('events').delete().eq('id', id);
-      if (error) throw error;
-    }
+    const { error } = await supabase.from('events').delete().eq('id', id);
+    if (error) throw error;
     setEventos((prev) => prev.filter((e) => e.id !== id));
-  }, [useMock]);
+  }, []);
 
   // Cancelar no borra: dispara events_guard_protected_columns_trg, que exige
   // can_delete_event() aunque el UPDATE en sí lo permita can_edit_event().
   const cancelEvento = useCallback(async (id: string, motivo?: string) => {
-    if (useMock) {
-      setEventos((prev) => prev.map((e) => (
-        e.id === id
-          ? { ...e, status: 'cancelled', cancelledAt: new Date().toISOString(), cancelReason: motivo ?? null }
-          : e
-      )));
-      return;
-    }
     const { data, error } = await supabase
       .from('events')
       .update({
@@ -271,7 +256,7 @@ export function EventosProvider({ children }: { children: ReactNode }) {
       .single();
     if (error) throw error;
     setEventos((prev) => prev.map((e) => (e.id === id ? mapEventoFromDB(data) : e)));
-  }, [useMock]);
+  }, []);
 
   const createTicket = useCallback(async (eventoId: string, userId: string, monto: number): Promise<Ticket> => {
     const ticket: Ticket = {
@@ -362,7 +347,7 @@ export function EventosProvider({ children }: { children: ReactNode }) {
   return (
     <EventosContext.Provider
       value={{
-        eventos, eventosDelPais, loading, refresh, createEvento, updateEvento, deleteEvento, cancelEvento,
+        eventos, eventosDelPais, loading, error, refresh, createEvento, updateEvento, deleteEvento, cancelEvento,
         tickets, createTicket, getTicketsByUser, updateTicketStatus,
         misColaboraciones, getColaboradores, invitarColaborador,
         cambiarPermisoBorrado, quitarColaborador, transferirPropiedad, buscarCandidatos,

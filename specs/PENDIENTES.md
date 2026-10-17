@@ -1002,6 +1002,13 @@ Deuda que queda declarada:
 3. **V (117-b):** una compra desde la web (sin `origen`) sigue volviendo a
    `/mis-entradas?compra=success&ref=…`.
 
+## Contextos sin mock 🟢 spec 115 aplicado, falta verificar en runtime (17-oct-2026)
+
+1. **V (115-a):** con el 095 todavía sin aplicar, publicar un evento desde la app muestra
+   el `Alert` de error y el evento **no** aparece en la cartelera.
+2. **V (115-b):** con la red cortada al abrir la app, la cartelera queda vacía (no muestra
+   eventos de muestra) y `useEventos().error` trae el mensaje.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

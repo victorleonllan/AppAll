@@ -77,24 +77,18 @@ rol**: `musician` → `MusicoStack`, `cafe` → `MiLocalStack`, `public` → `Pe
 Son dos fuentes distintas para el mismo concepto y pueden divergir. Cambiar el rol de un
 usuario real implica migrar `auth.users.raw_user_meta_data`, que es un spec aparte.
 
-### Providers con fallback a mock — el que más confunde
+### Providers sin fallback a mock — los errores se ven
 
-`VenuesContext` y `EventosContext` arrancan con datos mock y hacen `setUseMock(false)` solo si
-Supabase responde. Si la conexión falla, **la app se ve perfectamente bien con datos falsos** y
-las escrituras se quedan en memoria local sin llegar a la base.
+`VenuesContext` y `EventosContext` arrancan con listas vacías y leen y escriben **siempre** en
+Supabase. Una consulta con 0 filas deja la lista vacía; una consulta que falla deja `error`
+(`useEventos().error`, `useVenues().error`) con el mensaje y no borra lo que ya estaba cargado.
+Toda escritura (`createEvento`, `updateEvento`, `deleteEvento`, `cancelEvento`, `createVenue`,
+`updateVenue`) lanza el error de Postgres/RLS: quien llama decide qué mostrar.
 
-Si algo "funciona" pero no aparece en Postgres, sospecha de esto primero.
-
-⚠️ **Con `events` vacío el fallback se muerde la cola.** `setUseMock(false)` solo ocurre si la
-consulta devuelve **filas**, y `createEvento` solo escribe en Supabase si `useMock` es `false`.
-Con 0 eventos en la base, publicar un evento desde la app lo deja **solo en memoria** y
-desaparece al recargar — no hay forma de sembrar el primer evento desde la UI. La cartelera,
-además, no se ve vacía: muestra los 5 eventos mock, cuyos ids (`"1"`, `"2"`…) dan 404 al comprar.
-
-⚠️ **`createVenue` falla en silencio.** `mapVenueToDB` manda `owner_id: null` y la policy
-`venues_insert` exige `auth.uid() = owner_id`: el insert se rechaza, el `catch {}` se lo traga y
-devuelve un venue falso. Mismo patrón — un `catch` vacío convirtiendo un error de RLS en éxito
-aparente.
+Por qué importa: hasta el spec 115 los contextos caían a mock con 0 filas y las escrituras
+quedaban en memoria — la app se veía bien con datos falsos y un evento «publicado» no existía
+en la base. Si algo "funciona" pero no aparece en Postgres, el problema ya no es este: busca un
+`catch` que se trague el error en la pantalla que llama.
 
 Los providers también son el único punto de mapeo snake_case (DB) ↔ camelCase (frontend):
 `mapEventoFromDB` / `mapEventoToDB` en `EventosContext.tsx`. Un campo nuevo se agrega en los dos.

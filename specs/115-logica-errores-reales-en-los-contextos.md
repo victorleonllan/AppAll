@@ -1,6 +1,6 @@
 # Spec 115 — Los contextos dicen la verdad: sin `catch {}` silencioso ni datos mock de reemplazo
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — criterios 1-5 y 7 verificados (tsc limpio, greps vacíos, mocks de eventos/venues borrados, `musicos.ts` intacto, `error` en los dos contextos, export web OK); criterio 6 verificado por lectura de código (`if (error) throw error` antes de tocar `eventos`), sin ejecutar contra la base. Falta V (115-a/b) en dispositivo
 > Capa: LÓGICA. `src/context/EventosContext.tsx`, `src/context/VenuesContext.tsx`, `src/data/mock/eventos.ts` (se borra), `src/data/mock/venues.ts` (se borra), `AGENTS.md`, `CLAUDE.md`.
 > Depende de: ninguno.
 > Alimenta: spec 116 (mismo archivo, después de este), spec 119 (la cartelera puede mostrar `error`).
@@ -168,3 +168,11 @@ Este spec es el «spec explícito» que `AGENTS.md` exige para tocarlo:
   el `Alert` de error y el evento **no** aparece en la cartelera.
 - **V (115-b):** con la red cortada al abrir la app, la cartelera queda vacía (no muestra
   eventos de muestra) y `useEventos().error` trae el mensaje.
+
+## Bugs encontrados al aplicar
+
+- **17-oct-2026 — el criterio 3 choca con comentarios.** `grep -n "catch {}" src/context/*.tsx`
+  también encuentra el texto `catch {}` dentro de comentarios: el de `deleteEvento` (spec 033,
+  «antes: `catch {}` vacío…») ya lo tenía antes de este spec. Para que el criterio dé vacío se
+  reescribió ese comentario como «`catch` vacío», sin cambiar su sentido. El criterio sigue
+  midiendo lo que quería (ningún `catch {}` en el código).
