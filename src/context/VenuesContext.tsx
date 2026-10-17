@@ -45,6 +45,7 @@ function mapVenueFromDB(db: any): Venue {
     lng: db.lng,
     distance: undefined,
     image: db.image,
+    avatar: db.avatar ?? null,
   };
 }
 
@@ -79,6 +80,7 @@ function mapVenueToDB(venue: Partial<Venue>): Record<string, any> {
   if ('lat' in venue) out.lat = venue.lat ?? null;
   if ('lng' in venue) out.lng = venue.lng ?? null;
   if ('image' in venue) out.image = venue.image ?? null;
+  if ('avatar' in venue) out.avatar = venue.avatar ?? null;
   // `rating` deliberadamente fuera: ninguna pantalla lo escribe (spec 031).
   return out;
 }

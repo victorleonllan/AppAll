@@ -32,6 +32,7 @@ export interface Venue {
   lng?: number;
   distance?: string;
   image?: string | null;
+  avatar?: string | null; // spec 085
 }
 
 /** Spec 033 — estado del evento. 'draft' solo lo ve el equipo; 'cancelled'
