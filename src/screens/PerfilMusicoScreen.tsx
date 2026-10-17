@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, Image,
+  View, Text, TouchableOpacity, Image, Switch,
   StyleSheet, ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -9,7 +9,9 @@ import { useAuth } from '../context/AuthContext';
 import { useEventos } from '../context/EventosContext';
 import { musicosMock } from '../data/mock/musicos';
 import { PerfilMusico } from '../types';
-import { mapProfileFromDB, mapProfileToDB, TIPO_PROYECTO_LABEL, perfilCompletitud } from '../lib/profiles';
+import {
+  mapProfileFromDB, mapProfileToDB, TIPO_PROYECTO_LABEL, perfilCompletitud, setDisponibilidad,
+} from '../lib/profiles';
 import { confirmar } from '../lib/confirm';
 import TarjetaEvento from '../components/TarjetaEvento';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
@@ -124,6 +126,20 @@ export default function PerfilMusicoScreen() {
     }
   };
 
+  // Spec 130 — optimista: el interruptor cambia al tocarlo y vuelve atrás si
+  // la escritura falla, para que nunca muestre un valor que no se guardó.
+  const handleDisponibilidad = async (valor: boolean) => {
+    if (!user || !perfil) return;
+    const anterior = perfil.available ?? false;
+    setPerfil((p) => (p ? { ...p, available: valor } : p));
+    try {
+      await setDisponibilidad(user.id, valor);
+    } catch (err: any) {
+      setPerfil((p) => (p ? { ...p, available: anterior } : p));
+      Alert.alert('No se pudo actualizar', err?.message ?? 'Error desconocido');
+    }
+  };
+
   if (!user || cargando) {
     return (
       <View style={styles.container}>
@@ -156,6 +172,8 @@ export default function PerfilMusicoScreen() {
   }
 
   const { completos, total } = perfilCompletitud(perfil);
+  // Spec 130 — la miniatura prefiere el avatar (logo cuadrado).
+  const miniatura = perfil.avatar ?? perfil.foto;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -167,8 +185,8 @@ export default function PerfilMusicoScreen() {
 
       <View style={styles.card}>
         <View style={styles.filaBanda}>
-          {perfil.foto ? (
-            <Image source={{ uri: perfil.foto }} style={styles.foto} />
+          {miniatura ? (
+            <Image source={{ uri: miniatura }} style={styles.foto} />
           ) : (
             <View style={[styles.foto, styles.fotoPlaceholder]}>
               <Text style={styles.fotoPlaceholderTexto}>🎵</Text>
@@ -191,6 +209,31 @@ export default function PerfilMusicoScreen() {
           <Text style={styles.completitudTexto}>Perfil completo {completos}/{total}</Text>
         </View>
       </View>
+
+      {!esMock && (
+        <View
+          style={[
+            styles.card,
+            styles.filaDisponible,
+            { backgroundColor: perfil.available ? colors.accentLight : colors.cardBackground },
+          ]}
+        >
+          <View style={{ flex: 1, marginRight: spacing.md }}>
+            <Text style={styles.disponibleTitulo}>Disponible este fin de semana</Text>
+            <Text style={styles.disponibleSubtitulo}>
+              {perfil.available
+                ? 'Los locales pueden proponerte fechas'
+                : 'No apareces en la búsqueda de locales'}
+            </Text>
+          </View>
+          <Switch
+            value={perfil.available ?? false}
+            onValueChange={handleDisponibilidad}
+            trackColor={{ false: colors.border, true: colors.accent }}
+            thumbColor={colors.white}
+          />
+        </View>
+      )}
 
       <View style={styles.card}>
         <Text style={styles.titulo}>Resumen</Text>
@@ -304,6 +347,9 @@ const styles = StyleSheet.create({
   nombreBanda: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
   subtituloBanda: { fontSize: fontSize.sm, color: colors.secondary, marginTop: 2 },
   completitud: { marginTop: spacing.md },
+  filaDisponible: { flexDirection: 'row', alignItems: 'center' },
+  disponibleTitulo: { fontSize: fontSize.md, fontWeight: 'bold', color: colors.primary },
+  disponibleSubtitulo: { fontSize: fontSize.sm, color: colors.secondary, marginTop: 2 },
   completitudBarraFondo: {
     height: 6,
     borderRadius: 3,
