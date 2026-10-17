@@ -1,6 +1,9 @@
-import { View, Text, TouchableOpacity, StyleSheet, Linking, ScrollView } from 'react-native';
+import {
+  View, Text, TouchableOpacity, StyleSheet, Linking, ScrollView, Image, ActivityIndicator,
+} from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
-import { musicosMock } from '../data/mock/musicos';
+import { usePerfilMusico } from '../hooks/useMusicos';
+import { etiquetaPais } from '../constants/paises';
 import { TIPO_PROYECTO_LABEL } from '../lib/profiles';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
@@ -11,8 +14,26 @@ type ParamList = {
 export default function VerMusicoScreen() {
   const route = useRoute<RouteProp<ParamList, 'VerMusico'>>();
   const { musicoId } = route.params;
-  const musico = musicosMock.find((m) => m.id === musicoId);
+  // Spec 122 — el perfil real desde `profiles` (spec 121), no el mock.
+  const { musico, loading, error } = usePerfilMusico(musicoId);
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator color={colors.accent} style={{ marginTop: 40 }} />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.aviso}>No se pudo cargar el perfil.</Text>
+      </View>
+    );
+  }
+
+  // `null` cubre también el perfil que la RLS no deja ver (spec 020).
   if (!musico) {
     return (
       <View style={styles.container}>
@@ -21,12 +42,22 @@ export default function VerMusicoScreen() {
     );
   }
 
+  const imagen = musico.foto ?? musico.avatar;
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {imagen && <Image source={{ uri: imagen }} style={styles.imagen} resizeMode="cover" />}
       <View style={styles.card}>
-        <Text style={styles.nombre}>{musico.nombre}</Text>
+        {/* Fila preparada: el spec 124 pone el botón de seguir a la derecha del nombre. */}
+        <View style={styles.filaNombre}>
+          <Text style={styles.nombre}>{musico.nombre}</Text>
+        </View>
         <Text style={styles.genero}>
-          {[musico.tipoProyecto ? TIPO_PROYECTO_LABEL[musico.tipoProyecto] : null, musico.ciudad]
+          {[
+            musico.tipoProyecto ? TIPO_PROYECTO_LABEL[musico.tipoProyecto] : null,
+            musico.ciudad,
+            musico.pais ? etiquetaPais(musico.pais) : null,
+          ]
             .filter(Boolean)
             .join(' · ')}
         </Text>
@@ -104,7 +135,15 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
   },
+  imagen: {
+    width: '100%',
+    aspectRatio: 4 / 3,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.md,
+  },
+  filaNombre: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   nombre: {
+    flex: 1,
     fontSize: fontSize.xl,
     fontWeight: 'bold',
     color: colors.primary,

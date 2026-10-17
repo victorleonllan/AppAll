@@ -1,11 +1,8 @@
-import { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { musicosMock } from '../data/mock/musicos';
-import { useAuth } from '../context/AuthContext';
 import { useVenues } from '../context/VenuesContext';
 import { usePais } from '../context/PaisContext';
 import { PAISES } from '../constants/paises';
@@ -15,81 +12,21 @@ import { LocalesStackParamList } from '../navigation/LocalesStack';
 
 type NavigationProp = NativeStackNavigationProp<LocalesStackParamList, 'LocalesList'>;
 
-// `tipoProyecto` dejó de ser texto libre en el spec 030 (ahora es 'solista'
-// / 'banda' / 'dj' / …, no un género). El filtro pasa a usar `generos`, que
-// es el campo que la etiqueta "por género" siempre quiso decir.
-const generos = [...new Set(musicosMock.flatMap((m) => m.generos ?? []))];
-
 export default function LocalesScreen() {
-  const { session } = useAuth();
   const navigation = useNavigation<NavigationProp>();
   // Un solo listado de locales (spec 018): la separación por tipo venía de
   // usar `type` como si fuera un tier de asociación, que nunca fue.
   // Spec 096 — solo los locales del país activo (el que se elige en Cartelera).
   const { venuesDelPais: locales } = useVenues();
   const { pais } = usePais();
-  const [generoSeleccionado, setGeneroSeleccionado] = useState<string | null>(null);
-
-  const musicosFiltrados = generoSeleccionado
-    ? musicosMock.filter((m) => m.generos?.includes(generoSeleccionado))
-    : [];
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.seccionBuscar}>
-        <Text style={styles.tituloBuscar}>🎸 Buscar músicos por género</Text>
-
-        {!session ? (
-          <Text style={styles.aviso}>Inicia sesión como local para contactar músicos</Text>
-        ) : null}
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsContainer}
-        >
-          {generos.map((item) => (
-            <TouchableOpacity
-              key={item}
-              style={[
-                styles.chip,
-                generoSeleccionado === item && styles.chipActivo,
-              ]}
-              onPress={() =>
-                setGeneroSeleccionado(generoSeleccionado === item ? null : item)
-              }
-            >
-              <Text
-                style={[
-                  styles.chipTexto,
-                  generoSeleccionado === item && styles.chipTextoActivo,
-                ]}
-              >
-                {item}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {generoSeleccionado && (
-          <View style={styles.resultados}>
-            {musicosFiltrados.map((musico) => (
-              <TouchableOpacity
-                key={musico.id}
-                style={styles.tarjetaMusico}
-                onPress={() => navigation.navigate('VerMusico', { musicoId: musico.id })}
-              >
-                <Text style={styles.nombreMusico}>{musico.nombre}</Text>
-                <Text style={styles.generoMusico}>{(musico.generos ?? []).join(', ')}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-        {/* Spec 114 — entrada al directorio; la sección por género (mock) la saca el 122. */}
-        <TouchableOpacity onPress={() => navigation.navigate('DirectorioMusicos')}>
-          <Text style={styles.enlace}>Ver todos los músicos →</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Spec 122 — entrada al directorio real; reemplaza la búsqueda por género sobre el mock. */}
+      <TouchableOpacity style={styles.tarjetaMusicos} onPress={() => navigation.navigate('DirectorioMusicos')}>
+        <Text style={styles.tituloMusicos}>🎸 Músicos</Text>
+        <Text style={styles.infoVenue}>Descubre quién toca en {PAISES[pais]?.nombre ?? pais}</Text>
+      </TouchableOpacity>
 
       <View style={styles.filaTitulo}>
         <Text style={styles.titulo}>📍 Locales</Text>
@@ -146,25 +83,16 @@ const styles = StyleSheet.create({
   filaTitulo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: spacing.md },
   botonMapa: { backgroundColor: colors.accentLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: borderRadius.sm, marginTop: spacing.md, marginBottom: spacing.sm },
   textoBotonMapa: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
-  enlace: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm, marginTop: spacing.sm },
-  seccionBuscar: { paddingHorizontal: spacing.md, marginBottom: spacing.md },
-  tituloBuscar: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary, marginBottom: spacing.sm },
-  aviso: { fontSize: fontSize.sm, color: colors.muted, marginBottom: spacing.sm, fontStyle: 'italic' },
-  chipsContainer: { gap: spacing.sm, paddingBottom: spacing.sm },
-  chip: { backgroundColor: colors.accentLight, paddingHorizontal: 16, paddingVertical: 8, borderRadius: borderRadius.lg },
-  chipActivo: { backgroundColor: colors.accent },
-  chipTexto: { fontSize: fontSize.sm, color: colors.secondary },
-  chipTextoActivo: { color: colors.white, fontWeight: 'bold' },
-  resultados: { marginTop: spacing.sm, gap: spacing.sm },
-  tarjetaMusico: {
+  tarjetaMusicos: {
     backgroundColor: colors.cardBackground,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.sm,
     padding: 14,
     borderRadius: borderRadius.md,
     borderLeftWidth: 4,
     borderLeftColor: colors.accent,
   },
-  nombreMusico: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary },
-  generoMusico: { fontSize: fontSize.sm, color: colors.secondary, marginTop: 2 },
+  tituloMusicos: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
   tarjetaVenue: {
     backgroundColor: colors.cardBackground,
     marginHorizontal: spacing.md,
