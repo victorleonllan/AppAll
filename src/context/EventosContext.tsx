@@ -16,7 +16,7 @@ interface EventosState {
   error: string | null;
   refresh: () => Promise<void>;
   createEvento: (evento: Omit<Evento, 'id'>) => Promise<Evento>;
-  updateEvento: (id: string, cambios: Partial<Pick<Evento, 'artista' | 'fecha' | 'hora' | 'genero' | 'precio' | 'imagen' | 'pais' | 'comienzaAt'>>) => Promise<void>;
+  updateEvento: (id: string, cambios: Partial<Pick<Evento, 'artista' | 'fecha' | 'hora' | 'genero' | 'precio' | 'imagen' | 'pais' | 'comienzaAt' | 'descripcion' | 'tipoPrecio' | 'visibleEnCartelera'>>) => Promise<void>;
   deleteEvento: (id: string) => Promise<void>;
   cancelEvento: (id: string, motivo?: string) => Promise<void>;
   tickets: Ticket[];
@@ -59,7 +59,9 @@ export function mapEventoFromDB(db: any): Evento {
     moneda: db.moneda ?? null,
     // Spec 119 — mismos respaldos que sonopolisWeb/libs/mappers.js.
     tipoPrecio: db.tipo_precio ?? 'general',
-    descripcion: db.descripcion ?? null,
+    // Spec 135 — la columna es `description` (spec 087); leer `db.descripcion`
+    // dejaba la descripción siempre en null.
+    descripcion: db.description ?? null,
     visibleEnCartelera: db.visible_en_cartelera ?? true,
     createdAt: db.created_at,
   };
@@ -83,6 +85,10 @@ function mapEventoToDB(evento: Omit<Evento, 'id'>): any {
     // (spec 100), y mandarla desde el cliente abriría la puerta a una moneda que
     // no corresponde al país.
     comienza_at: evento.comienzaAt ?? null,
+    // Spec 135 — `visible_en_cartelera` no se manda: el default de la columna ya es
+    // `true` (spec 079).
+    description: evento.descripcion?.trim() || null,
+    tipo_precio: evento.tipoPrecio ?? 'general',
   };
 }
 
@@ -212,7 +218,7 @@ export function EventosProvider({ children }: { children: ReactNode }) {
   // y pisaría el monto real en cualquier UPDATE que no toque el precio.
   const updateEvento = useCallback(async (
     id: string,
-    cambios: Partial<Pick<Evento, 'artista' | 'fecha' | 'hora' | 'genero' | 'precio' | 'imagen' | 'pais' | 'comienzaAt'>>
+    cambios: Partial<Pick<Evento, 'artista' | 'fecha' | 'hora' | 'genero' | 'precio' | 'imagen' | 'pais' | 'comienzaAt' | 'descripcion' | 'tipoPrecio' | 'visibleEnCartelera'>>
   ) => {
     const cambiosDB: Record<string, any> = {};
     if (cambios.artista !== undefined) cambiosDB.artist_name = cambios.artista;
@@ -224,6 +230,10 @@ export function EventosProvider({ children }: { children: ReactNode }) {
     // Spec 095 — events.pais es copia del local (spec 080): corregir el local no
     // arrastra los eventos ya creados, así que el evento se corrige por su cuenta.
     if (cambios.pais !== undefined) cambiosDB.pais = cambios.pais;
+    // Spec 135 — mismos campos que edita el formulario de la web.
+    if (cambios.descripcion !== undefined) cambiosDB.description = cambios.descripcion?.trim() || null;
+    if (cambios.tipoPrecio !== undefined) cambiosDB.tipo_precio = cambios.tipoPrecio;
+    if (cambios.visibleEnCartelera !== undefined) cambiosDB.visible_en_cartelera = cambios.visibleEnCartelera;
     if (cambios.precio !== undefined) {
       cambiosDB.precio = cambios.precio;
       cambiosDB.monto = montoDesdePrecio(cambios.precio);

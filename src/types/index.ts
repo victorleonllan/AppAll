@@ -39,6 +39,10 @@ export interface Venue {
  * sigue público (quien compró tiene que poder ver que el show se canceló). */
 export type EventoStatus = 'draft' | 'published' | 'cancelled';
 
+/** Spec 064 — `general`: un precio fijo. `puerta`: el precio es el de la puerta y
+ * lo que se vende antes son preventas (spec 135, `usePreventas`). */
+export type TipoPrecio = 'general' | 'puerta';
+
 export interface Evento {
   id: string;
   artista: string;
@@ -60,10 +64,36 @@ export interface Evento {
   moneda?: string | null;       // Spec 116 — events.moneda (spec 100), solo lectura
   // Spec 119 — opcionales para no romper los objetos que se arman a mano
   // (el `Omit<Evento, 'id'>` de createEvento).
-  tipoPrecio?: 'general' | 'puerta';  // spec 064
+  tipoPrecio?: TipoPrecio;            // spec 064
   descripcion?: string | null;        // spec 087
   visibleEnCartelera?: boolean;       // spec 079
   createdAt?: string;                 // fecha de publicación (no del show); la usa el feed del 123
+}
+
+/** Spec 135 — regla de cierre de una preventa (spec 082): N horas antes del show,
+ * o una fecha fija. */
+export type CierreTipo = 'horas_antes' | 'fecha';
+
+/** Spec 135 — lo que el formulario arma antes de que la preventa exista en la base. */
+export interface BorradorPreventa {
+  precio: string;
+  cupo: number;                    // spec 068: obligatorio, toda preventa tiene límite
+  cierreTipo: CierreTipo;
+  cierreHorasAntes: number | null; // solo con `horas_antes`
+  cierreAt: string | null;         // solo con `fecha`
+}
+
+/** Spec 135 — fila de `event_preventas`. */
+export interface Preventa extends BorradorPreventa {
+  id: string;
+  eventId: string;
+  nombre: string;          // «Preventa N», lo pone el cliente, no quien organiza
+  orden: number;
+  monto: number;
+  vendidos: number;
+  activa: boolean;
+  cierraAt: string | null; // columna calculada `preventa_cierra_at` (spec 083)
+  createdAt: string;
 }
 
 /** Spec 119 — evento scrapeado de otra plataforma (spec 049). No se vende en Sonópolis. */
@@ -140,6 +170,10 @@ export interface TicketItem {
   // Datos de la compra a la que pertenece, vía el join con tickets (spec 039).
   compradorUserId: string;
   compradorNombre?: string;
+  // Spec 135 — opcionales para no romper a quien ya arma un TicketItem.
+  compraPagada?: boolean;           // tickets.status === 'completed'
+  cantidadEnCompra?: number;        // el correo lleva la compra entera
+  entradaEnviadaAt?: string | null; // tickets.entrada_enviada_at; null = nunca salió
 }
 
 export interface Musico {

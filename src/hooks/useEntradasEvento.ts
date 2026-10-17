@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { llamarApiWeb } from '../lib/apiWeb';
 import { TicketItem, TicketItemStatus } from '../types';
 
 export interface CompraSinEmitir {
@@ -21,6 +22,7 @@ interface EntradasEventoState {
   comprasSinEmitir: CompraSinEmitir[];
   contadores: ContadoresEntradas;
   refrescar: () => Promise<void>;
+  reenviarCorreo: (ticketId: string) => Promise<string>;
 }
 
 /**
@@ -44,7 +46,7 @@ export function useEntradasEvento(eventoId: string | undefined): EntradasEventoS
       // El join sale gratis por la FK ticket_items.ticket_id → tickets.id.
       const { data: itemsData, error: itemsError } = await supabase
         .from('ticket_items')
-        .select('id, ticket_id, folio, qr_token, status, redeemed_at, ticket:tickets(user_id, cantidad, status)')
+        .select('id, ticket_id, folio, qr_token, status, redeemed_at, ticket:tickets(user_id, cantidad, status, entrada_enviada_at)')
         .eq('evento_id', eventoId)
         .order('folio');
       if (itemsError) throw itemsError;
@@ -71,6 +73,9 @@ export function useEntradasEvento(eventoId: string | undefined): EntradasEventoS
         redeemedAt: r.redeemed_at,
         compradorUserId: r.ticket?.user_id,
         compradorNombre: nombres[r.ticket?.user_id],
+        compraPagada: r.ticket?.status === 'completed',
+        cantidadEnCompra: r.ticket?.cantidad,
+        entradaEnviadaAt: r.ticket?.entrada_enviada_at ?? null,
       }));
       setEntradas(mapeadas);
 
@@ -107,6 +112,25 @@ export function useEntradasEvento(eventoId: string | undefined): EntradasEventoS
     cargar();
   }, [cargar]);
 
+  /**
+   * Spec 135 — reenvía el correo con las entradas por la ruta de la web, que tiene la
+   * llave de Resend. Manda la COMPRA entera (el correo lleva todos los talones), así
+   * que `enviadoAt` se escribe en todas las entradas de ese ticket. Los errores
+   * llegan como `ErrorApiWeb` con el código de la ruta: `sin_email`,
+   * `ticket_no_pagado`, `no_encontrado`, `envio_fallido`.
+   */
+  const reenviarCorreo = useCallback(async (ticketId: string): Promise<string> => {
+    const r = await llamarApiWeb<{ enviadoAt?: string }>('/api/entradas/reenviar', {
+      metodo: 'POST',
+      cuerpo: { ticket_id: ticketId },
+    });
+    const enviadoAt = r.enviadoAt ?? new Date().toISOString();
+    setEntradas((prev) =>
+      prev.map((e) => (e.ticketId === ticketId ? { ...e, entradaEnviadaAt: enviadoAt } : e))
+    );
+    return enviadoAt;
+  }, []);
+
   const contadores: ContadoresEntradas = {
     emitidas: entradas.length,
     dentro: entradas.filter((e) => e.status === 'used').length,
@@ -115,5 +139,5 @@ export function useEntradasEvento(eventoId: string | undefined): EntradasEventoS
       .reduce((sum, c) => sum + c.cantidad, 0),
   };
 
-  return { cargando, error, entradas, comprasSinEmitir, contadores, refrescar: cargar };
+  return { cargando, error, entradas, comprasSinEmitir, contadores, refrescar: cargar, reenviarCorreo };
 }
