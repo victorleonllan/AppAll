@@ -1,6 +1,6 @@
 # Spec 139 — Entradas del evento: enviar o reenviar el correo de una compra
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` limpio (criterio 1) y `npx expo export --platform web` sin error (criterio 6). **Pendiente:** criterios 2-5 en la app contra la base y V-candidata 139-a; el envío real necesita W-246 en producción
 > Capa: FRONTEND. `src/screens/EntradasEventoScreen.tsx`, `src/components/BotonReenviarEntrada.tsx` (nuevo).
 > Depende de: spec 135
 > Alimenta: spec 140

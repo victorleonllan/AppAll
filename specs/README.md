@@ -74,7 +74,7 @@
 | 136 | Crear y editar un evento con todo lo que pide la web — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 137 | Cancelar con motivo, borrar y sacar de la cartelera desde Editar evento — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 138 | Equipo del evento: invitar por correo, invitaciones pendientes y correos del equipo — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
-| 139 | Entradas del evento: enviar o reenviar el correo de una compra — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
+| 139 | Entradas del evento: enviar o reenviar el correo de una compra — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | **Aplicado** (17-oct-2026) — `BotonReenviarEntrada` en cada entrada pagada no anulada de `EntradasEventoScreen`; tsc y export web limpios. Pendiente criterios 2-5 en la app (necesita W-246 en producción) |
 | 140 | Cobrar lo recaudado de un evento desde la app — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 141 | Abrir la invitación de dueño de local en la app y activar el local — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 142 | La app usa los roles `local` y `fan` de la base — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | **Aplicado** (17-oct-2026); falta probar en dispositivo con cuenta de local vieja |
