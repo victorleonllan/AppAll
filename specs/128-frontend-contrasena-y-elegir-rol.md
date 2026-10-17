@@ -1,6 +1,6 @@
 # Spec 128 — Perfil: cambiar la contraseña, y elegir rol al entrar sin uno
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` sin errores fuera de `supabase/functions`, `expo export --platform web` limpio, `src/navigation/` y `AuthContext` sin tocar. Criterios 4-10 pendientes de prueba en dispositivo (V-128a, V-128b). Ver «Bugs encontrados al aplicar».
 > Capa: FRONTEND. `src/screens/CambiarContrasenaScreen.tsx` (reemplaza el placeholder del spec 114), `src/screens/ElegirRolScreen.tsx` (reemplaza el placeholder del spec 114), `src/components/FormElegirRol.tsx` (nuevo), `src/components/GuardaRol.tsx` (nuevo), `src/lib/contrasena.ts` (nuevo), `src/lib/rol.ts` (nuevo), `App.tsx`, `src/screens/PerfilScreen.tsx`, `src/screens/PerfilMusicoScreen.tsx`, `src/screens/DashboardLocalScreen.tsx`.
 > Depende de: spec 114, spec 142
 > Alimenta: —
@@ -265,3 +265,18 @@ La ruta `ElegirRol` del 114 queda para llegar a mano (deep link o navegación ex
 - **V-128b** — Login con Google en un Android real (build propio, no Expo Go): la vuelta a
   `appall://` crea la sesión y aparece la guarda. Requiere que `appall://` esté en la lista
   de URLs de redirección de Supabase Auth.
+
+## Bugs encontrados al aplicar (17-oct-2026)
+
+- **El spec 114 ya había puesto «🔑 Cambiar contraseña»** en `PerfilScreen` y en la variante
+  completa de `PerfilMusicoScreen` y `DashboardLocalScreen`, justo arriba de «Cerrar sesión».
+  Agregar otro botón los duplicaba. Se cambió el texto de esos tres a «🔑 Contraseña de tu
+  cuenta» y se agregó el botón nuevo solo en las dos variantes que no lo tenían (músico sin
+  perfil, local sin local). Las líneas citadas en §2 (`:152`, `:249`, `:131`, `:236`) ya
+  habían corrido por otros specs.
+- **`navigation.goBack()` en `ElegirRolScreen` no tiene a dónde volver** cuando la pantalla es
+  la ruta inicial de `PerfilStack` (spec 114 la abre así cuando `role === null`). Tras elegir
+  fan desde la guarda, el stack ya montado queda en `ElegirRol` y muestra el aviso de rol ya
+  configurado. Tanto `onListo` como «Volver» usan `canGoBack() ? goBack() : replace('Perfil')`.
+- **`set_my_role` lanza `RAISE EXCEPTION 'no_autenticado'`**: PostgREST lo devuelve como
+  `error.message` (código `P0001`), no como `error.code`. `elegirMiRol` compara el mensaje.
