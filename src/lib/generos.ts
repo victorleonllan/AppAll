@@ -9,13 +9,15 @@ function normalizar(s: string): string {
 }
 
 /**
- * Filtra GENEROS_MUSICALES por substring, para la caja de búsqueda del picker
- * (spec 056). Query vacía devuelve la lista completa, en el orden original.
+ * Filtra `lista` por substring, para la caja de búsqueda del picker (spec 056).
+ * Query vacía devuelve la lista completa, en el orden original. Spec 146 —
+ * `lista` permite buscar sobre los géneros de la cartelera en vez del listado
+ * cerrado completo.
  */
-export function buscarGeneros(query: string): string[] {
-  if (!query.trim()) return GENEROS_MUSICALES;
+export function buscarGeneros(query: string, lista: string[] = GENEROS_MUSICALES): string[] {
+  if (!query.trim()) return lista;
   const q = normalizar(query);
-  return GENEROS_MUSICALES.filter((g) => normalizar(g).includes(q));
+  return lista.filter((g) => normalizar(g).includes(q));
 }
 
 /**

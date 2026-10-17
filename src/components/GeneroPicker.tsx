@@ -17,6 +17,9 @@ interface GeneroPickerProps {
   /** Solo tiene efecto en modo single — agrega un ítem "Todos los géneros" al principio
    * que limpia la selección (spec 056, filtro de Cartelera). */
   permitirTodos?: boolean;
+  /** Spec 146 — si viene, se busca sobre esta lista en vez del listado cerrado
+   * completo (la Cartelera pasa solo los géneros que tiene). */
+  opciones?: string[];
 }
 
 /** Spec 056 — modal de búsqueda + lista sobre el listado cerrado del spec 054. */
@@ -28,9 +31,11 @@ export default function GeneroPicker({
   multiple = false,
   titulo = 'Género',
   permitirTodos = false,
+  opciones,
 }: GeneroPickerProps) {
   const [query, setQuery] = useState('');
-  const resultados = buscarGeneros(query);
+  const resultados = buscarGeneros(query, opciones);
+  const sinOpciones = opciones !== undefined && opciones.length === 0;
   const items = permitirTodos && !multiple ? [TODOS, ...resultados] : resultados;
 
   const elegir = (g: string) => {
@@ -88,6 +93,11 @@ export default function GeneroPicker({
             }}
             ListEmptyComponent={
               <Text style={styles.vacio}>Sin resultados para "{query}"</Text>
+            }
+            ListFooterComponent={
+              sinOpciones ? (
+                <Text style={styles.vacio}>Todavía no hay géneros en la cartelera</Text>
+              ) : null
             }
           />
         </View>

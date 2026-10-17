@@ -134,6 +134,19 @@ export default function CarteleraScreen() {
     );
   }, [eventosDelPais]);
 
+  // Spec 146 — el picker ofrece solo los géneros que hay, como la web
+  // (`Cartelera.js:213-216`). Se deriva antes de los filtros de texto, fecha y
+  // género: si saliera de lo filtrado, al elegir un género desaparecerían los demás.
+  const generosDisponibles = useMemo(() => {
+    const set = new Set<string>();
+    for (const e of visibles) if (e.genero) set.add(e.genero);
+    if (!soloSonopolis) for (const e of externos) if (e.genero) set.add(e.genero);
+    // La selección actual se mantiene visible aunque ya no haya eventos de ese
+    // género (p. ej. tras activar «Solo Sonópolis»), para poder cambiarla.
+    if (generoFiltro) set.add(generoFiltro);
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'es'));
+  }, [visibles, externos, soloSonopolis, generoFiltro]);
+
   const texto = busqueda.trim().toLowerCase();
   const rango = rangoFecha(filtroFecha);
 
@@ -294,6 +307,7 @@ export default function CarteleraScreen() {
         seleccionados={generoFiltro ? [generoFiltro] : []}
         onCambiar={(gs) => setGeneroFiltro(gs[0] ?? null)}
         permitirTodos
+        opciones={generosDisponibles}
         titulo="Filtrar por género"
       />
 

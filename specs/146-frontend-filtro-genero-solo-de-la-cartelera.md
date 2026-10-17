@@ -1,6 +1,6 @@
 # Spec 146 — El filtro de género de la cartelera ofrece solo los géneros que hay
 
-> Estado: propuesto (17-oct-2026)
+> Estado: aplicado (17-oct-2026) — tsc y export web limpios; criterios 3-4 verificados sobre `buscarGeneros` con una lista Rock/Jazz, y sin `opciones` sigue devolviendo los 174 (criterio 5). Criterios 3, 4 y 6 en dispositivo pendientes
 > Capa: FRONTEND. `src/screens/CarteleraScreen.tsx`, `src/components/GeneroPicker.tsx`,
 > `src/lib/generos.ts`.
 > Depende de: spec 056 (aplicado), spec 119 (aplicado)
