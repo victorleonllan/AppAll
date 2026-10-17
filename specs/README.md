@@ -78,6 +78,7 @@
 | 140 | Cobrar lo recaudado de un evento desde la app — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Aplicado (17-oct-2026) |
 | 141 | Abrir la invitación de dueño de local en la app y activar el local — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | **Aplicado** (17-oct-2026) — `InvitacionLocalScreen` reemplaza el placeholder del 114: tarjeta del local, estados revocada/aceptada/reclamo por RPC/otra cuenta/login y registro embebidos; tsc y export web limpios. Criterios 2-6 en dispositivo pendientes |
 | 142 | La app usa los roles `local` y `fan` de la base — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | **Aplicado** (17-oct-2026); falta probar en dispositivo con cuenta de local vieja |
+| 143 | El detalle del evento deja de duplicar cancelar y borrar: solo queda «Borrar» para un cancelado (W-047) — pendientes de paridad, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Pendiente |
 | 028 | Correo transaccional por Resend (SMTP + plantillas + dominio propio) | Aplicado y confirmado (2026-08-11) — SMTP, límites, plantilla y remitente en `sonopolis.org` (verificado en Resend). El primero con `onboarding@resend.dev` cayó en spam; con dominio propio, confirmado que ya no |
 | 029 | Correo de confirmación de compra | Propuesto — depende del 028 y del 021 |
 | 030 | Dashboard de banda: perfil completo y panel | Implementado y desplegado — falta verificar en runtime |
