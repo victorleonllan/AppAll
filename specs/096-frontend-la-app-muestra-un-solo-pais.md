@@ -1,6 +1,6 @@
 # Spec 096 — La app móvil muestra la cartelera de un país
 
-> Estado: propuesto (21-sep-2026) — **no se implementa hasta que exista un segundo país con cartelera**
+> Estado: propuesto (21-sep-2026) — espera levantada el 17-oct-2026: México ya tiene cartelera (W-159); ver addenda
 > Capa: FRONTEND. `src/constants/paises.ts`, `src/context/PaisContext.tsx` (nuevo), `src/context/EventosContext.tsx`, `src/context/VenuesContext.tsx`, `src/screens/CarteleraScreen.tsx`, `src/screens/LocalesScreen.tsx`.
 > Depende de: spec 095 (el catálogo ISO ya existe en la app y las filas nuevas nacen con país), spec 080 (la columna).
 > Hermano en la web: `sonopolisWeb/specs/w111-logica-cartelera-por-pais.md` + `w113-frontend-selector-de-pais.md`, ambos aplicados.
@@ -118,3 +118,12 @@ está rota" y "acá todavía no llegamos".
   tiene abierto en `libs/fecha.js`.
 - Traducción, moneda o formato de precio por país.
 - Geolocalización por IP o por permiso de ubicación (Decisión 1).
+
+## Addenda (17-oct-2026) — la condición de espera se cumplió
+
+- México entró al catálogo `PAISES` de la web el 21-sep-2026 (W-159) con eventos scrapeados, y
+  `paises_cobro`/`pasarelas_cobro` ya consideran MX. La espera de este spec ya no aplica.
+- El spec 119 suma eventos externos a la cartelera de la app; sin el país activo de este spec,
+  una persona en Chile vería eventos de México. Por eso 119 y 122 dependen de este spec.
+- La Decisión 3 (no filtrar el mock) queda obsoleta: el spec 115 elimina los mocks.
+- El «Fuera de alcance» que dice que la app no muestra eventos externos queda superado por el 119.
