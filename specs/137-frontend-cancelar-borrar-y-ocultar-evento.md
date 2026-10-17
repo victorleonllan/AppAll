@@ -1,6 +1,6 @@
 # Spec 137 — Cancelar con motivo, borrar y sacar de la cartelera desde Editar evento
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` limpio fuera de `supabase/functions` (criterio 1), `npx expo export --platform web` sin error (criterio 6, a una carpeta temporal). `EditarEventoScreen` pide `useEventoPermisos(eventoId)` en vez de `(evento.id)`: es el mismo id y el hook tiene que ir antes del `return` de «Evento no encontrado». La navegación se tipa como `NativeStackNavigationProp<ParamListBase>` para tener `popToTop()` en las tres stacks. **Pendiente:** criterios 2-5 contra la base y V-candidata 137-a
 > Capa: FRONTEND. `src/components/AccionesEvento.tsx` (nuevo), `src/screens/EditarEventoScreen.tsx`.
 > Depende de: spec 135, spec 136
 > Hermano en la web: `app/(private)/eventos/[id]/editar/AccionesEvento.js`, `app/(marketing)/cartelera/[id]/BotonBorrarEvento.js` (W-044, W-047, W-097).
