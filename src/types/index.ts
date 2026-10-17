@@ -57,6 +57,39 @@ export interface Evento {
   cancelReason?: string | null;
   comienzaAt?: string | null;   // Spec 116 — events.comienza_at (spec 045). null en eventos viejos
   moneda?: string | null;       // Spec 116 — events.moneda (spec 100), solo lectura
+  // Spec 119 — opcionales para no romper los objetos que se arman a mano
+  // (el `Omit<Evento, 'id'>` de createEvento).
+  tipoPrecio?: 'general' | 'puerta';  // spec 064
+  descripcion?: string | null;        // spec 087
+  visibleEnCartelera?: boolean;       // spec 079
+  createdAt?: string;                 // fecha de publicación (no del show); la usa el feed del 123
+}
+
+/** Spec 119 — evento scrapeado de otra plataforma (spec 049). No se vende en Sonópolis. */
+export interface EventoExterno {
+  id: string;
+  sourceSlug: string;
+  fuenteNombre: string;   // event_sources.nombre; fallback al slug
+  sourceUrl: string;
+  titulo: string;
+  comienzaAt: string;     // NOT NULL en la tabla
+  venueNombre: string | null;
+  comuna: string | null;
+  pais: string;
+  imagen: string | null;
+  genero: string | null;
+}
+
+/** Spec 119 — respuesta del RPC precio_vigente_de (spec 100). */
+export interface PrecioVigente {
+  precio: string;
+  monto: number;
+  preventaId: string | null;
+  preventaNombre: string | null;
+  restantes: number | null;
+  cierraAt: string | null;
+  moneda: string | null;
+  seVende: boolean;
 }
 
 /** Spec 033 — rol dentro del equipo de un evento (tabla event_collaborators). */
