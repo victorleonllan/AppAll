@@ -33,6 +33,8 @@ const TICKET_A_VISTA: Record<TicketStatus, VistaStatus> = {
  */
 const VENTANA_POLLING_MS = 3 * 60 * 1000;
 const INTERVALO_POLLING_MS = 3000;
+/** Spec 126 — la compra termina donde termina en la web: mostrando la entrada. */
+const REDIRECT_EXITO_MS = 8000;
 
 /** Spec 118 — mismos headers que `pedirConfirmacion` de sonopolisWeb/libs/data/tickets.js. */
 async function pedirConfirmacion(cuerpo: { ticket_id?: string; ticket_ref?: string }) {
@@ -100,6 +102,25 @@ export default function ConfirmacionCompraScreen() {
   // El intervalo vive en un ref para poder cortarlo tanto desde el timeout como
   // desde la consulta manual sin recrear el efecto.
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Se corta si el usuario toca «Ver mis entradas» antes: sin doble navegación.
+  const redirectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const irAMisEntradas = useCallback(() => {
+    if (redirectRef.current) clearTimeout(redirectRef.current);
+    redirectRef.current = null;
+    // MisEntradas vive en este mismo stack (spec 114): replace, para que «atrás»
+    // no vuelva a la confirmación.
+    navigation.replace('MisEntradas');
+  }, [navigation]);
+
+  useEffect(() => {
+    if (actualStatus !== 'success') return;
+    redirectRef.current = setTimeout(irAMisEntradas, REDIRECT_EXITO_MS);
+    return () => {
+      if (redirectRef.current) clearTimeout(redirectRef.current);
+      redirectRef.current = null;
+    };
+  }, [actualStatus, irAMisEntradas]);
 
   useEffect(() => {
     if (ticketId || !ref) return;
@@ -221,7 +242,7 @@ export default function ConfirmacionCompraScreen() {
 
       {actualStatus === 'success' ? (
         <>
-          <TouchableOpacity style={styles.boton} onPress={() => navigation.navigate('MisEntradas')}>
+          <TouchableOpacity style={styles.boton} onPress={irAMisEntradas}>
             <Text style={styles.textoBoton}>🎟️ Ver mis entradas</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.boton, styles.botonSecundario]} onPress={irACartelera}>
