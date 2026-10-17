@@ -50,7 +50,7 @@ export default function PerfilScreen() {
           <Text style={styles.textoAccion}>⭐ Mi panel</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.botonAccion} onPress={() => navigation.navigate('CambiarContrasena')}>
-          <Text style={styles.textoAccion}>🔑 Cambiar contraseña</Text>
+          <Text style={styles.textoAccion}>🔑 Contraseña de tu cuenta</Text>
         </TouchableOpacity>
       </View>
 

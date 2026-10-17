@@ -164,6 +164,13 @@ export default function PerfilMusicoScreen() {
             <Text style={styles.textoBoton}>Crear mi perfil</Text>
           )}
         </TouchableOpacity>
+        {/* Spec 128 — también sin perfil: la contraseña es de la cuenta. */}
+        <TouchableOpacity
+          style={styles.botonEscaner}
+          onPress={() => (navigation as any).navigate('CambiarContrasena')}
+        >
+          <Text style={styles.textoBotonSecundario}>🔑 Contraseña de tu cuenta</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.botonSalir} onPress={handleSignOut}>
           <Text style={styles.textoBotonSalir}>Cerrar sesión</Text>
         </TouchableOpacity>
@@ -308,7 +315,7 @@ export default function PerfilMusicoScreen() {
         style={styles.botonEscaner}
         onPress={() => (navigation as any).navigate('CambiarContrasena')}
       >
-        <Text style={styles.textoBotonSecundario}>🔑 Cambiar contraseña</Text>
+        <Text style={styles.textoBotonSecundario}>🔑 Contraseña de tu cuenta</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.botonSalir} onPress={handleSignOut}>
