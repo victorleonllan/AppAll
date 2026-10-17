@@ -1,6 +1,6 @@
 # Spec 136 — Crear y editar un evento con todo lo que pide la web
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` limpio fuera de `supabase/functions` (criterio 1), `npx expo export --platform web` sin error (criterio 10). Flyer con `CampoImagen` (spec 130) en `pendientes/<user.id>` al crear y `eventos/<id>` al editar: el 129 sí deja elegir carpeta. Editar manda `precio` solo si cambió, para no recalcular `monto` (criterio 9). **Pendiente:** criterios 2-9 contra la base y V-candidatas 136-a/136-b en teléfono
 > Capa: FRONTEND. `src/screens/CrearEventoScreen.tsx`, `src/screens/EditarEventoScreen.tsx`, `src/components/ArtistaSelector.tsx` (nuevo), `src/components/PreventasEvento.tsx` (nuevo), `src/components/DatosPagoEvento.tsx` (nuevo).
 > Depende de: spec 095, spec 129, spec 133, spec 135
 > Alimenta: spec 137
