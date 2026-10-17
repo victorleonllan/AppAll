@@ -29,7 +29,7 @@ export default function DetalleEventoScreen() {
   const route = useRoute<DetalleRoute>();
   const navigation = useNavigation<NavProp>();
   const { user, signInOtp } = useAuth();
-  const { eventos, cancelEvento, deleteEvento } = useEventos();
+  const { eventos, deleteEvento } = useEventos();
 
   const [email, setEmail] = useState('');
   const [step, setStep] = useState<'idle' | 'email' | 'enviado' | 'comprando'>('idle');
@@ -37,6 +37,7 @@ export default function DetalleEventoScreen() {
   const [loading, setLoading] = useState(false);
   const [emailEnviado, setEmailEnviado] = useState('');
   const [gestionando, setGestionando] = useState(false);
+  const [errorGestion, setErrorGestion] = useState<string | null>(null);
 
   // Candado de la auto-compra — ver comentario en el efecto de abajo
   const autoCompraIniciada = useRef(false);
@@ -83,31 +84,10 @@ export default function DetalleEventoScreen() {
     }
   };
 
-  // Spec 033 — cancelar (recuperable) vs. borrar (definitivo, y bloqueado
-  // por el trigger events_block_delete_with_tickets si hay entradas vendidas
-  // o en proceso). El mensaje de error del trigger llega tal cual al Alert.
-  const handleCancelar = () => {
-    confirmar(
-      {
-        title: 'Cancelar evento',
-        message: 'El evento deja de venderse pero sigue visible como cancelado. No se puede deshacer desde acá.',
-        confirmText: 'Cancelar evento',
-        cancelText: 'Volver',
-        destructive: true,
-      },
-      async () => {
-        setGestionando(true);
-        try {
-          await cancelEvento(evento.id);
-        } catch (err: any) {
-          Alert.alert('No se pudo cancelar', err?.message ?? 'Error desconocido');
-        } finally {
-          setGestionando(false);
-        }
-      }
-    );
-  };
-
+  // Spec 143 — cancelar con motivo vive en Editar evento (spec 137, AccionesEvento).
+  // Aquí solo queda borrar un evento ya cancelado, igual que la ficha web (W-047).
+  // El trigger events_block_delete_with_tickets rechaza el borrado si hay entradas
+  // vendidas o en proceso; su mensaje va a un Text porque Alert.alert no hace nada en web.
   const handleBorrar = () => {
     confirmar(
       {
@@ -119,11 +99,12 @@ export default function DetalleEventoScreen() {
       },
       async () => {
         setGestionando(true);
+        setErrorGestion(null);
         try {
           await deleteEvento(evento.id);
           navigation.goBack();
         } catch (err: any) {
-          Alert.alert('No se pudo borrar', err?.message ?? 'Error desconocido');
+          setErrorGestion(`No se pudo borrar: ${err?.message ?? 'Error desconocido'}`);
         } finally {
           setGestionando(false);
         }
@@ -493,18 +474,10 @@ export default function DetalleEventoScreen() {
                 <Text style={styles.textoBotonGestion}>💰 Cobrar</Text>
               </TouchableOpacity>
             )}
-            {permisos.puedeBorrar && !cancelado && (
-              <TouchableOpacity
-                style={styles.botonGestion}
-                onPress={handleCancelar}
-                disabled={gestionando}
-              >
-                <Text style={styles.textoBotonGestion}>🚫 Cancelar</Text>
-              </TouchableOpacity>
-            )}
             {/* Spec 059/060 — borrar es solo del owner: events_delete ya no acepta
-                can_delete de un colaborador, RLS lo rechazaría igual. */}
-            {permisos.rol === 'owner' && (
+                can_delete de un colaborador, RLS lo rechazaría igual.
+                Spec 143 — y solo de un cancelado (W-047). */}
+            {permisos.rol === 'owner' && cancelado && (
               <TouchableOpacity
                 style={[styles.botonGestion, styles.botonPeligro]}
                 onPress={handleBorrar}
@@ -514,6 +487,7 @@ export default function DetalleEventoScreen() {
               </TouchableOpacity>
             )}
           </View>
+          {errorGestion && <Text style={styles.errorGestion}>{errorGestion}</Text>}
         </View>
       )}
 
@@ -638,6 +612,7 @@ const styles = StyleSheet.create({
   textoBotonGestion: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
   botonPeligro: { backgroundColor: '#FDECEA' },
   textoBotonPeligro: { color: '#B71C1C' },
+  errorGestion: { fontSize: fontSize.sm, color: colors.danger, marginTop: spacing.sm },
   // Modal
   overlay: {
     position: 'absolute',
