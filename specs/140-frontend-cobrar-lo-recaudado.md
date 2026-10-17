@@ -1,6 +1,6 @@
 # Spec 140 — Cobrar lo recaudado de un evento desde la app
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` sin errores, `npx expo export --platform web` OK. Montos con `formatearMonto` de `src/lib/precio.ts` (spec 119). Criterios 2-6 y V-candidata 140-a pendientes de prueba manual con datos reales.
 > Capa: FRONTEND. `src/screens/CobrarEventoScreen.tsx`, `src/screens/EntradasEventoScreen.tsx`.
 > Depende de: spec 114, spec 135, spec 139
 > Hermano en la web: `app/(marketing)/cartelera/[id]/CobroEvento.js`, `page.js:209-219`, `libs/data/pagos.js:61-174` (W-081, W-085, W-086).

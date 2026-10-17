@@ -79,6 +79,17 @@ export default function EntradasEventoScreen() {
         <Text style={styles.textoBotonEscanear}>📷 Escanear entradas</Text>
       </TouchableOpacity>
 
+      {/* Spec 140 — solo el owner: la plata es suya (spec 073, RLS de
+          event_payouts; spec 075, guarda de reclamar_pago_evento). */}
+      {permisos.esOwner && (
+        <TouchableOpacity
+          style={styles.botonEscanear}
+          onPress={() => (navigation as any).navigate('CobrarEvento', { eventoId })}
+        >
+          <Text style={styles.textoBotonEscanear}>💰 Cobrar lo recaudado</Text>
+        </TouchableOpacity>
+      )}
+
       <View style={[styles.card, styles.filaContadores]}>
         <View style={styles.contador}>
           <Text style={styles.contadorNumero}>{contadores.emitidas}</Text>
