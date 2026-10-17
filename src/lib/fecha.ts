@@ -44,3 +44,16 @@ export function separarFechaHora(
   const horaISO = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   return { fechaISO, horaISO };
 }
+
+/** Spec 135 — si el par fecha/hora del formulario arma un `comienzaAt` real. Formato
+ * solo no alcanza: "2026-02-31" pasa la regex, y según el motor el `Date` sale
+ * inválido o corrido al 3 de marzo; por eso además se compara el día armado con el
+ * pedido. La hora no se compara: en el día del cambio de horario las 00:00 pueden no
+ * existir y el motor las corre a la 01:00, y eso no es un error de quien escribe. */
+export function fechaHoraValidas(fechaISO: string, horaISO: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaISO) || !/^\d{2}:\d{2}$/.test(horaISO)) return false;
+  const d = new Date(`${fechaISO}T${horaISO}:00`);
+  if (Number.isNaN(d.getTime())) return false;
+  const [anio, mes, dia] = fechaISO.split('-').map(Number);
+  return d.getFullYear() === anio && d.getMonth() + 1 === mes && d.getDate() === dia;
+}
