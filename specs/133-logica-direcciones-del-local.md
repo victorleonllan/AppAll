@@ -1,6 +1,6 @@
 # Spec 133 — Hook de direcciones del local: hasta 3, una activa
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `tsc --noEmit` limpio, criterios 2-4 verificados (sin `catch {}`, sin `.update(`, el `throw` de la activa va antes del `delete`), `expo export --platform web` sin error. V-candidata 1 pendiente (la verifica el spec 134).
 > Capa: LÓGICA. `src/hooks/useDireccionesVenue.ts` (nuevo).
 > Depende de: ninguno pendiente. Tabla, tope, RPC y trigger ya están en producción (migración `20260901140000_spec_w062_venue_addresses.sql`).
 > Alimenta: spec 134 (editar local).
