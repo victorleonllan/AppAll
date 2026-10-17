@@ -1,6 +1,6 @@
 # Spec 142 — La app usa los roles `local` y `fan` de la base
 
-> Estado: propuesto (17-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` sin errores nuevos en `src/` (los 69 que quedan son de `supabase/functions/`, Deno, ya estaban en la base); greps de criterios 2-3 limpios salvo comentarios de otros specs (§5). Criterios 4-6 pendientes de prueba en dispositivo.
 > Capa: FRONTEND. `src/context/AuthContext.tsx`, `src/navigation/index.tsx`, `src/screens/AuthScreen.tsx`, `src/screens/RegisterScreen.tsx`, `src/screens/CrearEventoScreen.tsx`.
 > Depende de: ninguno pendiente (spec 046, aplicado en producción).
 > Alimenta: spec 128 (elegir rol), spec 114 (comparte `navigation/index.tsx`; el orquestador los serializa).

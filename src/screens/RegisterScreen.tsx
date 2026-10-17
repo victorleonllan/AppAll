@@ -6,7 +6,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { colors, spacing, borderRadius, fontSize } from "../theme";
 
-type RoleOption = "musician" | "cafe";
+type RoleOption = "musician" | "local";
 
 interface Props {
   preselectedRole: RoleOption;
@@ -85,11 +85,11 @@ export default function RegisterScreen({
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.botonRol, role === "cafe" && styles.botonRolActivo]}
-          onPress={() => setRole("cafe")}
+          style={[styles.botonRol, role === "local" && styles.botonRolActivo]}
+          onPress={() => setRole("local")}
         >
           <Text
-            style={[styles.textoRol, role === "cafe" && styles.textoRolActivo]}
+            style={[styles.textoRol, role === "local" && styles.textoRolActivo]}
           >
             📍 Dueño de local
           </Text>

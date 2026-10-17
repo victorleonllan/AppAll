@@ -9,17 +9,15 @@ import PerfilStack from './PerfilStack';
 import LocalesStack from './LocalesStack';
 import MiLocalStack from './MiLocalStack';
 import { linking } from './linking';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, UserRole } from '../context/AuthContext';
 import { colors } from '../theme';
-
-type UserRole = 'public' | 'musician' | 'cafe' | null;
 
 const Tab = createBottomTabNavigator();
 
 function getThirdTab(session: unknown, role: UserRole) {
   if (!session) return { name: 'Sonópolis' as const, component: AuthScreen, icon: 'apps' as const };
   if (role === 'musician') return { name: 'Mi Perfil' as const, component: MusicoStack, icon: 'person-circle' as const };
-  if (role === 'cafe') return { name: 'Mi Local' as const, component: MiLocalStack, icon: 'location' as const };
+  if (role === 'local') return { name: 'Mi Local' as const, component: MiLocalStack, icon: 'location' as const };
   // Spec 114 — con stack propio, para que el fan pueda navegar desde su perfil
   // (Mis entradas, Mi panel) y una sesión sin rol entre por ElegirRol.
   return { name: 'Perfil' as const, component: PerfilStack, icon: 'person' as const };

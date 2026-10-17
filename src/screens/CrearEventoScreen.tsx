@@ -84,7 +84,7 @@ export default function CrearEventoScreen() {
   // Un local que publica su propio evento no debería tener que buscarse a
   // sí mismo en la lista — se preselecciona su venue (spec 031).
   useEffect(() => {
-    if (role === 'cafe' && user && !selectedVenue) {
+    if (role === 'local' && user && !selectedVenue) {
       const miVenue = allVenues.find((v) => v.ownerId === user.id);
       if (miVenue) {
         setSelectedVenue(miVenue);
