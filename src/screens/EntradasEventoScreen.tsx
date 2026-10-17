@@ -7,6 +7,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { useEventos } from '../context/EventosContext';
 import { useEntradasEvento } from '../hooks/useEntradasEvento';
 import { useEventoPermisos } from '../hooks/useEventoPermisos';
+import BotonReenviarEntrada from '../components/BotonReenviarEntrada';
 import { TicketItem } from '../types';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
@@ -25,7 +26,7 @@ export default function EntradasEventoScreen() {
   const { eventoId } = route.params as { eventoId: string };
   const { eventos } = useEventos();
   const permisos = useEventoPermisos(eventoId);
-  const { cargando, error, entradas, comprasSinEmitir, contadores, refrescar } = useEntradasEvento(eventoId);
+  const { cargando, error, entradas, comprasSinEmitir, contadores, refrescar, reenviarCorreo } = useEntradasEvento(eventoId);
   const [qrSeleccionado, setQrSeleccionado] = useState<TicketItem | null>(null);
 
   const evento = eventos.find((e) => e.id === eventoId);
@@ -110,11 +111,23 @@ export default function EntradasEventoScreen() {
                     : 'válida'}
               </Text>
             </View>
-            {item.status === 'valid' && (
-              <TouchableOpacity style={styles.botonQr} onPress={() => setQrSeleccionado(item)}>
-                <Text style={styles.textoBotonQr}>QR</Text>
-              </TouchableOpacity>
-            )}
+            <View style={styles.accionesEntrada}>
+              {item.status === 'valid' && (
+                <TouchableOpacity style={styles.botonQr} onPress={() => setQrSeleccionado(item)}>
+                  <Text style={styles.textoBotonQr}>QR</Text>
+                </TouchableOpacity>
+              )}
+              {/* Spec 139 — sin compra pagada no hay entradas que mandar; anulada
+                  sería mandarle a alguien algo que ya no sirve. */}
+              {item.compraPagada && item.status !== 'void' && (
+                <BotonReenviarEntrada
+                  ticketId={item.ticketId}
+                  cantidadEnCompra={item.cantidadEnCompra ?? 1}
+                  enviadoAt={item.entradaEnviadaAt ?? null}
+                  onReenviar={reenviarCorreo}
+                />
+              )}
+            </View>
           </View>
         ))}
 
@@ -197,6 +210,7 @@ const styles = StyleSheet.create({
   datosEntrada: { flex: 1 },
   compradorNombre: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary },
   estadoEntrada: { fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
+  accionesEntrada: { alignItems: 'flex-end' },
   botonQr: {
     backgroundColor: colors.accentLight,
     paddingHorizontal: 12,
