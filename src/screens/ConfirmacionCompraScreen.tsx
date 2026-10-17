@@ -27,9 +27,32 @@ const TICKET_A_VISTA: Record<TicketStatus, VistaStatus> = {
   pending: 'pending',
 };
 
-/** El webhook depende de que MP notifique; su latencia puede ser de minutos. */
+/**
+ * El webhook no confirma contra tráfico real de MP (firma x-signature), así que cada
+ * consulta le pide primero la confirmación a `confirm-payment`, como la web.
+ */
 const VENTANA_POLLING_MS = 3 * 60 * 1000;
 const INTERVALO_POLLING_MS = 3000;
+
+/** Spec 118 — mismos headers que `pedirConfirmacion` de sonopolisWeb/libs/data/tickets.js. */
+async function pedirConfirmacion(cuerpo: { ticket_id?: string; ticket_ref?: string }) {
+  try {
+    const res = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/confirm-payment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
+      },
+      body: JSON.stringify(cuerpo),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as { status?: TicketStatus };
+  } catch {
+    // Deliberado: un tick fallido no es un error para el usuario mientras quede
+    // ventana; el próximo reintenta. El error visible es el `timeout` del final.
+    return null;
+  }
+}
 
 const config: Record<VistaStatus, { icon: keyof typeof Ionicons.glyphMap; color: string; titulo: string; mensaje: string }> = {
   success: {
@@ -63,45 +86,80 @@ export default function ConfirmacionCompraScreen() {
   const navigation = useNavigation<NavProp>();
   const { eventos } = useEventos();
 
-  const { eventoId, ticketId, status = 'pending' } = route.params ?? {};
+  const { eventoId, ticketId, ref, status = 'pending' } = route.params ?? {};
   const [actualStatus, setActualStatus] = useState<VistaStatus>(status);
   const [consultando, setConsultando] = useState(false);
-  const evento = eventos.find((e) => e.id === eventoId);
+  // Si llega solo `ref` (la abrió el deep link con la app cerrada), el ticket y su
+  // evento se resuelven por preference_id al montar.
+  const [ticketResuelto, setTicketResuelto] = useState<{ id: string; eventoId: string } | null>(null);
+  const [resolviendo, setResolviendo] = useState(!ticketId && !!ref);
+  const idTicket = ticketId ?? ticketResuelto?.id;
+  const evento = eventos.find((e) => e.id === (eventoId ?? ticketResuelto?.eventoId));
   const cfg = config[actualStatus] ?? config.failure;
 
   // El intervalo vive en un ref para poder cortarlo tanto desde el timeout como
   // desde la consulta manual sin recrear el efecto.
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  useEffect(() => {
+    if (ticketId || !ref) return;
+    let activo = true;
+    supabase
+      .from('tickets')
+      .select('id, evento_id')
+      .eq('preference_id', ref)
+      .maybeSingle()
+      .then(({ data }) => {
+        // Sin fila (otra cuenta o sin sesión) se sigue con `ref` sola:
+        // confirm-payment la acepta; solo falta la info del evento.
+        if (activo && data) setTicketResuelto({ id: data.id, eventoId: data.evento_id });
+        if (activo) setResolviendo(false);
+      });
+    return () => { activo = false; };
+  }, [ticketId, ref]);
+
   /** Devuelve true si el ticket ya salio de 'pending'. */
   const consultarTicket = useCallback(async (): Promise<boolean> => {
-    if (!ticketId) return false;
+    if (!idTicket && !ref) return false;
 
-    const { data } = await supabase
-      .from('tickets')
-      .select('status')
-      .eq('id', ticketId)
-      .single();
+    const confirmacion = await pedirConfirmacion(idTicket ? { ticket_id: idTicket } : { ticket_ref: ref });
 
-    if (data && data.status !== 'pending') {
-      setActualStatus(TICKET_A_VISTA[data.status as TicketStatus] ?? 'failure');
+    let estado: TicketStatus | undefined;
+    if (idTicket) {
+      const { data } = await supabase
+        .from('tickets')
+        .select('status')
+        .eq('id', idTicket)
+        .single();
+      estado = data?.status as TicketStatus | undefined;
+    } else {
+      estado = confirmacion?.status;
+    }
+
+    if (estado && estado !== 'pending') {
+      setActualStatus(TICKET_A_VISTA[estado] ?? 'failure');
       return true;
     }
     return false;
-  }, [ticketId]);
+  }, [idTicket, ref]);
 
-  // Polling mientras el webhook confirma el pago
+  // Una consulta inmediata y después polling. `success` también consulta: la
+  // back_url dice que MP aprobó, pero el ticket lo emite confirm-payment.
   useEffect(() => {
-    if (status !== 'pending' || !ticketId) return;
+    if (status === 'failure' || resolviendo || (!idTicket && !ref)) return;
 
+    let activo = true;
     const detener = () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       intervalRef.current = null;
     };
 
-    intervalRef.current = setInterval(async () => {
-      if (await consultarTicket()) detener();
-    }, INTERVALO_POLLING_MS);
+    consultarTicket().then((resuelto) => {
+      if (resuelto || !activo) return;
+      intervalRef.current = setInterval(async () => {
+        if (await consultarTicket()) detener();
+      }, INTERVALO_POLLING_MS);
+    });
 
     // Al vencer la ventana el estado se hace visible, en vez de dejar
     // "Verificando pago..." congelado para siempre.
@@ -111,10 +169,11 @@ export default function ConfirmacionCompraScreen() {
     }, VENTANA_POLLING_MS);
 
     return () => {
+      activo = false;
       detener();
       clearTimeout(timeout);
     };
-  }, [status, ticketId, consultarTicket]);
+  }, [status, idTicket, ref, resolviendo, consultarTicket]);
 
   const reintentarConsulta = async () => {
     setConsultando(true);
@@ -122,16 +181,6 @@ export default function ConfirmacionCompraScreen() {
     setConsultando(false);
     if (!resuelto) setActualStatus('timeout');
   };
-
-  // Auto-redireccion despues de exito
-  useEffect(() => {
-    if (actualStatus === 'success') {
-      const timer = setTimeout(() => {
-        navigation.getParent()?.goBack();
-      }, 8000);
-      return () => clearTimeout(timer);
-    }
-  }, [actualStatus, navigation]);
 
   const irACartelera = () => {
     navigation.navigate('CarteleraList');
@@ -170,9 +219,20 @@ export default function ConfirmacionCompraScreen() {
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity style={styles.boton} onPress={irACartelera}>
-        <Text style={styles.textoBoton}>Volver a cartelera</Text>
-      </TouchableOpacity>
+      {actualStatus === 'success' ? (
+        <>
+          <TouchableOpacity style={styles.boton} onPress={() => navigation.navigate('MisEntradas')}>
+            <Text style={styles.textoBoton}>🎟️ Ver mis entradas</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.boton, styles.botonSecundario]} onPress={irACartelera}>
+            <Text style={styles.textoBotonSecundario}>Volver a cartelera</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        <TouchableOpacity style={styles.boton} onPress={irACartelera}>
+          <Text style={styles.textoBoton}>Volver a cartelera</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
