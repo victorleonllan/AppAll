@@ -7,6 +7,7 @@ import AppNavigator from './src/navigation';
 import { Splash } from './src/components/Splash';
 import { getOAuthErrorFromUrl } from './src/lib/oauthError';
 import OAuthErrorScreen from './src/screens/OAuthErrorScreen';
+import GuardaRol from './src/components/GuardaRol';
 
 export default function App() {
   // Solo en web: si Supabase volvió del login de Google con ?error=... (state
@@ -25,6 +26,8 @@ export default function App() {
         <VenuesProvider>
           <EventosProvider>
             <AppNavigator />
+            {/* Spec 128 — tapa toda la app mientras la sesión no tenga rol. */}
+            <GuardaRol />
             <StatusBar style="light" />
           </EventosProvider>
         </VenuesProvider>

@@ -127,6 +127,10 @@ export default function DashboardLocalScreen() {
         <TouchableOpacity style={styles.botonNuevo} onPress={() => navigation.navigate('EditarLocal')}>
           <Text style={styles.textoBotonNuevo}>+ Registrar mi local</Text>
         </TouchableOpacity>
+        {/* Spec 128 — también sin local: la contraseña es de la cuenta. */}
+        <TouchableOpacity style={styles.botonEscaner} onPress={() => navigation.navigate('CambiarContrasena')}>
+          <Text style={styles.textoBotonSecundario}>🔑 Contraseña de tu cuenta</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.botonSalir} onPress={handleSignOut}>
           <Text style={styles.textoBotonSalir}>Cerrar sesión</Text>
         </TouchableOpacity>
@@ -243,7 +247,7 @@ export default function DashboardLocalScreen() {
             </TouchableOpacity>
           </View>
           <TouchableOpacity style={styles.botonEscaner} onPress={() => navigation.navigate('CambiarContrasena')}>
-            <Text style={styles.textoBotonSecundario}>🔑 Cambiar contraseña</Text>
+            <Text style={styles.textoBotonSecundario}>🔑 Contraseña de tu cuenta</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.botonSalir} onPress={handleSignOut}>
             <Text style={styles.textoBotonSalir}>Cerrar sesión</Text>
