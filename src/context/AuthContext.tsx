@@ -4,7 +4,17 @@ import * as WebBrowser from 'expo-web-browser';
 import { supabase } from '../lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 
-type UserRole = 'public' | 'musician' | 'cafe' | null;
+export type UserRole = 'fan' | 'musician' | 'local' | null;
+
+// Spec 142 — la base usa fan/musician/local desde el spec 046, pero hay cuentas
+// con metadata vieja ('cafe'/'public', escrita por esta misma app): se aceptan
+// como alias.
+export function normalizarRol(valor: unknown): UserRole {
+  if (valor === 'local' || valor === 'cafe') return 'local';
+  if (valor === 'fan' || valor === 'public') return 'fan';
+  if (valor === 'musician') return 'musician';
+  return null;
+}
 
 interface AuthState {
   session: Session | null;
@@ -30,14 +40,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setRole((session?.user?.user_metadata?.role as UserRole) ?? null);
+      setRole(normalizarRol(session?.user?.user_metadata?.role));
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setRole((session?.user?.user_metadata?.role as UserRole) ?? null);
+      setRole(normalizarRol(session?.user?.user_metadata?.role));
     });
 
     return () => subscription.unsubscribe();
@@ -66,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        data: { role: 'public', nombre: email.split('@')[0] },
+        data: { role: 'fan', nombre: email.split('@')[0] },
         shouldCreateUser: true,
         emailRedirectTo: redirectTo,
       },

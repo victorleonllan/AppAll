@@ -6,7 +6,7 @@ import RegisterScreen from "./RegisterScreen";
 import LoginScreen from "./LoginScreen";
 import { colors, spacing, borderRadius, fontSize } from "../theme";
 
-type RoleOption = "musician" | "cafe";
+type RoleOption = "musician" | "local";
 type AuthView = "landing" | "register" | "login";
 
 export default function AuthScreen() {
@@ -69,7 +69,7 @@ export default function AuthScreen() {
       <TouchableOpacity
         style={[styles.card, styles.cardAction]}
         onPress={() => {
-          setSelectedRole("cafe");
+          setSelectedRole("local");
           setView("register");
         }}
       >
