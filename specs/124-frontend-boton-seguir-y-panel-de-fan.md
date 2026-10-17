@@ -1,6 +1,6 @@
 # Spec 124 — Botón «Seguir» y panel del fan: próxima entrada, feed y a quién sigo
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `BotonSeguir` en `VerMusico` y en el pie de cada tarjeta del directorio, `PanelFanScreen` con saludo, próxima entrada (≥ ahora, sin cancelados), feed, «Esta semana» y «Sigues a». Verificado: `npx tsc --noEmit` limpio y `npx expo export --platform web` sin errores. Criterios 2-8 y V-a/V-b pendientes de probar con sesión real.
 > Capa: FRONTEND. `src/components/BotonSeguir.tsx` (nuevo), `src/screens/PanelFanScreen.tsx` (reemplaza el placeholder del spec 114), `src/screens/VerMusicoScreen.tsx`, `src/screens/DirectorioMusicosScreen.tsx`.
 > Depende de: spec 114, spec 119, spec 122, spec 123, spec 125
 > Alimenta: spec 127 (pone `BotonSeguir` con `tipo="venue"` en el detalle del local).
@@ -171,3 +171,12 @@ defecto del 114: se reporta, no se arregla acá.
   y el feed muestra los mismos eventos en el mismo orden.
 - V-b: con varios botones «Seguir» en el directorio, tocar dos rápido no deja ninguno en un
   estado distinto al de la base (recargar y comparar).
+
+## Bugs encontrados al aplicar (17-oct-2026)
+
+- **§1, aviso de error tras `alternar()`.** «Si no y hay `s.error`, `Alert.alert(…, s.error)`»
+  no avisa nunca: `s` dentro del manejador es el del render del toque, y el error que deja
+  `alternar()` (vía `setError`) recién existe en el render siguiente. Se aplicó con un
+  `useEffect` sobre `s.error` que avisa solo si el error vino de un toque (un `useRef`
+  marcado al tocar), para no disparar alertas por el error de la consulta inicial en cada
+  tarjeta del directorio. El comportamiento visible es el que pedía el diseño.
