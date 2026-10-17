@@ -1,6 +1,6 @@
 # Spec 096 — La app móvil muestra la cartelera de un país
 
-> Estado: propuesto (21-sep-2026) — espera levantada el 17-oct-2026: México ya tiene cartelera (W-159); ver addenda
+> Estado: aplicado (17-oct-2026) — decisión abierta cerrada por la lista derivada: los contexts mantienen la consulta sin filtrar (`eventos`/`allVenues`, para las pantallas privadas) y exponen `eventosDelPais`/`venuesDelPais`; solo Cartelera y Locales leen las derivadas. `PaisProvider` envuelve a Venues/Eventos en `App.tsx` (archivo no declarado, imprescindible). Verificado: `tsc --noEmit` sin errores en `src/` (los únicos son de `supabase/functions`, Deno, preexistentes) y `expo export --platform web` limpio. Sin probar en dispositivo
 > Capa: FRONTEND. `src/constants/paises.ts`, `src/context/PaisContext.tsx` (nuevo), `src/context/EventosContext.tsx`, `src/context/VenuesContext.tsx`, `src/screens/CarteleraScreen.tsx`, `src/screens/LocalesScreen.tsx`.
 > Depende de: spec 095 (el catálogo ISO ya existe en la app y las filas nuevas nacen con país), spec 080 (la columna).
 > Hermano en la web: `sonopolisWeb/specs/w111-logica-cartelera-por-pais.md` + `w113-frontend-selector-de-pais.md`, ambos aplicados.

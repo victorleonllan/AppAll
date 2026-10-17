@@ -1,11 +1,16 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, ReactNode, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Evento, EventoStatus, EventRole, Colaborador, Ticket, TicketStatus } from '../types';
 import { eventos as mockEventos } from '../data/mock/eventos';
 import { useAuth } from './AuthContext';
+import { usePais } from './PaisContext';
 
 interface EventosState {
+  // Spec 096 — `eventos` son TODOS los países: lo leen las pantallas privadas
+  // ("mis eventos", "mis ventas", "mi local"), que son lo mío y no una cartelera.
+  // `eventosDelPais` es lo que lista la Cartelera.
   eventos: Evento[];
+  eventosDelPais: Evento[];
   loading: boolean;
   refresh: () => Promise<void>;
   createEvento: (evento: Omit<Evento, 'id'>) => Promise<Evento>;
@@ -101,6 +106,17 @@ export function EventosProvider({ children }: { children: ReactNode }) {
   const [useMock, setUseMock] = useState(true);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [misColaboraciones, setMisColaboraciones] = useState<Colaborador[]>([]);
+  const { pais } = usePais();
+
+  // Spec 096 — derivado de la consulta sin filtrar, no una segunda consulta con
+  // `.eq('pais', pais)`: las pantallas privadas necesitan todos los países, y la
+  // lista del país es un subconjunto de esa misma lista. Cambiar de país recalcula
+  // al instante sin ir a la red. El mock no tiene `pais` y se muestra tal cual
+  // (Decisión 3): filtrarlo dejaría la app vacía justo cuando algo ya falló.
+  const eventosDelPais = useMemo(
+    () => (useMock ? eventos : eventos.filter((e) => e.pais === pais)),
+    [eventos, pais, useMock]
+  );
 
   const loadFromSupabase = useCallback(async () => {
     try {
@@ -346,7 +362,7 @@ export function EventosProvider({ children }: { children: ReactNode }) {
   return (
     <EventosContext.Provider
       value={{
-        eventos, loading, refresh, createEvento, updateEvento, deleteEvento, cancelEvento,
+        eventos, eventosDelPais, loading, refresh, createEvento, updateEvento, deleteEvento, cancelEvento,
         tickets, createTicket, getTicketsByUser, updateTicketStatus,
         misColaboraciones, getColaboradores, invitarColaborador,
         cambiarPermisoBorrado, quitarColaborador, transferirPropiedad, buscarCandidatos,

@@ -1,6 +1,6 @@
 /**
  * Spec 095 — dónde se puede **crear** un local o un evento: cualquier país ISO,
- * no solo los que tienen cartelera (ese otro catálogo, `PAISES`, llega con el
+ * no solo los que tienen cartelera (ese otro catálogo es `PAISES`, más abajo,
  * spec 096).
  *
  * Copia de `sonopolisWeb/libs/paisesISO.js` (W-114), no paquete compartido: los
@@ -15,6 +15,33 @@
  * rebuildear (es un módulo nativo).
  */
 export const PAIS_POR_DEFECTO = 'CL';
+
+/**
+ * Spec 096 — catálogo de países **con cartelera**, copia de `PAISES` en
+ * `sonopolisWeb/libs/pais.js` (W-109/W-159). Responde otra pregunta que
+ * `PAISES_ISO`: no "dónde se puede crear algo" sino "qué carteleras se pueden
+ * mirar" (W-114, Decisión 1). Un país entra cuando ya tiene eventos, no antes.
+ *
+ * `zonaHoraria` queda disponible pero nadie la consume todavía (Fuera de
+ * alcance del 096: el formato de fecha por huso es un pendiente aparte).
+ */
+export interface PaisActivo {
+  codigo: string;
+  nombre: string;
+  bandera: string;
+  zonaHoraria: string;
+}
+
+export const PAISES: Record<string, PaisActivo> = {
+  CL: { codigo: 'CL', nombre: 'Chile', bandera: '🇨🇱', zonaHoraria: 'America/Santiago' },
+  MX: { codigo: 'MX', nombre: 'México', bandera: '🇲🇽', zonaHoraria: 'America/Mexico_City' },
+};
+
+/** ¿Es un país con cartelera? Normaliza antes de mirar (" cl" es Chile). */
+export function esPaisActivo(codigo: unknown): codigo is string {
+  if (typeof codigo !== 'string') return false;
+  return Object.prototype.hasOwnProperty.call(PAISES, codigo.trim().toUpperCase());
+}
 
 /**
  * Solo los códigos ISO 3166-1 alpha-2. Nombre y bandera se derivan (ver abajo):
