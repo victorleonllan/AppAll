@@ -137,4 +137,8 @@ export interface PerfilMusico {
   tiktok?: string;
   riderTecnico?: string;
   updatedAt?: string;
+  // Spec 121 — solo lectura por ahora; escribirlos es del spec 130.
+  pais?: string;            // spec 106 — ISO alpha-2
+  avatar?: string | null;   // spec 085 — logo chico; `foto` es la imagen grande
+  available?: boolean;      // spec 051 — «disponible este finde»
 }

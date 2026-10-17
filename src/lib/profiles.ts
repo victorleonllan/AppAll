@@ -38,6 +38,10 @@ export function mapProfileFromDB(db: any): PerfilMusico {
     tiktok: db.tiktok ?? undefined,
     riderTecnico: db.rider_tecnico ?? undefined,
     updatedAt: db.updated_at ?? undefined,
+    // Spec 121 — mapProfileToDB no los escribe (spec 130).
+    pais: db.pais ?? undefined,
+    avatar: db.avatar ?? null,
+    available: db.available ?? false,
   };
 }
 
