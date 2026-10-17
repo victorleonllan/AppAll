@@ -20,3 +20,22 @@ export function montoDesdePrecio(precio: string | undefined | null): number {
   if (!digitos) return 0;
   return Math.round(parseInt(digitos, 10) * (1 + RECARGO_PLATAFORMA));
 }
+
+/** Separador de miles por moneda; CLP y moneda desconocida usan punto, como la web. */
+const SEPARADOR_MILES: Record<string, string> = { CLP: '.', MXN: ',' };
+
+/**
+ * Spec 119 — port de `formatearMonto` de sonopolisWeb/libs/moneda.js (W-167):
+ * `$5.000 CLP` · `$1,320 MXN` · `$5.000` sin moneda (país sin fila en
+ * `paises_cobro`). El código va siempre que se conoce: con dos países, "$500"
+ * no dice si son pesos chilenos o mexicanos.
+ *
+ * Sin `toLocaleString`: el soporte de locales de `Intl` en Hermes (el motor JS de
+ * React Native) no está garantizado en todos los builds, y un precio no puede
+ * depender de eso. Los montos son enteros (`events.monto integer`).
+ */
+export function formatearMonto(monto: number | null | undefined, moneda: string | null | undefined): string {
+  const sep = (moneda && SEPARADOR_MILES[moneda]) || '.';
+  const n = String(Math.round(monto ?? 0)).replace(/\B(?=(\d{3})+(?!\d))/g, sep);
+  return moneda ? `$${n} ${moneda}` : `$${n}`;
+}

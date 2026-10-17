@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Evento } from '../types';
+import PrecioEvento from './PrecioEvento';
 import { colors, spacing, borderRadius } from '../theme';
 
 interface Props {
@@ -17,7 +18,10 @@ export default function TarjetaEvento({ evento, onPress, onComprar }: Props) {
         <Text style={styles.detalle}>
           📍 {evento.venueName} · {evento.fecha} · {evento.hora}
         </Text>
-        <Text style={styles.precio}>{evento.precio}</Text>
+        {/* Spec 119 — precio en la moneda del evento. Sin consulta de preventa:
+            esta tarjeta la usan DashboardLocal y PerfilMusico, donde N llamadas
+            al RPC no aportan. */}
+        <PrecioEvento evento={evento} vigente={null} />
       </View>
       {onComprar && (
         <TouchableOpacity style={styles.boton} onPress={onComprar}>
@@ -51,7 +55,6 @@ const styles = StyleSheet.create({
   artista: { fontSize: 16, fontWeight: '600', color: colors.primary },
   genero: { fontSize: 13, color: colors.secondary, marginTop: 2 },
   detalle: { fontSize: 12, color: colors.muted, marginTop: 4 },
-  precio: { fontSize: 15, fontWeight: 'bold', color: colors.success, marginTop: 6 },
   boton: { backgroundColor: colors.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: borderRadius.sm, marginLeft: 12 },
   textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: 13 },
 });

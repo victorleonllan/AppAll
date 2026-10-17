@@ -35,7 +35,9 @@ interface EventosState {
 
 const EventosContext = createContext<EventosState>({} as EventosState);
 
-function mapEventoFromDB(db: any): Evento {
+// Spec 119 — exportado: el feed del spec 123 consulta `events` por su cuenta y
+// necesita el mismo mapeo (los providers son el único punto de mapeo).
+export function mapEventoFromDB(db: any): Evento {
   return {
     id: db.id,
     artista: db.artist_name,
@@ -55,6 +57,11 @@ function mapEventoFromDB(db: any): Evento {
     cancelReason: db.cancel_reason ?? null,
     comienzaAt: db.comienza_at ?? null,
     moneda: db.moneda ?? null,
+    // Spec 119 — mismos respaldos que sonopolisWeb/libs/mappers.js.
+    tipoPrecio: db.tipo_precio ?? 'general',
+    descripcion: db.descripcion ?? null,
+    visibleEnCartelera: db.visible_en_cartelera ?? true,
+    createdAt: db.created_at,
   };
 }
 
@@ -122,7 +129,12 @@ export function EventosProvider({ children }: { children: ReactNode }) {
   const loadFromSupabase = useCallback(async () => {
     setError(null);
     try {
-      const { data, error } = await supabase.from('events').select('*');
+      // Spec 119 — mismo orden que `getEventos` de la web: la Cartelera reparte
+      // destacados en el orden del contexto, y los eventos sin fecha van al final.
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('comienza_at', { ascending: true, nullsFirst: false });
       if (error) throw error;
       setEventos((data ?? []).map(mapEventoFromDB));
     } catch (e: any) {
