@@ -1,6 +1,6 @@
 # Spec 135 — Lógica para gestionar un evento como en la web: preventas, banco, cobro, artistas e invitaciones
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` limpio, criterio 2 (grep `catch {}`/`data/mock`) en 0 líneas, `fechaHoraValidas` verificada con `npx tsx` (6 casos, script no commiteado). `mapEventoFromDB` ahora lee `db.description` (antes `db.descripcion`, siempre null). `montoDesdePrecio` ya vivía exportada en `src/lib/precio.ts` (116): se importa de ahí. Tipos de banco en `datosPago.ts`; `apiWeb.ts` cae a `URL_WEB` de `src/constants/web.ts`. **Pendiente:** criterios 3-8 contra la base y V-candidata 135-a; el 23503 de artistas se cierra cuando el 136 cambie `CrearEventoScreen` a `buscarArtistas`
 > Capa: LÓGICA. `src/context/EventosContext.tsx`, `src/types/index.ts`, `src/hooks/useEntradasEvento.ts`, `src/hooks/usePreventas.ts` (nuevo), `src/hooks/useCobroEvento.ts` (nuevo), `src/hooks/useInvitacionesEquipo.ts` (nuevo), `src/lib/datosPago.ts` (nuevo), `src/lib/artistas.ts` (nuevo), `src/lib/fecha.ts`, `src/lib/apiWeb.ts` (nuevo), `src/lib/invitacionLocal.ts` (nuevo).
 > Depende de: spec 095, spec 115, spec 116
 > Alimenta: spec 136, spec 137, spec 138, spec 139, spec 140, spec 141
