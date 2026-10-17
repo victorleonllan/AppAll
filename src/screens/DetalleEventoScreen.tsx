@@ -303,10 +303,14 @@ export default function DetalleEventoScreen() {
 
         <View style={styles.divisor} />
 
-        <View style={styles.infoRow}>
+        {/* Spec 114 — el lugar lleva al detalle del local. */}
+        <TouchableOpacity
+          style={styles.infoRow}
+          onPress={() => navigation.navigate('DetalleLocal', { venueId: evento.venueId })}
+        >
           <Text style={styles.infoLabel}>Lugar</Text>
-          <Text style={styles.infoValor}>{evento.venueName}</Text>
-        </View>
+          <Text style={[styles.infoValor, styles.infoValorEnlace]}>{evento.venueName} ›</Text>
+        </TouchableOpacity>
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Fecha</Text>
           <Text style={styles.infoValor}>{evento.fecha}</Text>
@@ -365,6 +369,16 @@ export default function DetalleEventoScreen() {
                 onPress={() => (navigation as any).navigate('EquipoEvento', { eventoId: evento.id })}
               >
                 <Text style={styles.textoBotonGestion}>👥 Equipo</Text>
+              </TouchableOpacity>
+            )}
+            {/* Spec 114 — que el show ya haya terminado lo exige la pantalla
+                CobrarEvento (spec 140), no el botón. */}
+            {permisos.rol === 'owner' && !cancelado && (
+              <TouchableOpacity
+                style={styles.botonGestion}
+                onPress={() => (navigation as any).navigate('CobrarEvento', { eventoId: evento.id })}
+              >
+                <Text style={styles.textoBotonGestion}>💰 Cobrar</Text>
               </TouchableOpacity>
             )}
             {permisos.puedeBorrar && !cancelado && (
@@ -435,6 +449,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '500',
   },
+  infoValorEnlace: { color: colors.accent },
   precioLabel: {
     fontSize: fontSize.sm,
     color: colors.muted,

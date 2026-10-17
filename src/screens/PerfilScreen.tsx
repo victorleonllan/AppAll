@@ -1,10 +1,16 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { confirmar } from '../lib/confirm';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { PerfilStackParamList } from '../navigation/PerfilStack';
+
+type NavProp = NativeStackNavigationProp<PerfilStackParamList, 'Perfil'>;
 
 export default function PerfilScreen() {
   const { signOut } = useAuth();
+  const navigation = useNavigation<NavProp>();
 
   const handleSignOut = () => {
     confirmar(
@@ -34,6 +40,20 @@ export default function PerfilScreen() {
 
       <Text style={styles.aviso}>Si eres músico o local, podrás gestionar tu perfil después.</Text>
 
+      {/* Spec 114 — entradas a rutas registradas de antemano; cada pantalla
+          la completa su propio spec. */}
+      <View style={styles.acciones}>
+        <TouchableOpacity style={styles.botonAccion} onPress={() => navigation.navigate('MisEntradas')}>
+          <Text style={styles.textoAccion}>🎟️ Mis entradas</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.botonAccion} onPress={() => navigation.navigate('PanelFan')}>
+          <Text style={styles.textoAccion}>⭐ Mi panel</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.botonAccion} onPress={() => navigation.navigate('CambiarContrasena')}>
+          <Text style={styles.textoAccion}>🔑 Cambiar contraseña</Text>
+        </TouchableOpacity>
+      </View>
+
       <TouchableOpacity style={styles.botonSalir} onPress={handleSignOut}>
         <Text style={styles.textoBotonSalir}>Cerrar sesión</Text>
       </TouchableOpacity>
@@ -53,6 +73,9 @@ const styles = StyleSheet.create({
   textoRol: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
   textoRolInactivo: { color: colors.secondary, fontSize: fontSize.md },
   aviso: { fontSize: fontSize.xs, color: colors.muted, marginTop: 20, textAlign: 'center', paddingHorizontal: 30 },
+  acciones: { width: '85%', marginTop: spacing.lg, gap: spacing.sm },
+  botonAccion: { backgroundColor: colors.accentLight, padding: 14, borderRadius: borderRadius.sm, alignItems: 'center' },
+  textoAccion: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
   botonSalir: { marginTop: spacing.xl },
   textoBotonSalir: { color: colors.danger, fontWeight: '600', fontSize: fontSize.md },
 });

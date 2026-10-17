@@ -232,6 +232,19 @@ export default function DashboardLocalScreen() {
               </TouchableOpacity>
             ))
           )}
+          {/* Spec 114 — entradas a rutas registradas de antemano; cada pantalla
+              la completa su propio spec. */}
+          <View style={styles.accionesRow}>
+            <TouchableOpacity style={styles.botonSecundario} onPress={() => navigation.navigate('MisEntradas')}>
+              <Text style={styles.textoBotonSecundario}>🎟️ Mis entradas</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.botonSecundario} onPress={() => navigation.navigate('Solicitudes')}>
+              <Text style={styles.textoBotonSecundario}>📨 Solicitudes</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity style={styles.botonEscaner} onPress={() => navigation.navigate('CambiarContrasena')}>
+            <Text style={styles.textoBotonSecundario}>🔑 Cambiar contraseña</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.botonSalir} onPress={handleSignOut}>
             <Text style={styles.textoBotonSalir}>Cerrar sesión</Text>
           </TouchableOpacity>

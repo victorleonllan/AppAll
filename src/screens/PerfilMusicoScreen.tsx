@@ -245,6 +245,29 @@ export default function PerfilMusicoScreen() {
         )}
       </View>
 
+      {/* Spec 114 — entradas a rutas registradas de antemano; cada pantalla
+          la completa su propio spec. */}
+      <View style={styles.filaAccionesSecundarias}>
+        <TouchableOpacity
+          style={[styles.botonSecundario, { marginRight: spacing.sm }]}
+          onPress={() => (navigation as any).navigate('MisEntradas')}
+        >
+          <Text style={styles.textoBotonSecundario}>🎟️ Mis entradas</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.botonSecundario}
+          onPress={() => (navigation as any).navigate('Solicitudes')}
+        >
+          <Text style={styles.textoBotonSecundario}>📨 Solicitudes</Text>
+        </TouchableOpacity>
+      </View>
+      <TouchableOpacity
+        style={styles.botonEscaner}
+        onPress={() => (navigation as any).navigate('CambiarContrasena')}
+      >
+        <Text style={styles.textoBotonSecundario}>🔑 Cambiar contraseña</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.botonSalir} onPress={handleSignOut}>
         <Text style={styles.textoBotonSalir}>Cerrar sesión</Text>
       </TouchableOpacity>

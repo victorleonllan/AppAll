@@ -8,6 +8,10 @@ import EntradasEventoScreen from '../screens/EntradasEventoScreen';
 import EscanerQRScreen from '../screens/EscanerQRScreen';
 import EditarLocalScreen from '../screens/EditarLocalScreen';
 import VentasMusicoScreen from '../screens/VentasMusicoScreen';
+import MisEntradasScreen from '../screens/MisEntradasScreen';
+import CambiarContrasenaScreen from '../screens/CambiarContrasenaScreen';
+import SolicitudesScreen from '../screens/SolicitudesScreen';
+import CobrarEventoScreen from '../screens/CobrarEventoScreen';
 import { colors, fontSize } from '../theme';
 
 export type MiLocalStackParamList = {
@@ -20,6 +24,10 @@ export type MiLocalStackParamList = {
   Escaner: { eventoId?: string } | undefined;
   EditarLocal: undefined;
   Ventas: undefined;
+  MisEntradas: undefined;
+  CambiarContrasena: undefined;
+  Solicitudes: undefined;
+  CobrarEvento: { eventoId: string };
 };
 
 const Stack = createNativeStackNavigator<MiLocalStackParamList>();
@@ -51,6 +59,11 @@ export default function MiLocalStack() {
           de tickets mira event_collaborators (no created_by), así que un local
           invitado como admin también ve sus ventas sin haber tocado esta pantalla. */}
       <Stack.Screen name="Ventas" component={VentasMusicoScreen} options={{ title: 'Ventas' }} />
+      {/* Spec 114 — registradas de antemano; cada spec de pantalla reemplaza solo su archivo. */}
+      <Stack.Screen name="MisEntradas" component={MisEntradasScreen} options={{ title: 'Mis entradas' }} />
+      <Stack.Screen name="CambiarContrasena" component={CambiarContrasenaScreen} options={{ title: 'Cambiar contraseña' }} />
+      <Stack.Screen name="Solicitudes" component={SolicitudesScreen} options={{ title: 'Solicitudes' }} />
+      <Stack.Screen name="CobrarEvento" component={CobrarEventoScreen} options={{ title: 'Cobrar' }} />
     </Stack.Navigator>
   );
 }

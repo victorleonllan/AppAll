@@ -63,7 +63,7 @@ export default function ConfirmacionCompraScreen() {
   const navigation = useNavigation<NavProp>();
   const { eventos } = useEventos();
 
-  const { eventoId, ticketId, status } = route.params;
+  const { eventoId, ticketId, status = 'pending' } = route.params ?? {};
   const [actualStatus, setActualStatus] = useState<VistaStatus>(status);
   const [consultando, setConsultando] = useState(false);
   const evento = eventos.find((e) => e.id === eventoId);
