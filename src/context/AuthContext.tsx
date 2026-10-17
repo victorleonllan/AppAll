@@ -2,7 +2,8 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { supabase } from '../lib/supabase';
-import { Session, User } from '@supabase/supabase-js';
+import { createClient, Session, User } from '@supabase/supabase-js';
+import { URL_WEB } from '../constants/web';
 
 export type UserRole = 'fan' | 'musician' | 'local' | null;
 
@@ -24,6 +25,7 @@ interface AuthState {
   signUp: (email: string, password: string, role: UserRole, nombre: string) => Promise<string | null>;
   signIn: (email: string, password: string) => Promise<string | null>;
   signInOtp: (email: string) => Promise<string | null>;
+  pedirEnlaceRecuperacion: (email: string) => Promise<string | null>;
   signInWithGoogle: () => Promise<string | null>;
   signOut: () => Promise<void>;
 }
@@ -84,6 +86,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return error ? error.message : null;
   };
 
+  // Spec 145 — enlace para elegir una contraseña nueva en la web (W-228). Cliente
+  // aparte con flujo implícito: los tokens vuelven en el fragmento de la URL, así el
+  // enlace abre en cualquier navegador del teléfono, y no toca la sesión ni el storage
+  // del cliente de la app. Mismo patrón que libs/enlaceCorreo.js de la web.
+  const pedirEnlaceRecuperacion = async (email: string): Promise<string | null> => {
+    const cliente = createClient(
+      process.env.EXPO_PUBLIC_SUPABASE_URL || '',
+      process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
+      {
+        auth: {
+          flowType: 'implicit',
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+      },
+    );
+    const { error } = await cliente.auth.signInWithOtp({
+      email,
+      options: {
+        // W-205: se crea la cuenta si no existe, para no revelar qué correos tienen cuenta.
+        shouldCreateUser: true,
+        data: { nombre: email.split('@')[0], pais: 'CL' },
+        emailRedirectTo: `${URL_WEB}/auth/enlace?next=${encodeURIComponent('/perfil/contrasena')}`,
+      },
+    });
+    return error ? error.message : null;
+  };
+
   // Google OAuth (spec 042). En web, Supabase redirige la pestaña entera y
   // `detectSessionInUrl` (activo en src/lib/supabase.ts) captura la sesión sola al
   // volver — no hace falta nada más acá. En nativo no hay redirect de navegador:
@@ -133,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, user, role, loading, signUp, signIn, signInOtp, signInWithGoogle, signOut }}
+      value={{ session, user, role, loading, signUp, signIn, signInOtp, pedirEnlaceRecuperacion, signInWithGoogle, signOut }}
     >
       {children}
     </AuthContext.Provider>
