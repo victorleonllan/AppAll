@@ -1,8 +1,15 @@
+import { useState } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Linking, ScrollView, Image, ActivityIndicator,
+  View, Text, TouchableOpacity, StyleSheet, Linking, ScrollView, Image, ActivityIndicator, Alert,
 } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { usePerfilMusico } from '../hooks/useMusicos';
+import { useAuth } from '../context/AuthContext';
+import { useVenues } from '../context/VenuesContext';
+import { useSolicitudes, contrapartesConSolicitudViva } from '../hooks/useSolicitudes';
+import { useConexiones, musicosYaConectados } from '../hooks/useConexiones';
+import ModalSolicitud from '../components/ModalSolicitud';
+import { MENSAJES_SOLICITUD } from '../constants/solicitudes';
 import { etiquetaPais } from '../constants/paises';
 import { TIPO_PROYECTO_LABEL } from '../lib/profiles';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
@@ -16,6 +23,73 @@ export default function VerMusicoScreen() {
   const { musicoId } = route.params;
   // Spec 122 — el perfil real desde `profiles` (spec 121), no el mock.
   const { musico, loading, error } = usePerfilMusico(musicoId);
+
+  // Spec 132 — «Solicitar»/«Conectar» desde la ficha: en la app es donde el
+  // local decide. Los hooks se llaman siempre; quién mira decide cuál se usa.
+  const { user, role } = useAuth();
+  const { allVenues } = useVenues();
+  const sol = useSolicitudes();
+  const con = useConexiones();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [enviado, setEnviado] = useState(false);
+
+  const userId = user?.id ?? null;
+  const miVenueId = allVenues.find((v) => v.ownerId === userId)?.id ?? null;
+  // Sin sesión o mi propia ficha → nada; músico → conexión; dueño de local → bolo; fan → nada.
+  const modo: 'conexion' | 'bolo' | null =
+    !userId || userId === musicoId
+      ? null
+      : role === 'musician'
+        ? 'conexion'
+        : miVenueId
+          ? 'bolo'
+          : null;
+
+  const enviar = async ({ note, proposedAt }: { note: string | null; proposedAt: string | null }) => {
+    if (!userId || !modo) return;
+    try {
+      if (modo === 'conexion') {
+        await con.crear({ toMusician: musicoId, note });
+      } else {
+        await sol.crear({ musicianId: musicoId, venueId: miVenueId!, proposedAt, note });
+      }
+      setEnviado(true);
+      setModalVisible(false);
+      Alert.alert('Solicitud enviada');
+    } catch (err: any) {
+      Alert.alert('No se pudo enviar', err?.message ?? '');
+      throw err;
+    }
+  };
+
+  const botonSolicitud = () => {
+    if (!modo) return null;
+    let label: string;
+    let habilitado = false;
+    if (modo === 'conexion') {
+      const estado = musicosYaConectados(con.conexiones).get(musicoId);
+      if (estado === 'accepted') label = 'Conectado';
+      else if (estado === 'pending' || enviado) label = 'Pendiente';
+      else {
+        label = 'Conectar';
+        habilitado = true;
+      }
+    } else if (enviado || contrapartesConSolicitudViva(sol.solicitudes, 'musician').has(musicoId)) {
+      label = 'Solicitud enviada';
+    } else {
+      label = 'Solicitar';
+      habilitado = true;
+    }
+    return (
+      <TouchableOpacity
+        style={[styles.botonSolicitud, !habilitado && styles.botonSolicitudDeshabilitado]}
+        onPress={() => setModalVisible(true)}
+        disabled={!habilitado}
+      >
+        <Text style={[styles.textoBotonSolicitud, !habilitado && styles.textoBotonDeshabilitado]}>{label}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) {
     return (
@@ -122,7 +196,21 @@ export default function VerMusicoScreen() {
             <Text style={styles.enlace}>🌐 {musico.sitioWeb}</Text>
           </TouchableOpacity>
         )}
+
+        {botonSolicitud()}
       </View>
+
+      {modo && (
+        <ModalSolicitud
+          visible={modalVisible}
+          destino={musico.nombre}
+          mensajeInicial={modo === 'conexion' ? MENSAJES_SOLICITUD.musicoAlMusico : MENSAJES_SOLICITUD.localAlMusico}
+          titulo={modo === 'conexion' ? 'Conectar con' : undefined}
+          mostrarFecha={modo === 'bolo'}
+          onCancelar={() => setModalVisible(false)}
+          onEnviar={enviar}
+        />
+      )}
     </ScrollView>
   );
 }
@@ -175,6 +263,16 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
     marginTop: spacing.sm,
   },
+  botonSolicitud: {
+    backgroundColor: colors.accent,
+    borderRadius: borderRadius.sm,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    marginTop: spacing.lg,
+  },
+  botonSolicitudDeshabilitado: { backgroundColor: colors.border },
+  textoBotonSolicitud: { color: colors.white, fontWeight: '600', fontSize: fontSize.md },
+  textoBotonDeshabilitado: { color: colors.secondary },
   aviso: {
     fontSize: fontSize.md,
     color: colors.muted,
