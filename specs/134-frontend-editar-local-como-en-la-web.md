@@ -1,6 +1,6 @@
 # Spec 134 — Editar local al nivel de la web: direcciones, avatar, foto y estilos
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` limpio fuera de `supabase/functions`, `npx expo export --platform web` sin error, criterio 9 en cero, criterio 3 por lectura de código (`campos` ya no lleva `address/ciudad/comuna` en ningún modo). Criterios 2, 4-8 y V-candidatas 1-3 pendientes de probar en ejecución contra la base.
 > Capa: FRONTEND. `src/screens/EditarLocalScreen.tsx`, `src/components/GestionDirecciones.tsx` (nuevo), `src/context/VenuesContext.tsx`, `src/types/index.ts`.
 > Depende de: spec 095 (selector de país en `EditarLocalScreen` y `pais` en el mapper), spec 115 (reescribe `VenuesContext` sin mock ni `catch {}`), spec 129 (subida de imágenes), spec 130 (`CampoImagen`), spec 133 (`useDireccionesVenue`, `crearDireccion`).
 > Alimenta: —
