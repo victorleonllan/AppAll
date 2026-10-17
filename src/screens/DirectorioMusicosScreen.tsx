@@ -9,6 +9,7 @@ import { useMusicos } from '../hooks/useMusicos';
 import { usePais } from '../context/PaisContext';
 import { PAISES, banderaPais } from '../constants/paises';
 import { TIPO_PROYECTO_LABEL } from '../lib/profiles';
+import BotonSeguir from '../components/BotonSeguir';
 import { PerfilMusico } from '../types';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 import { LocalesStackParamList } from '../navigation/LocalesStack';
@@ -135,13 +136,16 @@ function TarjetaMusico({ musico, onPress }: { musico: PerfilMusico; onPress: () 
         {!!musico.bio && (
           <Text style={styles.bio} numberOfLines={2}>{musico.bio}</Text>
         )}
-        {/* Pie con espacio a la derecha: ahí va el botón de seguir del spec 124. */}
+        {/* Spec 124 — cada botón consulta su propio estado: una consulta por
+            tarjeta visible. Si el directorio crece, pasarle el estado inicial
+            desde un solo getIdsSeguidos (como `seguidosIds` en la web). */}
         <View style={styles.pie}>
           {tieneMusica ? (
             <Text style={styles.escuchar}>🎵 Escuchar</Text>
           ) : (
             <Text style={styles.incompleto}>Sin música aún</Text>
           )}
+          <BotonSeguir tipo="musico" targetId={musico.id} />
         </View>
       </View>
     </TouchableOpacity>
