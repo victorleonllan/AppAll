@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { montoDesdePrecio } from '../lib/precio';
 import { Evento, EventoStatus, EventRole, Colaborador, Ticket, TicketStatus } from '../types';
 import { useAuth } from './AuthContext';
 import { usePais } from './PaisContext';
@@ -15,7 +16,7 @@ interface EventosState {
   error: string | null;
   refresh: () => Promise<void>;
   createEvento: (evento: Omit<Evento, 'id'>) => Promise<Evento>;
-  updateEvento: (id: string, cambios: Partial<Pick<Evento, 'artista' | 'fecha' | 'hora' | 'genero' | 'precio' | 'imagen' | 'pais'>>) => Promise<void>;
+  updateEvento: (id: string, cambios: Partial<Pick<Evento, 'artista' | 'fecha' | 'hora' | 'genero' | 'precio' | 'imagen' | 'pais' | 'comienzaAt'>>) => Promise<void>;
   deleteEvento: (id: string) => Promise<void>;
   cancelEvento: (id: string, motivo?: string) => Promise<void>;
   tickets: Ticket[];
@@ -52,18 +53,9 @@ function mapEventoFromDB(db: any): Evento {
     status: (db.status as EventoStatus) ?? 'published',
     cancelledAt: db.cancelled_at ?? null,
     cancelReason: db.cancel_reason ?? null,
+    comienzaAt: db.comienza_at ?? null,
+    moneda: db.moneda ?? null,
   };
-}
-
-/**
- * `precio` es texto libre que escribe el músico ("$5.000"); `monto` es el entero
- * en CLP que Mercado Pago cobra. El formulario solo captura el primero, así que
- * el segundo se deriva: sin esto `monto` queda NULL y la compra se bloquea con
- * "Sin precio". Formato chileno: el punto es separador de miles, no decimal.
- */
-function montoDesdePrecio(precio: string | undefined): number {
-  const digitos = (precio ?? '').replace(/\D/g, '');
-  return digitos ? parseInt(digitos, 10) : 0;
 }
 
 function mapEventoToDB(evento: Omit<Evento, 'id'>): any {
@@ -80,6 +72,10 @@ function mapEventoToDB(evento: Omit<Evento, 'id'>): any {
     imagen: evento.imagen ?? null,
     created_by: evento.createdBy,
     monto: evento.monto ?? montoDesdePrecio(evento.precio),
+    // Spec 116 — `moneda` no se escribe nunca: la pone el trigger desde `pais`
+    // (spec 100), y mandarla desde el cliente abriría la puerta a una moneda que
+    // no corresponde al país.
+    comienza_at: evento.comienzaAt ?? null,
   };
 }
 
@@ -204,12 +200,13 @@ export function EventosProvider({ children }: { children: ReactNode }) {
   // y pisaría el monto real en cualquier UPDATE que no toque el precio.
   const updateEvento = useCallback(async (
     id: string,
-    cambios: Partial<Pick<Evento, 'artista' | 'fecha' | 'hora' | 'genero' | 'precio' | 'imagen' | 'pais'>>
+    cambios: Partial<Pick<Evento, 'artista' | 'fecha' | 'hora' | 'genero' | 'precio' | 'imagen' | 'pais' | 'comienzaAt'>>
   ) => {
     const cambiosDB: Record<string, any> = {};
     if (cambios.artista !== undefined) cambiosDB.artist_name = cambios.artista;
     if (cambios.fecha !== undefined) cambiosDB.fecha = cambios.fecha;
     if (cambios.hora !== undefined) cambiosDB.hora = cambios.hora;
+    if (cambios.comienzaAt !== undefined) cambiosDB.comienza_at = cambios.comienzaAt;
     if (cambios.genero !== undefined) cambiosDB.genero = cambios.genero;
     if (cambios.imagen !== undefined) cambiosDB.imagen = cambios.imagen;
     // Spec 095 — events.pais es copia del local (spec 080): corregir el local no

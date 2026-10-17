@@ -55,6 +55,8 @@ export interface Evento {
   status?: EventoStatus;      // Spec 033 — default 'published' en DB
   cancelledAt?: string | null;
   cancelReason?: string | null;
+  comienzaAt?: string | null;   // Spec 116 — events.comienza_at (spec 045). null en eventos viejos
+  moneda?: string | null;       // Spec 116 — events.moneda (spec 100), solo lectura
 }
 
 /** Spec 033 — rol dentro del equipo de un evento (tabla event_collaborators). */

@@ -929,9 +929,11 @@ Lo que falta para **encender** la venta en México después de aplicar 100, 101,
 
 Deuda que queda declarada:
 
-- `src/context/EventosContext.tsx:57` — la copia móvil de `montoDesdePrecio` tiene el error
+- ~~`src/context/EventosContext.tsx:57` — la copia móvil de `montoDesdePrecio` tiene el error
   de 100× con precios mexicanos (`"$1,200.00"` → 132.000). La web lo arregla en el W-167 con
-  una regla sin rama por país; copiarla cuando se implemente el 095.
+  una regla sin rama por país; copiarla cuando se implemente el 095.~~ **Resuelto por el spec
+  116** (17-oct-2026): regla de la web + recargo en `src/lib/precio.ts`. Quedan V (116-a)
+  (editar precio a `"$1,200.00"` → `monto = 1320`) y V (116-b) (`moneda`/`comienzaAt` llegan a la app).
 - `crm_contactos.total_gastado` suma `tickets.monto` sin moneda. Hoy nadie compró en dos
   países; el día que pase, el total mezcla CLP y MXN.
 
