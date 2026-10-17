@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Venue } from '../types';
-import { allVenues as mockVenues } from '../data/mock/venues';
 import { usePais } from './PaisContext';
 
 interface VenuesState {
@@ -10,6 +9,8 @@ interface VenuesState {
   allVenues: Venue[];
   venuesDelPais: Venue[];
   loading: boolean;
+  // Spec 115 — mensaje de la última carga fallida de `venues`; null si salió bien.
+  error: string | null;
   refresh: () => Promise<void>;
   createVenue: (venue: Omit<Venue, 'id'> & { ownerId: string }) => Promise<Venue>;
   updateVenue: (id: string, updates: Partial<Omit<Venue, 'id'>>) => Promise<Venue>;
@@ -83,30 +84,28 @@ function mapVenueToDB(venue: Partial<Venue>): Record<string, any> {
 }
 
 export function VenuesProvider({ children }: { children: ReactNode }) {
-  const [allVenues, setAllVenues] = useState<Venue[]>(mockVenues);
+  const [allVenues, setAllVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
-  const [useMock, setUseMock] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { pais } = usePais();
 
-  // Spec 096 — mismo criterio que `eventosDelPais` en EventosContext: derivado,
-  // y el mock (sin `pais`) se muestra completo.
+  // Spec 096 — mismo criterio que `eventosDelPais` en EventosContext: derivado.
   const venuesDelPais = useMemo(
-    () => (useMock ? allVenues : allVenues.filter((v) => v.pais === pais)),
-    [allVenues, pais, useMock]
+    () => allVenues.filter((v) => v.pais === pais),
+    [allVenues, pais]
   );
 
+  // Spec 115 — mismo criterio que loadFromSupabase en EventosContext: 0 filas
+  // es lista vacía, el error se expone en `error` y no vacía lo ya cargado.
   const loadFromSupabase = useCallback(async () => {
+    setError(null);
     try {
       const { data, error } = await supabase.from('venues').select('*');
       if (error) throw error;
-      if (data && data.length > 0) {
-        const mapped = data.map(mapVenueFromDB);
-        setAllVenues(mapped);
-        setUseMock(false);
-      }
-    } catch {
-      setAllVenues([...mockVenues]);
-      setUseMock(true);
+      setAllVenues((data ?? []).map(mapVenueFromDB));
+    } catch (e: any) {
+      console.error('[VenuesContext] no se pudo cargar venues:', e);
+      setError(e?.message ?? 'No se pudieron cargar los locales');
     } finally {
       setLoading(false);
     }
@@ -126,47 +125,32 @@ export function VenuesProvider({ children }: { children: ReactNode }) {
   // El catch ya no se traga el error — quien llama decide qué mostrar; un
   // venue que no se guardó no puede aparecer como si se hubiera guardado.
   const createVenue = useCallback(async (venue: Omit<Venue, 'id'> & { ownerId: string }): Promise<Venue> => {
-    if (!useMock) {
-      const { data, error } = await supabase
-        .from('venues')
-        .insert(mapVenueToDB(venue))
-        .select()
-        .single();
-      if (error) throw error;
-      const newVenue = mapVenueFromDB(data);
-      setAllVenues((prev) => [...prev, newVenue]);
-      return newVenue;
-    }
-    const newVenue: Venue = { ...venue, id: `venue-${Date.now()}` };
+    const { data, error } = await supabase
+      .from('venues')
+      .insert(mapVenueToDB(venue))
+      .select()
+      .single();
+    if (error) throw error;
+    const newVenue = mapVenueFromDB(data);
     setAllVenues((prev) => [...prev, newVenue]);
     return newVenue;
-  }, [useMock]);
+  }, []);
 
   const updateVenue = useCallback(async (id: string, updates: Partial<Omit<Venue, 'id'>>): Promise<Venue> => {
-    if (!useMock) {
-      const { data, error } = await supabase
-        .from('venues')
-        .update({ ...mapVenueToDB(updates), updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-      if (error) throw error;
-      const updated = mapVenueFromDB(data);
-      setAllVenues((prev) => prev.map((v) => (v.id === id ? updated : v)));
-      return updated;
-    }
-    let result: Venue | undefined;
-    setAllVenues((prev) => prev.map((v) => {
-      if (v.id !== id) return v;
-      result = { ...v, ...updates };
-      return result;
-    }));
-    if (!result) throw new Error('Local no encontrado');
-    return result;
-  }, [useMock]);
+    const { data, error } = await supabase
+      .from('venues')
+      .update({ ...mapVenueToDB(updates), updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    const updated = mapVenueFromDB(data);
+    setAllVenues((prev) => prev.map((v) => (v.id === id ? updated : v)));
+    return updated;
+  }, []);
 
   return (
-    <VenuesContext.Provider value={{ allVenues, venuesDelPais, loading, refresh, createVenue, updateVenue }}>
+    <VenuesContext.Provider value={{ allVenues, venuesDelPais, loading, error, refresh, createVenue, updateVenue }}>
       {children}
     </VenuesContext.Provider>
   );
