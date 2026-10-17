@@ -1,6 +1,6 @@
 # Spec 122 — Directorio de músicos y perfil público con datos reales
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` limpio, `rg musicosMock` vacío en las tres pantallas y `npx expo export --platform web` sin errores (criterios 1, 2 y 8). Criterios 3–7 y V-a pendientes de probar en ejecución.
 > Capa: FRONTEND. `src/screens/DirectorioMusicosScreen.tsx` (reemplaza el placeholder del spec 114), `src/screens/VerMusicoScreen.tsx`, `src/screens/LocalesScreen.tsx`.
 > Depende de: spec 095, spec 096, spec 114, spec 121
 > Alimenta: spec 124 (le agrega el botón de seguir a estas dos pantallas).
