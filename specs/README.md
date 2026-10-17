@@ -64,7 +64,7 @@
 | 126 | Pantalla «Mis entradas»: un talón con su QR por cada entrada — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 127 | Ficha del local y mapa de locales con `react-native-maps` — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 128 | Perfil: cambiar la contraseña, y elegir rol al entrar sin uno — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
-| 129 | La app sube imágenes al bucket `media` desde la galería del teléfono — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
+| 129 | La app sube imágenes al bucket `media` desde la galería del teléfono — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Aplicado (17-oct-2026) |
 | 130 | Editar perfil de músico al nivel de la web: país, avatar, foto y disponibilidad — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 131 | Hooks de solicitudes de bolo y conexiones entre músicos — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |
 | 132 | Pantalla de solicitudes para músico y local, y «Solicitar» desde la ficha del músico — paridad de la app con la web, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | Propuesto (16/17-oct-2026) |

@@ -1,6 +1,6 @@
 # Spec 129 — La app sube imágenes al bucket `media` desde la galería del teléfono
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` sin errores en los archivos del spec, `npx expo export --platform web` OK, criterios 2-6 verificados con `rg`/diff. V-candidatas 1-5 pendientes (necesitan build nativo nuevo y dispositivo real).
 > Capa: LÓGICA. `package.json`, `package-lock.json`, `app.json`, `src/lib/imagenes.ts` (nuevo), `src/hooks/useSubirImagen.ts` (nuevo).
 > Depende de: ninguno pendiente. El bucket `media` y sus policies ya están en producción (migraciones `20260822053622_spec_053_bucket_imagenes.sql`, `20260828000000_spec_062_storage_flyer_pendiente.sql`, `20260917170000_spec_092_media_no_listable.sql`).
 > Alimenta: spec 130 (avatar y foto del músico), spec 134 (avatar y foto del local), spec 136 (flyer del evento).

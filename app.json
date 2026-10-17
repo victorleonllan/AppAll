@@ -33,6 +33,14 @@
       "expo-secure-store",
       "expo-web-browser",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Sonópolis usa tus fotos para que subas la imagen de tu perfil, de tu local o el flyer de tu evento.",
+          "cameraPermission": "Sonópolis usa la cámara para leer el código QR de las entradas en la puerta del show.",
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-camera",
         {
           "cameraPermission": "Sonópolis usa la cámara para leer el código QR de las entradas en la puerta del show."
