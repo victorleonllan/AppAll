@@ -31,7 +31,7 @@ export default function LocalesScreen() {
       <View style={styles.filaTitulo}>
         <Text style={styles.titulo}>📍 Locales</Text>
         <TouchableOpacity style={styles.botonMapa} onPress={() => navigation.navigate('MapaLocales')}>
-          <Text style={styles.textoBotonMapa}>🗺️ Ver mapa</Text>
+          <Text style={styles.textoBotonMapa}>🗺 Ver mapa de locales</Text>
         </TouchableOpacity>
       </View>
       {locales.length === 0 && (
