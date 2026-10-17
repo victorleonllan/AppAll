@@ -1,9 +1,6 @@
 # Spec 048 — Lógica y frontend para rol fan, guest checkout y seguir
 
-> Estado: **propuesto, sin implementar.** Depende de que el spec 046 esté aplicado en
-> producción antes de tocar código (los literales `'fan'`/`'local'` no son roles válidos en
-> la base hasta entonces — ver "Orden de implementación"). El spec 047 es independiente,
-> se puede implementar en paralelo.
+> Estado: **superado** (17-oct-2026) — §1 por spec 142, §4 por specs 123 y 124; §2 (compra sin cuenta) descartado por ahora: la web tampoco la tiene y choca con specs 117/118. Diseño original sin implementar.
 
 **Capa: Comportamiento + Frontend · `src/`, `supabase/functions/create-preference/` ·
 Depende de: spec 046 (roles, guest checkout) y spec 047 (seguir), ambos sin aplicar.**
