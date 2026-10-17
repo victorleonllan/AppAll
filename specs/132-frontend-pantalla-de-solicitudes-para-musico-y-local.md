@@ -1,6 +1,6 @@
 # Spec 132 — Pantalla de solicitudes para músico y local, y «Solicitar» desde la ficha del músico
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` limpio fuera de `supabase/functions` (criterio 1), `npx expo export --platform web` sin errores (10), sin cambios en `src/navigation/`, `PerfilMusicoScreen` ni `DashboardLocalScreen` (9). Criterios 2–8 y V-candidatas 1–3 pendientes de probar en ejecución contra Supabase.
 > Capa: FRONTEND. `src/screens/SolicitudesScreen.tsx`, `src/components/ModalSolicitud.tsx` (nuevo), `src/constants/solicitudes.ts` (nuevo), `src/screens/VerMusicoScreen.tsx`.
 > Depende de: spec 114 (registra la ruta `Solicitudes` en `MusicoStack` y `MiLocalStack` con su pantalla provisoria, y ya agrega el botón «📨 Solicitudes» en los dos paneles), spec 131 (`useSolicitudes`, `useConexiones`), spec 121 (`useMusicos`), spec 122 (reemplaza `VerMusicoScreen` con datos reales).
 > Alimenta: —
