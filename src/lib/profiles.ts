@@ -1,4 +1,5 @@
 import { PerfilMusico, TipoProyecto } from '../types';
+import { supabase } from './supabase';
 
 /** Etiqueta legible por tipo de proyecto (spec 030 — antes era texto libre). */
 export const TIPO_PROYECTO_LABEL: Record<TipoProyecto, string> = {
@@ -38,7 +39,8 @@ export function mapProfileFromDB(db: any): PerfilMusico {
     tiktok: db.tiktok ?? undefined,
     riderTecnico: db.rider_tecnico ?? undefined,
     updatedAt: db.updated_at ?? undefined,
-    // Spec 121 — mapProfileToDB no los escribe (spec 130).
+    // Spec 121 — mapProfileToDB escribe `pais` y `avatar` (spec 130);
+    // `available` se escribe aparte con `setDisponibilidad`.
     pais: db.pais ?? undefined,
     avatar: db.avatar ?? null,
     available: db.available ?? false,
@@ -61,6 +63,11 @@ export function mapProfileToDB(perfil: Partial<PerfilMusico> & { userId: string 
     spotify: perfil.spotify || null,
     youtube: perfil.youtube || null,
     foto: perfil.foto || null,
+    avatar: perfil.avatar || null,
+    // Spec 130 — solo si viene: `pais` es NOT NULL DEFAULT 'CL', así que
+    // mandar null (p. ej. desde `handleCrearPerfil`, que no conoce el país)
+    // rompería el INSERT en vez de dejar actuar al DEFAULT.
+    ...(perfil.pais ? { pais: perfil.pais } : {}),
     ciudad: perfil.ciudad || null,
     generos: perfil.generos && perfil.generos.length > 0 ? perfil.generos : null,
     integrantes: perfil.integrantes ?? null,
@@ -71,7 +78,27 @@ export function mapProfileToDB(perfil: Partial<PerfilMusico> & { userId: string 
     tiktok: perfil.tiktok || null,
     rider_tecnico: perfil.riderTecnico || null,
     updated_at: new Date().toISOString(),
+    // `available` no entra a propósito (spec 130): guardar el formulario
+    // pisaría la disponibilidad con el valor que tenía al cargarse.
   };
+}
+
+/**
+ * Spec 130 — el interruptor «Disponible este fin de semana», mismo molde que
+ * `setDisponibilidad` de la web (`libs/data/profiles.js`). Un update que RLS
+ * filtra no devuelve error sino cero filas: sin el chequeo, el interruptor
+ * mostraría un cambio que no se guardó.
+ */
+export async function setDisponibilidad(userId: string, available: boolean): Promise<void> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ available })
+    .eq('id', userId)
+    .select('id');
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error('No se pudo actualizar tu disponibilidad.');
+  }
 }
 
 /**

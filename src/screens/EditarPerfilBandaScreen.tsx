@@ -9,6 +9,8 @@ import { useAuth } from '../context/AuthContext';
 import { TipoProyecto } from '../types';
 import { mapProfileFromDB, mapProfileToDB, TIPO_PROYECTO_LABEL, TIPOS_PROYECTO } from '../lib/profiles';
 import GeneroPicker from '../components/GeneroPicker';
+import CampoImagen from '../components/CampoImagen';
+import { etiquetaPais, nombrePais } from '../constants/paises';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export default function EditarPerfilBandaScreen() {
@@ -35,17 +37,38 @@ export default function EditarPerfilBandaScreen() {
   const [tiktok, setTiktok] = useState('');
   const [sitioWeb, setSitioWeb] = useState('');
   const [foto, setFoto] = useState('');
+  // Spec 130 — país (de `paises_cobro`) y avatar (logo cuadrado).
+  const [pais, setPais] = useState('');
+  const [avatar, setAvatar] = useState('');
+  const [paises, setPaises] = useState<string[]>([]);
 
   const cargarPerfil = useCallback(async () => {
     if (!user) return;
     setCargando(true);
     setCargaFallida(false);
+    // Spec 130 — el catálogo de países se pide junto al perfil, no después:
+    // si el perfil todavía no existe, el `throw` de abajo dejaría los chips vacíos.
+    const consultaPaises = supabase.from('paises_cobro').select('pais');
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
+      const { data: filasPaises, error: errorPaises } = await consultaPaises;
+      // Si el catálogo falla, queda solo el país actual: el músico guarda el
+      // resto sin perder su país. No es `cargaFallida` porque no arriesga
+      // pisar el perfil (mismo respaldo que `perfil/editar/page.js`).
+      const paisActual: string | undefined = data?.pais ?? undefined;
+      if (errorPaises || !filasPaises) {
+        setPaises(paisActual ? [paisActual] : []);
+      } else {
+        setPaises(
+          filasPaises
+            .map((f: { pais: string }) => f.pais)
+            .sort((a, b) => nombrePais(a).localeCompare(nombrePais(b), 'es'))
+        );
+      }
       if (error) throw error;
       const p = mapProfileFromDB(data);
       setNombre(p.nombre);
@@ -64,6 +87,8 @@ export default function EditarPerfilBandaScreen() {
       setTiktok(p.tiktok ?? '');
       setSitioWeb(p.sitioWeb ?? '');
       setFoto(p.foto ?? '');
+      setPais(p.pais ?? '');
+      setAvatar(p.avatar ?? '');
     } catch (err: any) {
       if (err?.code === 'PGRST116') {
         // .single() sin filas: perfil todavía no existe. Formulario en
@@ -124,6 +149,9 @@ export default function EditarPerfilBandaScreen() {
           tiktok,
           sitioWeb,
           foto,
+          avatar,
+          // Vacío → el mapper no manda `pais` y la fila conserva el suyo.
+          pais: pais || undefined,
         })
       );
       if (error) throw error;
@@ -167,6 +195,16 @@ export default function EditarPerfilBandaScreen() {
         <Text style={styles.label}>Nombre</Text>
         <TextInput style={styles.input} value={nombre} onChangeText={setNombre} />
 
+        <Text style={styles.label}>Avatar (logo)</Text>
+        <CampoImagen
+          carpeta="perfiles"
+          id={user.id}
+          valor={avatar}
+          onCambiar={setAvatar}
+          aspecto={[1, 1]}
+          ayuda="Aparece en el feed y donde se te vea en miniatura — sube tu logo o algo cuadrado."
+        />
+
         <Text style={styles.label}>Tipo de proyecto</Text>
         <View style={styles.chips}>
           {TIPOS_PROYECTO.map((t) => (
@@ -207,12 +245,33 @@ export default function EditarPerfilBandaScreen() {
           textAlignVertical="top"
         />
 
-        <Text style={styles.label}>Foto (URL)</Text>
-        <TextInput style={styles.input} value={foto} onChangeText={setFoto} autoCapitalize="none" />
+        <Text style={styles.label}>Foto</Text>
+        <CampoImagen
+          carpeta="perfiles"
+          id={user.id}
+          valor={foto}
+          onCambiar={setFoto}
+          ayuda="La foto grande de tu ficha pública — banda, escenario, lo que quieras mostrar en tamaño completo."
+        />
       </View>
 
       <View style={styles.card}>
         <Text style={styles.tituloSeccion}>Con qué decide un local</Text>
+
+        <Text style={styles.label}>País</Text>
+        <View style={styles.chips}>
+          {paises.map((codigo) => (
+            <TouchableOpacity
+              key={codigo}
+              style={[styles.chip, pais === codigo && styles.chipActivo]}
+              onPress={() => setPais(codigo)}
+            >
+              <Text style={[styles.chipTexto, pais === codigo && styles.chipTextoActivo]}>
+                {etiquetaPais(codigo)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         <Text style={styles.label}>Ciudad</Text>
         <TextInput style={styles.input} value={ciudad} onChangeText={setCiudad} />
