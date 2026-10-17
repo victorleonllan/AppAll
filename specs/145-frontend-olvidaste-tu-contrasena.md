@@ -1,6 +1,6 @@
 # Spec 145 — «¿Olvidaste tu contraseña?» en la pantalla de login
 
-> Estado: propuesto (17-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` sin errores fuera de `supabase/functions`, `npx expo export --platform web` limpio (criterios 1-2). Criterio 5 cubierto por código (sin `@` no se llama a `pedirEnlaceRecuperacion`). Criterios 3, 4, 6 y V-candidata 145-a pendientes de prueba con un correo real en dispositivo.
 > Capa: FRONTEND. `src/screens/LoginScreen.tsx`, `src/context/AuthContext.tsx`.
 > Depende de: spec 128 (aplicado). Usa sin cambios `/auth/enlace` y `/perfil/contrasena`
 > de la web (W-209, W-210, W-228).
