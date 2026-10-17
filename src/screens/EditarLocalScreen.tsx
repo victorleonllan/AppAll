@@ -11,6 +11,9 @@ import { useVenues } from '../context/VenuesContext';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 import GeneroPicker from '../components/GeneroPicker';
 import PaisPicker from '../components/PaisPicker';
+import CampoImagen from '../components/CampoImagen';
+import GestionDirecciones from '../components/GestionDirecciones';
+import { crearDireccion } from '../hooks/useDireccionesVenue';
 import { PAIS_POR_DEFECTO, etiquetaPais } from '../constants/paises';
 
 const TIPOS: VenueType[] = ['cafe', 'bar', 'sala', 'centro_cultural'];
@@ -18,7 +21,7 @@ const TIPOS: VenueType[] = ['cafe', 'bar', 'sala', 'centro_cultural'];
 export default function EditarLocalScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
-  const { allVenues, createVenue, updateVenue } = useVenues();
+  const { allVenues, createVenue, updateVenue, refresh } = useVenues();
 
   const miVenue = user ? allVenues.find((v) => v.ownerId === user.id) : null;
 
@@ -31,7 +34,7 @@ export default function EditarLocalScreen() {
   const [comuna, setComuna] = useState('');
   const [aforo, setAforo] = useState('');
   const [description, setDescription] = useState('');
-  const [estilo, setEstilo] = useState('');
+  const [estilos, setEstilos] = useState<string[]>([]);
   const [pickerGeneroVisible, setPickerGeneroVisible] = useState(false);
   const [horarios, setHorarios] = useState('');
   const [tieneEscenario, setTieneEscenario] = useState(false);
@@ -42,6 +45,7 @@ export default function EditarLocalScreen() {
   const [instagram, setInstagram] = useState('');
   const [sitioWeb, setSitioWeb] = useState('');
   const [image, setImage] = useState('');
+  const [avatar, setAvatar] = useState('');
   const [guardando, setGuardando] = useState(false);
 
   // Precarga si el usuario ya tiene un local — de lo contrario el formulario
@@ -51,12 +55,10 @@ export default function EditarLocalScreen() {
     setType(miVenue.type);
     setName(miVenue.name ?? '');
     setPais(miVenue.pais ?? PAIS_POR_DEFECTO);
-    setAddress(miVenue.address ?? '');
-    setCiudad(miVenue.ciudad ?? '');
-    setComuna(miVenue.comuna ?? '');
     setAforo(miVenue.aforo != null ? String(miVenue.aforo) : '');
     setDescription(miVenue.description ?? '');
-    setEstilo(miVenue.estilo ?? '');
+    // Spec 134 — mismo separador que la web: venues.estilo es texto "A, B".
+    setEstilos(miVenue.estilo ? miVenue.estilo.split(', ').filter(Boolean) : []);
     setHorarios(miVenue.horarios ?? '');
     setTieneEscenario(!!miVenue.tieneEscenario);
     setTieneSonido(!!miVenue.tieneSonido);
@@ -66,6 +68,7 @@ export default function EditarLocalScreen() {
     setInstagram(miVenue.instagram ?? '');
     setSitioWeb(miVenue.sitioWeb ?? '');
     setImage(miVenue.image ?? '');
+    setAvatar(miVenue.avatar ?? '');
   }, [miVenue?.id]);
 
   const handleGuardar = async () => {
@@ -83,16 +86,15 @@ export default function EditarLocalScreen() {
       return;
     }
 
+    // Spec 134 — sin address/ciudad/comuna: venues.address es una copia que
+    // mantiene el trigger desde la fila activa de venue_addresses.
     const campos = {
       name: name.trim(),
       type,
       pais,
-      address: address.trim() || undefined,
-      ciudad: ciudad.trim() || undefined,
-      comuna: comuna.trim() || undefined,
       aforo: aforoNum,
       description: description.trim() || undefined,
-      estilo: estilo.trim() || undefined,
+      estilo: estilos.length ? estilos.join(', ') : undefined,
       horarios: horarios.trim() || undefined,
       tieneEscenario,
       tieneSonido,
@@ -102,6 +104,7 @@ export default function EditarLocalScreen() {
       instagram: instagram.trim() || undefined,
       sitioWeb: sitioWeb.trim() || undefined,
       image: image.trim() || undefined,
+      avatar: avatar.trim() || undefined,
     };
 
     setGuardando(true);
@@ -109,7 +112,27 @@ export default function EditarLocalScreen() {
       if (miVenue) {
         await updateVenue(miVenue.id, campos);
       } else {
-        await createVenue({ ...campos, ownerId: user.id });
+        const nuevo = await createVenue({ ...campos, ownerId: user.id });
+        if (address.trim()) {
+          // La primera dirección nace activa y el trigger escribe venues.address.
+          try {
+            await crearDireccion(nuevo.id, {
+              address,
+              comuna: comuna.trim() || null,
+              ciudad: ciudad.trim() || null,
+            });
+          } catch (err: any) {
+            // El local ya quedó creado: no se borra, se avisa y se vuelve atrás.
+            await refresh();
+            Alert.alert(
+              'Local creado sin dirección',
+              'Tu local se guardó, pero la dirección no: agrégala desde Editar local. (' + (err?.message ?? 'Error desconocido') + ')',
+              [{ text: 'OK', onPress: () => navigation.goBack() }]
+            );
+            return;
+          }
+        }
+        await refresh();
       }
       // Éxito y error dicen cosas distintas (mismo antídoto que el problema
       // del catch vacío que este spec cierra en VenuesContext).
@@ -159,20 +182,60 @@ export default function EditarLocalScreen() {
           onCambiar={setPais}
           titulo="País del local"
         />
+      </View>
 
-        <Text style={styles.label}>Dirección</Text>
-        <TextInput style={styles.input} value={address} onChangeText={setAddress} placeholder="Ej: Av. Italia 890" placeholderTextColor={colors.muted} />
+      <View style={styles.card}>
+        <Text style={styles.tituloSeccion}>Foto</Text>
 
-        <View style={styles.filaDoble}>
-          <View style={styles.mitad}>
-            <Text style={styles.label}>Ciudad</Text>
-            <TextInput style={styles.input} value={ciudad} onChangeText={setCiudad} placeholder="Santiago" placeholderTextColor={colors.muted} />
-          </View>
-          <View style={styles.mitad}>
-            <Text style={styles.label}>Comuna</Text>
-            <TextInput style={styles.input} value={comuna} onChangeText={setComuna} placeholder="Ñuñoa" placeholderTextColor={colors.muted} />
-          </View>
-        </View>
+        <Text style={styles.label}>Avatar (logo)</Text>
+        {/* Al crear, el venue aún no tiene id: se sube a pendientes/<user.id>/
+            (spec 062), igual que la web. */}
+        <CampoImagen
+          carpeta={miVenue ? 'locales' : 'pendientes'}
+          id={miVenue ? miVenue.id : user?.id}
+          valor={avatar}
+          onCambiar={setAvatar}
+          aspecto={[1, 1]}
+          ayuda="Aparece en el feed de tus seguidores — sube tu logo o algo cuadrado."
+        />
+
+        <Text style={styles.label}>Foto del local</Text>
+        <CampoImagen
+          carpeta={miVenue ? 'locales' : 'pendientes'}
+          id={miVenue ? miVenue.id : user?.id}
+          valor={image}
+          onCambiar={setImage}
+          ayuda="Es lo primero que ve un músico en tu ficha."
+        />
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.tituloSeccion}>Dirección</Text>
+        {miVenue ? (
+          <GestionDirecciones venueId={miVenue.id} onCambio={refresh} />
+        ) : (
+          <>
+            <Text style={styles.ayuda}>
+              Esta primera dirección queda activa sola. De la segunda en adelante, activar es un paso aparte.
+            </Text>
+            <Text style={styles.label}>Dirección</Text>
+            <TextInput style={styles.input} value={address} onChangeText={setAddress} placeholder="Ej: Av. Italia 890" placeholderTextColor={colors.muted} />
+
+            <View style={styles.filaDoble}>
+              <View style={styles.mitad}>
+                <Text style={styles.label}>Ciudad</Text>
+                <TextInput style={styles.input} value={ciudad} onChangeText={setCiudad} placeholder="Santiago" placeholderTextColor={colors.muted} />
+              </View>
+              <View style={styles.mitad}>
+                <Text style={styles.label}>Comuna</Text>
+                <TextInput style={styles.input} value={comuna} onChangeText={setComuna} placeholder="Ñuñoa" placeholderTextColor={colors.muted} />
+              </View>
+            </View>
+          </>
+        )}
+      </View>
+
+      <View style={styles.card}>
 
         <Text style={styles.label}>Aforo</Text>
         <TextInput
@@ -198,15 +261,17 @@ export default function EditarLocalScreen() {
         {/* Vocabulario cerrado (spec 054), no texto libre — mismo componente
             que CrearEventoScreen (spec 059 AppAll / W-065 sonopolisWeb). */}
         <TouchableOpacity style={styles.input} onPress={() => setPickerGeneroVisible(true)}>
-          <Text style={estilo ? styles.inputTexto : styles.inputPlaceholder}>
-            {estilo || 'Seleccionar género'}
+          <Text style={estilos.length ? styles.inputTexto : styles.inputPlaceholder}>
+            {estilos.length ? estilos.join(', ') : 'Seleccionar géneros'}
           </Text>
         </TouchableOpacity>
         <GeneroPicker
           visible={pickerGeneroVisible}
           onClose={() => setPickerGeneroVisible(false)}
-          seleccionados={estilo ? [estilo] : []}
-          onCambiar={(gs) => setEstilo(gs[0] ?? '')}
+          multiple
+          seleccionados={estilos}
+          onCambiar={setEstilos}
+          titulo="Estilo musical"
         />
 
         <Text style={styles.label}>Horarios</Text>
@@ -237,9 +302,6 @@ export default function EditarLocalScreen() {
         <Text style={styles.label}>Sitio web</Text>
         <TextInput style={styles.input} value={sitioWeb} onChangeText={setSitioWeb} placeholder="https://..." placeholderTextColor={colors.muted} autoCapitalize="none" />
 
-        <Text style={styles.label}>Imagen (URL)</Text>
-        <TextInput style={styles.input} value={image} onChangeText={setImage} placeholder="https://..." placeholderTextColor={colors.muted} autoCapitalize="none" />
-
         <TouchableOpacity
           style={[styles.boton, guardando && styles.botonDesactivado]}
           onPress={handleGuardar}
@@ -263,6 +325,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
+    marginBottom: spacing.md,
   },
   titulo: {
     fontSize: fontSize.lg,
@@ -270,6 +333,13 @@ const styles = StyleSheet.create({
     color: colors.primary,
     marginBottom: spacing.md,
   },
+  tituloSeccion: {
+    fontSize: fontSize.md,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: spacing.sm,
+  },
+  ayuda: { fontSize: fontSize.xs, color: colors.muted, marginBottom: spacing.xs },
   label: {
     fontSize: fontSize.sm,
     fontWeight: '600',
