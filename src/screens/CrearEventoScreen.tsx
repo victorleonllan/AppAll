@@ -21,6 +21,7 @@ import ArtistaSelector from '../components/ArtistaSelector';
 import PreventasEvento from '../components/PreventasEvento';
 import DatosPagoEvento, { DATOS_PAGO_VACIOS } from '../components/DatosPagoEvento';
 import CampoImagen from '../components/CampoImagen';
+import { CampoFecha, CampoHora } from '../components/CampoFecha';
 import { PAIS_POR_DEFECTO, etiquetaPais } from '../constants/paises';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
@@ -65,6 +66,7 @@ export default function CrearEventoScreen() {
 
   const [fecha, setFecha] = useState('');
   const [hora, setHora] = useState('');
+  const [hoy] = useState(() => new Date());
   const [genero, setGenero] = useState('');
   const [pickerGeneroVisible, setPickerGeneroVisible] = useState(false);
   const [descripcion, setDescripcion] = useState('');
@@ -370,21 +372,20 @@ export default function CrearEventoScreen() {
         />
 
         <Text style={styles.label}>Fecha *</Text>
-        <TextInput
+        <CampoFecha
           style={styles.input}
           value={fecha}
-          onChangeText={setFecha}
+          onChange={setFecha}
           placeholder="2026-11-28"
-          placeholderTextColor={colors.muted}
+          minimo={hoy}
         />
 
         <Text style={styles.label}>Hora *</Text>
-        <TextInput
+        <CampoHora
           style={styles.input}
           value={hora}
-          onChangeText={setHora}
+          onChange={setHora}
           placeholder="21:00"
-          placeholderTextColor={colors.muted}
         />
 
         <Text style={styles.label}>Género</Text>
