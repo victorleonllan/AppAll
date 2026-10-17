@@ -9,7 +9,7 @@ interface EventosState {
   loading: boolean;
   refresh: () => Promise<void>;
   createEvento: (evento: Omit<Evento, 'id'>) => Promise<Evento>;
-  updateEvento: (id: string, cambios: Partial<Pick<Evento, 'artista' | 'fecha' | 'hora' | 'genero' | 'precio' | 'imagen'>>) => Promise<void>;
+  updateEvento: (id: string, cambios: Partial<Pick<Evento, 'artista' | 'fecha' | 'hora' | 'genero' | 'precio' | 'imagen' | 'pais'>>) => Promise<void>;
   deleteEvento: (id: string) => Promise<void>;
   cancelEvento: (id: string, motivo?: string) => Promise<void>;
   tickets: Ticket[];
@@ -35,6 +35,7 @@ function mapEventoFromDB(db: any): Evento {
     artistId: db.artist_id ?? null,
     venueId: db.venue_id,
     venueName: db.venue_name,
+    pais: db.pais,
     fecha: db.fecha,
     hora: db.hora,
     genero: db.genero,
@@ -65,6 +66,7 @@ function mapEventoToDB(evento: Omit<Evento, 'id'>): any {
     artist_id: evento.artistId ?? null,
     venue_id: evento.venueId,
     venue_name: evento.venueName,
+    pais: evento.pais,
     fecha: evento.fecha,
     hora: evento.hora,
     genero: evento.genero,
@@ -187,7 +189,7 @@ export function EventosProvider({ children }: { children: ReactNode }) {
   // y pisaría el monto real en cualquier UPDATE que no toque el precio.
   const updateEvento = useCallback(async (
     id: string,
-    cambios: Partial<Pick<Evento, 'artista' | 'fecha' | 'hora' | 'genero' | 'precio' | 'imagen'>>
+    cambios: Partial<Pick<Evento, 'artista' | 'fecha' | 'hora' | 'genero' | 'precio' | 'imagen' | 'pais'>>
   ) => {
     if (useMock) {
       setEventos((prev) => prev.map((e) => (e.id === id ? { ...e, ...cambios } : e)));
@@ -199,6 +201,9 @@ export function EventosProvider({ children }: { children: ReactNode }) {
     if (cambios.hora !== undefined) cambiosDB.hora = cambios.hora;
     if (cambios.genero !== undefined) cambiosDB.genero = cambios.genero;
     if (cambios.imagen !== undefined) cambiosDB.imagen = cambios.imagen;
+    // Spec 095 — events.pais es copia del local (spec 080): corregir el local no
+    // arrastra los eventos ya creados, así que el evento se corrige por su cuenta.
+    if (cambios.pais !== undefined) cambiosDB.pais = cambios.pais;
     if (cambios.precio !== undefined) {
       cambiosDB.precio = cambios.precio;
       cambiosDB.monto = montoDesdePrecio(cambios.precio);

@@ -18,6 +18,7 @@ function mapVenueFromDB(db: any): Venue {
     id: db.id,
     name: db.name,
     type: db.type,
+    pais: db.pais,
     ownerId: db.owner_id,
     address: db.address,
     description: db.description,
@@ -52,6 +53,9 @@ function mapVenueToDB(venue: Partial<Venue>): Record<string, any> {
   const out: Record<string, any> = {};
   if ('name' in venue) out.name = venue.name;
   if ('type' in venue) out.type = venue.type;
+  // Spec 095 — entra al insert y al update (updateVenue usa este mismo mapper):
+  // equivocarse de país es reversible desde EditarLocalScreen.
+  if ('pais' in venue) out.pais = venue.pais;
   if ('ownerId' in venue) out.owner_id = venue.ownerId ?? null;
   if ('address' in venue) out.address = venue.address ?? null;
   if ('description' in venue) out.description = venue.description ?? null;
