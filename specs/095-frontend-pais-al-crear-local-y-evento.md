@@ -1,6 +1,6 @@
 # Spec 095 — La app móvil manda el país al crear local y evento
 
-> Estado: propuesto (21-sep-2026) — **cierra una rotura viva en producción**
+> Estado: aplicado (17-oct-2026) — `tsc` limpio en `src/` (los únicos errores restantes son de `supabase/functions`, código Deno ajeno), `expo export --platform web` limpio, `banderaPais("CL")` = 🇨🇱 y `Intl.DisplayNames` → "Argentina" verificados en Node. **Pendiente:** `nombrePais("AR")` en dispositivo real (Hermes) y la prueba de los inserts contra la base. Selector en `src/components/PaisPicker.tsx` (nuevo, no listado arriba); mocks de `src/data/mock/` con `pais: "CL"`. La UI de país en `EditarEventoScreen` llega con el spec 136
 > Capa: FRONTEND. `src/constants/paises.ts` (nuevo), `src/context/VenuesContext.tsx`, `src/context/EventosContext.tsx`, `src/screens/EditarLocalScreen.tsx`, `src/screens/CrearEventoScreen.tsx`, `src/types/index.ts`.
 > Depende de: spec 080 (`pais` en `events`/`venues`, **ya aplicado en producción**).
 > Hermano en la web: `sonopolisWeb/specs/w114-frontend-crear-eligiendo-pais.md`, ya aplicado.

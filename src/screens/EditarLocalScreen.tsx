@@ -10,6 +10,8 @@ import { useAuth } from '../context/AuthContext';
 import { useVenues } from '../context/VenuesContext';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 import GeneroPicker from '../components/GeneroPicker';
+import PaisPicker from '../components/PaisPicker';
+import { PAIS_POR_DEFECTO, etiquetaPais } from '../constants/paises';
 
 const TIPOS: VenueType[] = ['cafe', 'bar', 'sala', 'centro_cultural'];
 
@@ -22,6 +24,8 @@ export default function EditarLocalScreen() {
 
   const [type, setType] = useState<VenueType>('sala');
   const [name, setName] = useState('');
+  const [pais, setPais] = useState(PAIS_POR_DEFECTO);
+  const [pickerPaisVisible, setPickerPaisVisible] = useState(false);
   const [address, setAddress] = useState('');
   const [ciudad, setCiudad] = useState('');
   const [comuna, setComuna] = useState('');
@@ -46,6 +50,7 @@ export default function EditarLocalScreen() {
     if (!miVenue) return;
     setType(miVenue.type);
     setName(miVenue.name ?? '');
+    setPais(miVenue.pais ?? PAIS_POR_DEFECTO);
     setAddress(miVenue.address ?? '');
     setCiudad(miVenue.ciudad ?? '');
     setComuna(miVenue.comuna ?? '');
@@ -81,6 +86,7 @@ export default function EditarLocalScreen() {
     const campos = {
       name: name.trim(),
       type,
+      pais,
       address: address.trim() || undefined,
       ciudad: ciudad.trim() || undefined,
       comuna: comuna.trim() || undefined,
@@ -139,6 +145,20 @@ export default function EditarLocalScreen() {
 
         <Text style={styles.label}>Nombre *</Text>
         <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Ej: Café La Palma" placeholderTextColor={colors.muted} />
+
+        <Text style={styles.label}>País *</Text>
+        {/* Spec 095 — dónde está el local, no desde dónde se carga: decide en
+            qué cartelera aparecen sus eventos. */}
+        <TouchableOpacity style={styles.input} onPress={() => setPickerPaisVisible(true)}>
+          <Text style={styles.inputTexto}>{etiquetaPais(pais)}</Text>
+        </TouchableOpacity>
+        <PaisPicker
+          visible={pickerPaisVisible}
+          onClose={() => setPickerPaisVisible(false)}
+          seleccionado={pais}
+          onCambiar={setPais}
+          titulo="País del local"
+        />
 
         <Text style={styles.label}>Dirección</Text>
         <TextInput style={styles.input} value={address} onChangeText={setAddress} placeholder="Ej: Av. Italia 890" placeholderTextColor={colors.muted} />

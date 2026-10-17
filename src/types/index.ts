@@ -4,6 +4,9 @@ export interface Venue {
   id: string;
   name: string;
   type: VenueType;
+  // Spec 095 — ISO 3166-1 alpha-2. NOT NULL sin DEFAULT en la base (spec 080):
+  // un insert que no lo mande falla con 23502 en vez de asumir Chile.
+  pais: string;
   ownerId?: string;
   address?: string;
   description?: string;
@@ -41,6 +44,7 @@ export interface Evento {
   artistId?: string | null;   // Spec 033 — FK opcional a profiles (role='musician')
   venueId: string;
   venueName: string;
+  pais: string;               // Spec 095 — copia denormalizada de venue.pais (spec 080)
   fecha: string;
   hora: string;
   genero: string;

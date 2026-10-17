@@ -10,6 +10,8 @@ import { useAuth } from '../context/AuthContext';
 import { useVenues } from '../context/VenuesContext';
 import { useEventos } from '../context/EventosContext';
 import GeneroPicker from '../components/GeneroPicker';
+import PaisPicker from '../components/PaisPicker';
+import { PAIS_POR_DEFECTO, etiquetaPais } from '../constants/paises';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export default function CrearEventoScreen() {
@@ -23,6 +25,10 @@ export default function CrearEventoScreen() {
   const [venueQuery, setVenueQuery] = useState('');
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [suggestions, setSuggestions] = useState<Venue[]>([]);
+  // Spec 095 — país del local que esta pantalla crea al vuelo. El evento no
+  // tiene campo propio: hereda `venue.pais` (Decisión 4).
+  const [paisNuevoVenue, setPaisNuevoVenue] = useState(PAIS_POR_DEFECTO);
+  const [pickerPaisVisible, setPickerPaisVisible] = useState(false);
   const [fecha, setFecha] = useState('');
   const [hora, setHora] = useState('');
   const [genero, setGenero] = useState('');
@@ -106,6 +112,7 @@ export default function CrearEventoScreen() {
       const nuevoVenue = await createVenue({
         name: venueQuery,
         type: "sala",
+        pais: paisNuevoVenue,
         ownerId: user.id,
       });
       handleSelectVenue(nuevoVenue);
@@ -127,13 +134,14 @@ export default function CrearEventoScreen() {
     try {
       let venue = selectedVenue;
       if (!venue) {
-        venue = await createVenue({ name: venueQuery || "Sin nombre", type: "sala", ownerId: user.id });
+        venue = await createVenue({ name: venueQuery || "Sin nombre", type: "sala", pais: paisNuevoVenue, ownerId: user.id });
       }
       const nuevo = await createEvento({
         artista,
         artistId: artistaId,
         venueId: venue.id,
         venueName: venue.name,
+        pais: venue.pais,
         fecha,
         hora,
         genero,
@@ -226,6 +234,23 @@ export default function CrearEventoScreen() {
             ✅ {venueEmoji(selectedVenue.type)} {selectedVenue.name}
           </Text>
         )}
+        {/* Sin local elegido, publicar o "+ Agregar" crea uno nuevo: su país
+            se elige acá. Con local elegido, el evento hereda el del local. */}
+        {!selectedVenue && (
+          <>
+            <Text style={styles.label}>País del local *</Text>
+            <TouchableOpacity style={styles.input} onPress={() => setPickerPaisVisible(true)}>
+              <Text style={styles.inputTexto}>{etiquetaPais(paisNuevoVenue)}</Text>
+            </TouchableOpacity>
+          </>
+        )}
+        <PaisPicker
+          visible={pickerPaisVisible}
+          onClose={() => setPickerPaisVisible(false)}
+          seleccionado={paisNuevoVenue}
+          onCambiar={setPaisNuevoVenue}
+          titulo="País del local"
+        />
 
         <Text style={styles.label}>Fecha *</Text>
         <TextInput
