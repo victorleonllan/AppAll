@@ -1,6 +1,6 @@
 # Spec 130 — Editar perfil de músico al nivel de la web: país, avatar, foto y disponibilidad
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` limpio, `npx expo export --platform web` sin error, criterio 8 en cero. Criterios 2–7 y V-candidatas 1–3 pendientes de probar en ejecución.
 > Capa: FRONTEND. `src/screens/EditarPerfilBandaScreen.tsx`, `src/screens/PerfilMusicoScreen.tsx`, `src/components/CampoImagen.tsx` (nuevo), `src/lib/profiles.ts`.
 > Depende de: spec 129 (`useSubirImagen`), spec 095 (`src/constants/paises.ts` con `etiquetaPais`), spec 121 (agrega `pais`, `avatar` y `available` a `PerfilMusico` y a `mapProfileFromDB`).
 > Alimenta: spec 134 y spec 136 (reusan `CampoImagen`).
