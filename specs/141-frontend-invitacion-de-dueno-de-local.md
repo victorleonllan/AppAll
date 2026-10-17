@@ -1,6 +1,6 @@
 # Spec 141 — Abrir la invitación de dueño de local en la app y activar el local
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado (17-oct-2026) — `npx tsc --noEmit` sin errores fuera de `supabase/functions`, `npx expo export --platform web` limpio (criterios 1 y 7). Criterios 2-6 y V 141-a pendientes de prueba en dispositivo con una invitación real.
 > Capa: FRONTEND. `src/screens/InvitacionLocalScreen.tsx`.
 > Depende de: spec 114, spec 135, spec 142
 > Hermano en la web: `app/(marketing)/invitacion/[token]/page.js` y `Acciones.js` (W-230–232, W-241).
