@@ -3,7 +3,8 @@ import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ScrollView, Alert, ActivityIndicator,
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { ParamListBase, useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { TipoPrecio } from '../types';
 import { useEventos } from '../context/EventosContext';
 import { useEventoPermisos } from '../hooks/useEventoPermisos';
@@ -15,6 +16,7 @@ import PaisPicker from '../components/PaisPicker';
 import PreventasEvento from '../components/PreventasEvento';
 import DatosPagoEvento, { DATOS_PAGO_VACIOS } from '../components/DatosPagoEvento';
 import CampoImagen from '../components/CampoImagen';
+import AccionesEvento from '../components/AccionesEvento';
 import { PAIS_POR_DEFECTO, etiquetaPais } from '../constants/paises';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
@@ -36,13 +38,19 @@ const MAX_DESCRIPCION = 900;
  * patrón que EquipoEvento. El cast de `route.params` sigue el mismo estilo
  * que EquipoEventoScreen: no vale la pena tipar contra las tres ParamList a
  * la vez para un solo campo.
+ *
+ * Spec 137 — debajo del formulario, `AccionesEvento`: visible en la cartelera,
+ * cancelar con motivo y borrar, como `/eventos/<id>/editar` en la web. Por
+ * eso la navegación se tipa como stack genérica: tras borrar hace
+ * `popToTop()`, porque el detalle del que se vino ya no existe.
  */
 export default function EditarEventoScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const route = useRoute();
   const { eventoId } = route.params as { eventoId: string };
   const { eventos, updateEvento } = useEventos();
-  const { esOwner } = useEventoPermisos(eventoId);
+  const permisos = useEventoPermisos(eventoId);
+  const { esOwner } = permisos;
 
   const evento = eventos.find((e) => e.id === eventoId);
   const inicial = separarFechaHora(evento?.comienzaAt);
@@ -286,6 +294,12 @@ export default function EditarEventoScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      <AccionesEvento
+        evento={evento}
+        permisos={permisos}
+        onBorrado={() => navigation.popToTop()}
+      />
     </ScrollView>
   );
 }
