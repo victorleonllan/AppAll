@@ -5,9 +5,10 @@ import { ActivityIndicator, View } from 'react-native';
 import CarteleraStack from './CarteleraStack';
 import AuthScreen from '../screens/AuthScreen';
 import MusicoStack from './MusicoStack';
-import PerfilScreen from '../screens/PerfilScreen';
+import PerfilStack from './PerfilStack';
 import LocalesStack from './LocalesStack';
 import MiLocalStack from './MiLocalStack';
+import { linking } from './linking';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme';
 
@@ -19,7 +20,9 @@ function getThirdTab(session: unknown, role: UserRole) {
   if (!session) return { name: 'Sonópolis' as const, component: AuthScreen, icon: 'apps' as const };
   if (role === 'musician') return { name: 'Mi Perfil' as const, component: MusicoStack, icon: 'person-circle' as const };
   if (role === 'cafe') return { name: 'Mi Local' as const, component: MiLocalStack, icon: 'location' as const };
-  return { name: 'Perfil' as const, component: PerfilScreen, icon: 'person' as const };
+  // Spec 114 — con stack propio, para que el fan pueda navegar desde su perfil
+  // (Mis entradas, Mi panel) y una sesión sin rol entre por ElegirRol.
+  return { name: 'Perfil' as const, component: PerfilStack, icon: 'person' as const };
 }
 
 export default function AppNavigator() {
@@ -36,7 +39,7 @@ export default function AppNavigator() {
   const thirdTab = getThirdTab(session, role);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <Tab.Navigator
         screenOptions={({ route }) => ({
           tabBarIcon: ({ color, size }) => {
@@ -66,7 +69,9 @@ export default function AppNavigator() {
           name={thirdTab.name}
           component={thirdTab.component}
           options={{
-            headerShown: thirdTab.name === 'Sonópolis' ? false : thirdTab.name === 'Mi Local' ? false : thirdTab.name === 'Mi Perfil' ? false : true,
+            // Las cuatro variantes ocultan el header de la pestaña: AuthScreen no
+            // lo usa y los tres stacks ponen el suyo (PerfilStack desde el spec 114).
+            headerShown: false,
             title: thirdTab.name,
           }}
         />

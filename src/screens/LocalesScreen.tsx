@@ -81,11 +81,24 @@ export default function LocalesScreen() {
             ))}
           </View>
         )}
+        {/* Spec 114 — entrada al directorio; la sección por género (mock) la saca el 122. */}
+        <TouchableOpacity onPress={() => navigation.navigate('DirectorioMusicos')}>
+          <Text style={styles.enlace}>Ver todos los músicos →</Text>
+        </TouchableOpacity>
       </View>
 
-      <Text style={styles.titulo}>📍 Locales</Text>
+      <View style={styles.filaTitulo}>
+        <Text style={styles.titulo}>📍 Locales</Text>
+        <TouchableOpacity style={styles.botonMapa} onPress={() => navigation.navigate('MapaLocales')}>
+          <Text style={styles.textoBotonMapa}>🗺️ Ver mapa</Text>
+        </TouchableOpacity>
+      </View>
       {locales.map((venue) => (
-        <View key={venue.id} style={styles.tarjetaVenue}>
+        <TouchableOpacity
+          key={venue.id}
+          style={styles.tarjetaVenue}
+          onPress={() => navigation.navigate('DetalleLocal', { venueId: venue.id })}
+        >
           <View style={{ flex: 1 }}>
             <Text style={styles.nombreVenue}>
               {venueEmoji(venue.type)} {venue.name}
@@ -114,7 +127,7 @@ export default function LocalesScreen() {
             {/* `rating` no se muestra: los valores actuales se cargaron a mano
                 y ningún flujo lo escribe — mostrarlo sería engañoso (spec 031). */}
           </View>
-        </View>
+        </TouchableOpacity>
       ))}
     </ScrollView>
   );
@@ -123,6 +136,10 @@ export default function LocalesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, paddingTop: 20 },
   titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary, marginLeft: spacing.md, marginTop: spacing.md, marginBottom: spacing.sm },
+  filaTitulo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: spacing.md },
+  botonMapa: { backgroundColor: colors.accentLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: borderRadius.sm, marginTop: spacing.md, marginBottom: spacing.sm },
+  textoBotonMapa: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  enlace: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm, marginTop: spacing.sm },
   seccionBuscar: { paddingHorizontal: spacing.md, marginBottom: spacing.md },
   tituloBuscar: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary, marginBottom: spacing.sm },
   aviso: { fontSize: fontSize.sm, color: colors.muted, marginBottom: spacing.sm, fontStyle: 'italic' },

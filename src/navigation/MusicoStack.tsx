@@ -7,6 +7,10 @@ import EquipoEventoScreen from '../screens/EquipoEventoScreen';
 import EditarEventoScreen from '../screens/EditarEventoScreen';
 import EntradasEventoScreen from '../screens/EntradasEventoScreen';
 import EscanerQRScreen from '../screens/EscanerQRScreen';
+import MisEntradasScreen from '../screens/MisEntradasScreen';
+import CambiarContrasenaScreen from '../screens/CambiarContrasenaScreen';
+import SolicitudesScreen from '../screens/SolicitudesScreen';
+import CobrarEventoScreen from '../screens/CobrarEventoScreen';
 import { colors, fontSize } from '../theme';
 
 export type MusicoStackParamList = {
@@ -20,6 +24,10 @@ export type MusicoStackParamList = {
   // Spec 041 — `eventoId` opcional: desde el dashboard se entra sin evento y la
   // pantalla lo pide; desde las entradas del evento se entra con él ya fijado.
   Escaner: { eventoId?: string } | undefined;
+  MisEntradas: undefined;
+  CambiarContrasena: undefined;
+  Solicitudes: undefined;
+  CobrarEvento: { eventoId: string };
 };
 
 const Stack = createNativeStackNavigator<MusicoStackParamList>();
@@ -77,6 +85,11 @@ export default function MusicoStack() {
         component={EscanerQRScreen}
         options={{ title: 'Escanear entradas' }}
       />
+      {/* Spec 114 — registradas de antemano; cada spec de pantalla reemplaza solo su archivo. */}
+      <Stack.Screen name="MisEntradas" component={MisEntradasScreen} options={{ title: 'Mis entradas' }} />
+      <Stack.Screen name="CambiarContrasena" component={CambiarContrasenaScreen} options={{ title: 'Cambiar contraseña' }} />
+      <Stack.Screen name="Solicitudes" component={SolicitudesScreen} options={{ title: 'Solicitudes' }} />
+      <Stack.Screen name="CobrarEvento" component={CobrarEventoScreen} options={{ title: 'Cobrar' }} />
     </Stack.Navigator>
   );
 }
