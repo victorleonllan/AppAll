@@ -177,3 +177,14 @@ export interface PerfilMusico {
   avatar?: string | null;   // spec 085 — logo chico; `foto` es la imagen grande
   available?: boolean;      // spec 051 — «disponible este finde»
 }
+
+// Spec 123 — seguir músicos y locales (tablas del spec 047).
+export type TipoSeguible = 'musico' | 'venue';
+
+/** Lo mínimo de un local seguido para listarlo (spec 123, Decisión 2). */
+export type VenueSeguido = Pick<Venue, 'id' | 'name' | 'type' | 'comuna' | 'image'>;
+
+export interface ItemFeed {
+  evento: Evento;
+  autor: { tipo: TipoSeguible; id: string; nombre: string };
+}
