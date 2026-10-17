@@ -1,6 +1,9 @@
 # Spec 117 — `create-preference` sabe cuándo la llama la app y la devuelve a la app
 
-> Estado: propuesto (16-oct-2026)
+> Estado: aplicado y desplegado (17-oct-2026) — `deno check` sin errores nuevos (los 7 que reporta son
+> previos, en líneas no tocadas: tipado de `cotizacion`/`ticket`); `get` de la función desplegada
+> trae `origen_invalido`, `/app/volver` y `ticket_ref`. Pendiente: criterio 4 (llamada con sesión
+> válida y `origen: 'ios'`) y V (117-a/b), en `PENDIENTES.md`.
 > Capa: LÓGICA. `supabase/functions/create-preference/index.ts`.
 > Depende de: ninguno.
 > Alimenta: spec 118 (pago nativo), `sonopolisWeb` W-245 (la página puente a la que apuntan las `back_urls`).

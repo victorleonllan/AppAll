@@ -992,6 +992,16 @@ Deuda que queda declarada:
   RPC salvo `suscripcion_desconocida`). Reintentar no lo arregla; MP insistirá hasta agotar
   sus reintentos y el cobro quedará sin registrar, visible solo en los logs.
 
+## `create-preference` con `origen: 'app'` 🟢 spec 117 desplegado, falta verificar en runtime (17-oct-2026)
+
+1. **Criterio 4 del 117:** con sesión válida, `origen: 'ios'` responde
+   `400 { error: 'origen_invalido' }` sin crear ticket. No se probó: hace falta un JWT real.
+2. **V (117-a):** compra de prueba con `origen: 'app'` → `GET /checkout/preferences/{id}` muestra
+   `back_urls` hacia `https://sonopolis.org/app/volver?compra=…&ref=…`, y `ticket_ref` de la
+   respuesta es igual a `tickets.preference_id`. Útil recién con W-245 (`/app/volver`) en la web.
+3. **V (117-b):** una compra desde la web (sin `origen`) sigue volviendo a
+   `/mis-entradas?compra=success&ref=…`.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

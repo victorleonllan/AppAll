@@ -48,7 +48,7 @@ serve(async (req) => {
   }
 
   try {
-    const { evento_id, user_id, cantidad } = await req.json();
+    const { evento_id, user_id, cantidad, origen } = await req.json();
 
     // Validar usuario
     const authHeader = req.headers.get('Authorization')!;
@@ -69,6 +69,15 @@ serve(async (req) => {
         detail: `cantidad debe ser un entero entre 1 y ${MAX_CANTIDAD_POR_COMPRA}`,
       }, 400);
     }
+
+    // Spec 117. La app nativa pide su propio retorno con `origen: 'app'`. Un valor
+    // desconocido se rechaza en vez de caer a la web: si no, la app recibiría
+    // back_urls de la web en silencio y el síntoma («después de pagar, la app no
+    // vuelve») quedaría lejísimos de la causa. La web no manda `origen`.
+    if (origen !== undefined && origen !== 'app') {
+      return json({ error: 'origen_invalido', detail: "origen debe ser 'app' u omitirse" }, 400);
+    }
+    const desdeApp = origen === 'app';
 
     // Info del evento
     const { data: evento, error } = await supabase
@@ -133,6 +142,11 @@ serve(async (req) => {
     // tickets.preference_id — deja de depender de un campo que MP dejó de mandar.
     const ticketRef = crypto.randomUUID();
 
+    // Spec 117. Página puente HTTPS de la web (W-245) que reabre la app: MP no
+    // acepta `appall://` como back_url con auto_return activo. `compra` y no
+    // `status` porque MP agrega su propio `status` al volver.
+    const volverApp = `${APP_WEB_URL}/app/volver`;
+
     // Crear preferencia en MP
     const preference = {
       items: [{
@@ -143,7 +157,13 @@ serve(async (req) => {
         currency_id: cotizacion.moneda,
       }],
       payer: { email: user.email },
-      back_urls: {
+      back_urls: desdeApp
+        ? {
+          success: `${volverApp}?compra=success&ref=${ticketRef}`,
+          failure: `${volverApp}?compra=failure&ref=${ticketRef}`,
+          pending: `${volverApp}?compra=pending&ref=${ticketRef}`,
+        }
+        : {
         // Spec W076 (3-sep-2026) ya resolvió dónde ve el fan sus entradas —
         // el pago aprobado vuelve directo ahí, no a la home.
         // `ref` (spec 072): la pestaña que MP devuelve puede pedirle la
@@ -238,6 +258,8 @@ serve(async (req) => {
       init_point: mpData.init_point,
       sandbox_init_point: mpData.sandbox_init_point,
       ticket_id: ticket.id,
+      // Spec 117. La app lo usa para reconocer su propio retorno (spec 118).
+      ticket_ref: ticketRef,
     }, 200);
   } catch (err) {
     console.error('create-preference error:', err);
