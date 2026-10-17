@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { Platform, Share, Linking, Image } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -11,6 +11,12 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { useEventos } from '../context/EventosContext';
 import { useEventoPermisos } from '../hooks/useEventoPermisos';
+import { useEstadoEventoEnVivo } from '../hooks/useEstadoEventoEnVivo';
+import { usePrecioVigente } from '../hooks/usePrecioVigente';
+import AvisoCancelacion from '../components/AvisoCancelacion';
+import PrecioEvento from '../components/PrecioEvento';
+import { formatearMonto } from '../lib/precio';
+import { URL_WEB, VERSION_PREVIEW_LINK } from '../constants/web';
 import { supabase } from '../lib/supabase';
 import { confirmar } from '../lib/confirm';
 import { CarteleraStackParamList } from '../navigation/CarteleraStack';
@@ -38,6 +44,16 @@ export default function DetalleEventoScreen() {
   const evento = eventos.find((e) => e.id === route.params.eventoId);
   const permisos = useEventoPermisos(evento?.id);
 
+  // Spec 120 — los hooks nuevos van antes del return temprano: un hook después
+  // de un return cambia el número de hooks entre renders y React lo rompe.
+  const enVivo = useEstadoEventoEnVivo(evento?.id ?? null, {
+    cancelado: evento?.status === 'cancelled',
+    motivo: evento?.cancelReason ?? null,
+  });
+  // Se consulta para todo evento no cancelado: además del precio, el RPC dice si
+  // el país del evento vende hoy (`se_vende`, spec 100).
+  const { vigente } = usePrecioVigente(evento && !enVivo.cancelado ? evento.id : null);
+
   if (!evento) {
     return (
       <View style={styles.container}>
@@ -46,8 +62,26 @@ export default function DetalleEventoScreen() {
     );
   }
 
-  const cancelado = evento.status === 'cancelled';
+  const cancelado = enVivo.cancelado;
   const monto = evento.monto ?? 0;
+  // Si el RPC falló (`vigente === null`) no se bloquea: la base lo vuelve a
+  // revisar al reservar, y un error de red no debe esconder la compra.
+  const ventaCerrada = vigente?.seVende === false;
+
+  // Spec 120 — link a la web (quien lo recibe puede no tener la app) con `?v=` y
+  // ningún otro parámetro, igual que BotonCompartir.js. Solo `message`: en iOS
+  // `url` aparte llega junto a WhatsApp y el link se ve repetido.
+  const urlEvento = `${URL_WEB}/cartelera/${evento.id}?v=${VERSION_PREVIEW_LINK}`;
+  const urlFlyer = `${URL_WEB}/cartelera/${evento.id}/flyer`;
+
+  const handleCompartir = async () => {
+    try {
+      await Share.share({ message: `${evento.artista} — ${evento.venueName}\n${urlEvento}` });
+    } catch {
+      // react-native-web sin navigator.share lanza; cancelar la hoja nativa no.
+      Alert.alert('Copia este link', urlEvento);
+    }
+  };
 
   // Spec 033 — cancelar (recuperable) vs. borrar (definitivo, y bloqueado
   // por el trigger events_block_delete_with_tickets si hay entradas vendidas
@@ -342,13 +376,17 @@ export default function DetalleEventoScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {cancelado && (
-        <View style={styles.bandaCancelado}>
-          <Text style={styles.bandaCanceladoTexto}>🚫 Este evento fue cancelado</Text>
-        </View>
+        <AvisoCancelacion motivo={enVivo.motivo} onVerOtros={() => navigation.navigate('CarteleraList')} />
       )}
 
       <View style={styles.card}>
-        <Text style={styles.artista}>{evento.artista}</Text>
+        <View style={styles.filaTitulo}>
+          <Text style={[styles.artista, styles.artistaFlex]}>{evento.artista}</Text>
+          {/* Visible también cancelado: quien lo recibe se entera de la cancelación. */}
+          <TouchableOpacity style={styles.botonCompartir} onPress={handleCompartir}>
+            <Text style={styles.textoBotonGestion}>Compartir</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.genero}>{evento.genero}</Text>
 
         <View style={styles.divisor} />
@@ -370,27 +408,51 @@ export default function DetalleEventoScreen() {
           <Text style={styles.infoValor}>{evento.hora}</Text>
         </View>
 
+        {evento.descripcion?.trim() ? (
+          <>
+            <View style={styles.divisor} />
+            <Text style={styles.seccionTitulo}>Sobre el evento</Text>
+            <Text style={styles.descripcion}>{evento.descripcion}</Text>
+          </>
+        ) : null}
+
         <View style={styles.divisor} />
 
         <Text style={styles.precioLabel}>Precio</Text>
-        <Text style={styles.precioValor}>{evento.precio}</Text>
+        <PrecioEvento evento={evento} vigente={vigente} alinear="inicio" />
 
+        {/* El monto del botón es solo lo que se muestra: lo que se cobra lo decide
+            el servidor con la preventa vigente (create-preference). */}
         <TouchableOpacity
-          style={[styles.botonComprar, (!monto || cancelado) && styles.botonDesactivado]}
+          style={[styles.botonComprar, (!monto || cancelado || ventaCerrada) && styles.botonDesactivado]}
           onPress={handleBotonComprar}
-          disabled={!monto || cancelado || step === 'comprando'}
+          disabled={!monto || cancelado || ventaCerrada || step === 'comprando'}
         >
           <Text style={styles.textoBotonComprar}>
             {cancelado
               ? 'Evento cancelado'
               : step === 'comprando'
                 ? 'Procesando...'
-                : monto > 0
-                  ? `Comprar entrada — ${evento.precio}`
-                  : 'Evento gratuito'}
+                : ventaCerrada
+                  ? 'Venta no habilitada todavía en este país'
+                  : monto > 0
+                    ? `Comprar entrada — ${formatearMonto(vigente?.monto ?? monto, evento.moneda)}`
+                    : 'Evento gratuito'}
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Spec 120 — mismas condiciones que la web (W-244): sin imagen la ruta da
+          404, y un evento cancelado no se difunde. */}
+      {evento.imagen && !cancelado && (
+        <View style={[styles.card, styles.cardSeparada]}>
+          <Text style={styles.seccionTitulo}>Material de difusión</Text>
+          <Image source={{ uri: urlFlyer }} style={styles.flyer} resizeMode="cover" />
+          <TouchableOpacity style={styles.boton} onPress={() => Linking.openURL(urlFlyer)}>
+            <Text style={styles.textoBoton}>Descargar flyer</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Spec 033 — panel de gestión, visible solo para el equipo del evento */}
       {permisos.puedeEditar && (
@@ -505,11 +567,6 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginBottom: spacing.xs,
   },
-  precioValor: {
-    fontSize: fontSize.xl,
-    fontWeight: 'bold',
-    color: colors.success,
-  },
   botonComprar: {
     backgroundColor: colors.accent,
     padding: 16,
@@ -531,14 +588,34 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 40,
   },
-  bandaCancelado: {
-    backgroundColor: '#B71C1C',
+  filaTitulo: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
+  artistaFlex: { flex: 1 },
+  botonCompartir: {
+    backgroundColor: colors.accentLight,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: borderRadius.sm,
-    padding: spacing.sm,
-    marginBottom: spacing.sm,
-    alignItems: 'center',
+    marginTop: 4,
   },
-  bandaCanceladoTexto: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.sm },
+  seccionTitulo: {
+    fontSize: fontSize.sm,
+    color: colors.muted,
+    marginBottom: spacing.xs,
+  },
+  descripcion: {
+    fontSize: fontSize.md,
+    color: colors.secondary,
+    lineHeight: 22,
+  },
+  cardSeparada: { marginTop: spacing.md },
+  // La ruta /flyer genera 1080×1350 (4:5).
+  flyer: {
+    width: 240,
+    aspectRatio: 4 / 5,
+    borderRadius: borderRadius.sm,
+    alignSelf: 'center',
+    backgroundColor: colors.accentLight,
+  },
   tituloGestion: {
     fontSize: fontSize.md,
     fontWeight: 'bold',
