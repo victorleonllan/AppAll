@@ -90,6 +90,7 @@
 | 152 | Lógica del admin de Sonópolis en la app: quién es admin, Pagos y Eventos — CRM, Pro, admin y Flow en la app, ver `[[2026-10-19 Plan — CRM, Pro, admin y Flow en la app]]` | Propuesto (19-oct-2026) |
 | 153 | Lógica del admin en la app: CRM de cada tenant, Sonópolis Pro y Locales — CRM, Pro, admin y Flow en la app, ver `[[2026-10-19 Plan — CRM, Pro, admin y Flow en la app]]` | Propuesto (19-oct-2026) |
 | 154 | Tarjeta «Sonópolis Pro» informativa en los paneles de local y de músico — CRM, Pro, admin y Flow en la app, ver `[[2026-10-19 Plan — CRM, Pro, admin y Flow en la app]]` | Propuesto (19-oct-2026) |
+| 155 | Contactos y «Escribir a tu público» en la app, para local y músico — CRM, Pro, admin y Flow en la app, ver `[[2026-10-19 Plan — CRM, Pro, admin y Flow en la app]]` | Propuesto (19-oct-2026) |
 | 028 | Correo transaccional por Resend (SMTP + plantillas + dominio propio) | Aplicado y confirmado (2026-08-11) — SMTP, límites, plantilla y remitente en `sonopolis.org` (verificado en Resend). El primero con `onboarding@resend.dev` cayó en spam; con dominio propio, confirmado que ya no |
 | 029 | Correo de confirmación de compra | Propuesto — depende del 028 y del 021 |
 | 030 | Dashboard de banda: perfil completo y panel | Implementado y desplegado — falta verificar en runtime |
