@@ -94,6 +94,7 @@
 | 156 | «Avisar por WhatsApp» en el detalle del evento y opt-in de WhatsApp en la app — CRM, Pro, admin y Flow en la app, ver `[[2026-10-19 Plan — CRM, Pro, admin y Flow en la app]]` | Propuesto (19-oct-2026) |
 | 157 | Redes del CRM en la app: cuentas, historial y redactor para local y músico — CRM, Pro, admin y Flow en la app, ver `[[2026-10-19 Plan — CRM, Pro, admin y Flow en la app]]` | Propuesto (19-oct-2026) |
 | 158 | Admin de Sonópolis en la app: entrada desde el perfil, Pagos y Eventos — CRM, Pro, admin y Flow en la app, ver `[[2026-10-19 Plan — CRM, Pro, admin y Flow en la app]]` | Propuesto (19-oct-2026) |
+| 159 | Admin de Sonópolis en la app: CRM de cada tenant, Pro y Locales — CRM, Pro, admin y Flow en la app, ver `[[2026-10-19 Plan — CRM, Pro, admin y Flow en la app]]` | Propuesto (19-oct-2026) |
 | 028 | Correo transaccional por Resend (SMTP + plantillas + dominio propio) | Aplicado y confirmado (2026-08-11) — SMTP, límites, plantilla y remitente en `sonopolis.org` (verificado en Resend). El primero con `onboarding@resend.dev` cayó en spam; con dominio propio, confirmado que ya no |
 | 029 | Correo de confirmación de compra | Propuesto — depende del 028 y del 021 |
 | 030 | Dashboard de banda: perfil completo y panel | Implementado y desplegado — falta verificar en runtime |
