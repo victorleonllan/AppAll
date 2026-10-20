@@ -83,6 +83,7 @@
 | 145 | «¿Olvidaste tu contraseña?» en el login: manda el enlace implícito de la web (W-228) hacia `/perfil/contrasena` — pendientes de paridad, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | **Aplicado** (17-oct-2026); falta probar el correo y el cambio de contraseña en dispositivo |
 | 146 | El filtro de género de la cartelera ofrece solo los géneros de los eventos que hay (addendum del 056, como la web) — pendientes de paridad, ver `[[2026-10-16 Plan — la app al nivel de la web]]` | **Aplicado** (17-oct-2026) — prop `opciones` en `GeneroPicker`, `generosDisponibles` en la Cartelera; tsc y export web limpios. Criterios 3, 4 y 6 en dispositivo pendientes |
 | 147 | `create-payment-flow` sabe cuándo la llama la app y la devuelve a la app — CRM, Pro, admin y Flow en la app, ver `[[2026-10-19 Plan — CRM, Pro, admin y Flow en la app]]` | Propuesto (19-oct-2026) |
+| 148 | La app lee si un local o una banda tiene Sonópolis Pro — CRM, Pro, admin y Flow en la app, ver `[[2026-10-19 Plan — CRM, Pro, admin y Flow en la app]]` | Propuesto (19-oct-2026) |
 | 028 | Correo transaccional por Resend (SMTP + plantillas + dominio propio) | Aplicado y confirmado (2026-08-11) — SMTP, límites, plantilla y remitente en `sonopolis.org` (verificado en Resend). El primero con `onboarding@resend.dev` cayó en spam; con dominio propio, confirmado que ya no |
 | 029 | Correo de confirmación de compra | Propuesto — depende del 028 y del 021 |
 | 030 | Dashboard de banda: perfil completo y panel | Implementado y desplegado — falta verificar en runtime |
