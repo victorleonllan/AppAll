@@ -48,7 +48,8 @@ serve(async (req) => {
   }
 
   try {
-    const { evento_id, user_id, cantidad, origen } = await req.json();
+    // Spec W-253: `especialId` opcional. Con él, `cantidad` son PACKS del ticket especial.
+    const { evento_id, user_id, cantidad, origen, especialId } = await req.json();
 
     // Validar usuario
     const authHeader = req.headers.get('Authorization')!;
@@ -88,6 +89,38 @@ serve(async (req) => {
 
     if (error || !evento) {
       return json({ error: 'evento_no_encontrado', evento_id }, 404);
+    }
+
+    // Spec W-253. Ticket especial (pack NxN): se lee antes de hablar con MP porque su monto
+    // y su multiplicador definen el ítem. Todos los errores de abajo se repiten en
+    // `_reservar_ticket_shared`, que es la guarda real; esto solo evita crear una
+    // preferencia de MP que la reserva después rechazaría.
+    let especial: { id: string; nombre: string; multiplicador: number; monto: number } | null = null;
+    if (especialId !== undefined && especialId !== null) {
+      if (typeof especialId !== 'string') {
+        return json({ error: 'especial_invalido', detail: 'especialId debe ser un uuid' }, 409);
+      }
+      const { data: esp } = await supabase
+        .from('event_tickets_especiales')
+        .select('id, event_id, nombre, multiplicador, monto, activa')
+        .eq('id', especialId)
+        .maybeSingle();
+      // Un uuid mal formado hace fallar la consulta (esp = null): también es inválido.
+      if (!esp || esp.event_id !== evento_id) {
+        return json({ error: 'especial_invalido', especial_id: especialId }, 409);
+      }
+      if (!esp.activa) {
+        return json({ error: 'especial_cerrado', especial_id: especialId }, 409);
+      }
+      // El tope por compra se mide en entradas, no en packs.
+      const entradas = cantidad * esp.multiplicador;
+      if (entradas > MAX_CANTIDAD_POR_COMPRA) {
+        return json({
+          error: 'cantidad_invalida',
+          detail: `${entradas} entradas superan el tope de ${MAX_CANTIDAD_POR_COMPRA} por compra`,
+        }, 400);
+      }
+      especial = esp;
     }
 
     // Cuánto se cobra ahora mismo (spec 065): general, puerta, o la preventa vigente
@@ -151,9 +184,12 @@ serve(async (req) => {
     const preference = {
       items: [{
         id: evento.id,
-        title: `Entrada: ${evento.artist_name} - ${evento.venue_name}`,
+        // Spec W-253: con un pack, quantity son packs y unit_price el monto del pack.
+        title: especial
+          ? `${evento.artist_name} - ${evento.venue_name} · ${especial.nombre} (${especial.multiplicador}x1)`
+          : `Entrada: ${evento.artist_name} - ${evento.venue_name}`,
         quantity: cantidad,
-        unit_price: cotizacion.monto,
+        unit_price: especial ? especial.monto : cotizacion.monto,
         currency_id: cotizacion.moneda,
       }],
       payer: { email: user.email },
@@ -231,17 +267,27 @@ serve(async (req) => {
         p_preference_id: ticketRef,
         // Spec 105: explícito, en vez de depender del DEFAULT del spec 104.
         p_pasarela: 'mercadopago',
+        // Spec W-253: solo se manda con un pack. Sin él la llamada queda idéntica a la de
+        // antes, así que el deploy no depende de que la migración ya esté aplicada.
+        ...(especial ? { p_especial_id: especial.id } : {}),
       })
       .single();
 
     if (ticketError) {
-      const sinCupo = ticketError.message?.includes('sin_cupo');
-      const paisSinCobro = ticketError.message?.includes('pais_sin_cobro');
+      const msg = ticketError.message ?? '';
+      const sinCupo = msg.includes('sin_cupo');
+      const paisSinCobro = msg.includes('pais_sin_cobro');
+      // Spec W-253: los códigos del ticket especial viajan tal cual a la web.
+      const codigoEspecial = ['especial_invalido', 'especial_cerrado', 'especial_agotado']
+        .find((c) => msg.includes(c));
+      const cantidadInvalida = msg.includes('cantidad_invalida');
       console.error('reservar_ticket_pending falló:', ticketError);
+      const codigo = sinCupo ? 'sin_cupo' : paisSinCobro ? 'pais_sin_cobro'
+        : codigoEspecial ?? (cantidadInvalida ? 'cantidad_invalida' : null);
       return json({
-        error: sinCupo ? 'sin_cupo' : paisSinCobro ? 'pais_sin_cobro' : 'ticket_insert_failed',
+        error: codigo ?? 'ticket_insert_failed',
         detail: ticketError.message,
-      }, sinCupo || paisSinCobro ? 409 : 500);
+      }, !codigo ? 500 : cantidadInvalida && !codigoEspecial ? 400 : 409);
     }
 
     // Spec 101. El evento pudo cambiar de país entre el chequeo de arriba y esta

@@ -43,7 +43,8 @@ serve(async (req) => {
   }
 
   try {
-    const { evento_id, user_id, cantidad } = await req.json();
+    // Spec W-253: `especialId` opcional. Con él, `cantidad` son PACKS del ticket especial.
+    const { evento_id, user_id, cantidad, especialId } = await req.json();
 
     const authHeader = req.headers.get('Authorization')!;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
@@ -70,6 +71,37 @@ serve(async (req) => {
 
     if (error || !evento) {
       return json({ error: 'evento_no_encontrado', evento_id }, 404);
+    }
+
+    // Spec W-253. Ticket especial (pack NxN). Mismas validaciones que create-preference;
+    // la guarda real del cupo es `_reservar_ticket_shared`. El cobro sigue saliendo de
+    // `ticket.monto`, que ya trae el monto del pack × packs.
+    let especial: { id: string; nombre: string; multiplicador: number } | null = null;
+    if (especialId !== undefined && especialId !== null) {
+      if (typeof especialId !== 'string') {
+        return json({ error: 'especial_invalido', detail: 'especialId debe ser un uuid' }, 409);
+      }
+      const { data: esp } = await supabase
+        .from('event_tickets_especiales')
+        .select('id, event_id, nombre, multiplicador, activa')
+        .eq('id', especialId)
+        .maybeSingle();
+      // Un uuid mal formado hace fallar la consulta (esp = null): también es inválido.
+      if (!esp || esp.event_id !== evento_id) {
+        return json({ error: 'especial_invalido', especial_id: especialId }, 409);
+      }
+      if (!esp.activa) {
+        return json({ error: 'especial_cerrado', especial_id: especialId }, 409);
+      }
+      // El tope por compra se mide en entradas, no en packs.
+      const entradas = cantidad * esp.multiplicador;
+      if (entradas > MAX_CANTIDAD_POR_COMPRA) {
+        return json({
+          error: 'cantidad_invalida',
+          detail: `${entradas} entradas superan el tope de ${MAX_CANTIDAD_POR_COMPRA} por compra`,
+        }, 400);
+      }
+      especial = esp;
     }
 
     const { data: cotizacion, error: cotizError } = await supabase
@@ -120,6 +152,9 @@ serve(async (req) => {
         p_cantidad: cantidad,
         p_preference_id: ticketRef,
         p_pasarela: 'flow',
+        // Spec W-253: solo se manda con un pack. Sin él la llamada queda idéntica a la de
+        // antes, así que el deploy no depende de que la migración ya esté aplicada.
+        ...(especial ? { p_especial_id: especial.id } : {}),
       })
       .single<{ id: string; monto: number; moneda: string }>();
 
@@ -128,13 +163,21 @@ serve(async (req) => {
       const codigo = msg.includes('sin_cupo') ? 'sin_cupo'
         : msg.includes('pais_sin_cobro') ? 'pais_sin_cobro'
         : msg.includes('pasarela_inactiva') ? 'pasarela_inactiva'
-        : null;
+        // Spec W-253: los códigos del ticket especial viajan tal cual a la web.
+        : ['especial_invalido', 'especial_cerrado', 'especial_agotado'].find((c) => msg.includes(c))
+          ?? null;
+      const cantidadInvalida = !codigo && msg.includes('cantidad_invalida');
       console.error('reservar_ticket_pending falló:', ticketError);
+      if (cantidadInvalida) {
+        return json({ error: 'cantidad_invalida', detail: msg }, 400);
+      }
       return json({ error: codigo ?? 'ticket_insert_failed', detail: msg }, codigo ? 409 : 500);
     }
 
     // 5. Cobro en Flow, por el monto y la moneda que calculó la reserva.
-    const subject = `Entrada: ${evento.artist_name} - ${evento.venue_name}` +
+    const subject = (especial
+      ? `${evento.artist_name} - ${evento.venue_name} · ${especial.nombre} (${especial.multiplicador}x1)`
+      : `Entrada: ${evento.artist_name} - ${evento.venue_name}`) +
       (cantidad > 1 ? ` ×${cantidad}` : '');
 
     let orden;
