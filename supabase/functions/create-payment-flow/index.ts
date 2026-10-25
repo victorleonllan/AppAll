@@ -37,6 +37,26 @@ const MAX_CANTIDAD_POR_COMPRA = 10;
 // pague horas después — verificarlo en sandbox es una V de PENDIENTES.md.
 const TIMEOUT_ORDEN_SEGUNDOS = 30 * 60;
 
+// Spec W-259 (sonopolisWeb). Misma regla que `public.correos_validos` (W-258): el CHECK
+// de la base es la guarda real; esto solo responde 409 antes de reservar.
+const CORREO_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+// `destinatarios` del body → lista normalizada (trim + minúsculas, sin vacíos), `null` si no
+// viene o queda vacía, o `'invalido'` si no es un arreglo de strings.
+function normalizarDestinatarios(valor: unknown): string[] | null | 'invalido' {
+  if (valor === undefined || valor === null) return null;
+  if (!Array.isArray(valor) || valor.some((c) => typeof c !== 'string')) return 'invalido';
+  const lista = (valor as string[]).map((c) => c.trim().toLowerCase()).filter((c) => c !== '');
+  return lista.length > 0 ? lista : null;
+}
+
+// Válida solo con un pack y para las entradas 2..N: la primera es del comprador.
+function destinatariosValidos(lista: string[], entradas: number | null): boolean {
+  return entradas !== null &&
+    lista.length <= entradas - 1 &&
+    lista.every((c) => c.length <= 254 && CORREO_RE.test(c));
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS });
@@ -44,7 +64,8 @@ serve(async (req) => {
 
   try {
     // Spec W-253: `especialId` opcional. Con él, `cantidad` son PACKS del ticket especial.
-    const { evento_id, user_id, cantidad, especialId } = await req.json();
+    // Spec W-259: `destinatarios` opcional, correos de las entradas 2..N de un pack.
+    const { evento_id, user_id, cantidad, especialId, destinatarios: destinatariosBody } = await req.json();
 
     const authHeader = req.headers.get('Authorization')!;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
@@ -102,6 +123,13 @@ serve(async (req) => {
         }, 400);
       }
       especial = esp;
+    }
+
+    // Spec W-259 (sonopolisWeb). Antes de reservar: un 409 acá no deja ticket ni cupo tomado.
+    const destinatarios = normalizarDestinatarios(destinatariosBody);
+    if (destinatarios === 'invalido' ||
+        (destinatarios && !destinatariosValidos(destinatarios, especial ? cantidad * especial.multiplicador : null))) {
+      return json({ error: 'destinatarios_invalidos' }, 409);
     }
 
     const { data: cotizacion, error: cotizError } = await supabase
@@ -172,6 +200,33 @@ serve(async (req) => {
         return json({ error: 'cantidad_invalida', detail: msg }, 400);
       }
       return json({ error: codigo ?? 'ticket_insert_failed', detail: msg }, codigo ? 409 : 500);
+    }
+
+    // Spec W-259 (sonopolisWeb). Los correos de las entradas extra se guardan aparte de la
+    // reserva para no cambiar la firma de `_reservar_ticket_shared` (ver el spec). Cliente
+    // solo con service role: `supabase` lleva el JWT del comprador y `tickets` no tiene
+    // policy de UPDATE, así que con él el UPDATE no tocaría ninguna fila, sin error.
+    if (destinatarios) {
+      const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const { data: guardado, error: destErr } = await admin
+        .from('tickets')
+        .update({ destinatarios_extra: destinatarios })
+        .eq('id', ticket.id)
+        .select('id')
+        .maybeSingle();
+      if (destErr || !guardado) {
+        // Sin la lista no se reserva: el cupo del pack se devuelve en el acto.
+        console.error('No se pudieron guardar los destinatarios del ticket', ticket.id, destErr);
+        const { error: cancelErr } = await admin
+          .from('tickets')
+          .update({ status: 'cancelled' })
+          .eq('id', ticket.id)
+          .eq('status', 'pending');
+        if (cancelErr) {
+          console.error('No se pudo cancelar el ticket tras fallar los destinatarios:', ticket.id, cancelErr);
+        }
+        return json({ error: 'destinatarios_no_guardados', detail: destErr?.message }, 500);
+      }
     }
 
     // 5. Cobro en Flow, por el monto y la moneda que calculó la reserva.
