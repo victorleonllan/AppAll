@@ -1,6 +1,6 @@
 # Spec 162 — Cancelar la suscripción a Pro en Mercado Pago desde el panel, y que el webhook cierre igual
 
-> Estado: propuesto (26-oct-2026)
+> Estado: aplicado y **desplegado en producción** (26-oct-2026) — `cancelar-suscripcion-pro` v1 y `webhook-mp-pro` v3. `deno check` limpio en las dos (criterio 1). En producción: sin token → 401; con la anon key (JWT válido, sin cuenta) → 403 «Solo la cuenta…», sin llamar a Mercado Pago (criterio 2, ver addenda); `webhook-mp-pro` sin firma → 401 (criterio 3). Cancelar de verdad: V40.
 > Capa: LÓGICA. `supabase/functions/cancelar-suscripcion-pro/index.ts` (nueva),
 > `supabase/functions/webhook-mp-pro/index.ts`, `supabase/config.toml`.
 > Depende de: spec 161 (`pro_mi_suscripcion`, `pro_cerrar_suscripcion`), spec 109
@@ -72,3 +72,18 @@ verify_jwt = true
 ## Fuera de alcance
 
 - La pantalla (W-265) y la función de la web que llama a esta (W-264).
+
+## Addenda (26-oct-2026)
+
+- **`status` es `canceled`, con una L.** La guía de Mercado Pago
+  (`/developers/en/docs/subscriptions/subscription-management`) dice «send a PUT with the
+  `status` attribute and the `canceled` value». La página de referencia `…/_preapproval_id/put`
+  del spec ya no existe (404); la actual es
+  `/reference/online-payments/subscriptions/update-preapproval/put`.
+- **Criterio 2:** «con `anon` → 401» se cumple sin `Authorization`. Con la anon key el
+  gateway la acepta (es un JWT válido) y la función responde 403, porque
+  `pro_mi_suscripcion` devuelve cero filas: es el mismo camino que una cuenta que no es
+  dueña, que no se probó con una sesión real.
+- En el webhook, la rama `cancelada` busca la fila por `mp_plan_id`, guarda
+  `mp_preapproval_id` solo si faltaba y llama a `pro_cerrar_suscripcion`; los demás estados
+  siguen con el `update` del spec 109.
