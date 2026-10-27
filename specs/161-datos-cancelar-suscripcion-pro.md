@@ -1,6 +1,6 @@
 # Spec 161 — El dueño ve su suscripción a Pro y la base sabe cerrarla en el día que pagó
 
-> Estado: propuesto (26-oct-2026)
+> Estado: aplicado y **pusheado a producción** (26-oct-2026) — `20261026200000_spec_161_cancelar_suscripcion_pro.sql`, única pendiente. Antes del push, los 5 criterios verificados en producción dentro de una transacción abortada (migración corrida dos veces, Quintal como tenant de prueba, sin dejar filas): próximo cobro 26-nov y Pro hasta 29-nov; otra cuenta y `anon` → 0 filas; cerrar → 26-nov, idempotente, 1 fila en `pro_cambios`; con la fecha movida por el admin no la toca; `authenticated` → permission denied. Ver addenda.
 > Capa: DATOS. Migración nueva en `supabase/migrations/` (`*_spec_161_cancelar_suscripcion_pro.sql`).
 > Depende de: spec 110 (`pro_suscripciones`, `pro_pagos`, `pro_cuenta_del_tenant`,
 > `pro_cambios.fuente`). **No se hace `db push` mientras la migración de W-261 de
@@ -102,3 +102,9 @@ Verificar en una transacción con `rollback` (local o producción), como el spec
 - Llamar a Mercado Pago (spec 162).
 - Volver a suscribirse antes de que venza un Pro cancelado: hoy el botón de suscribirse
   solo aparece sin Pro. Se anota en `PENDIENTES.md` si Victor lo pide.
+
+## Addenda (26-oct-2026)
+
+- `pro_mi_suscripcion` también tiene `grant` a `anon`: el criterio 2 pide «cero filas» sin
+  sesión, no un error de permiso. Sin `auth.uid()` devuelve vacío.
+- El `db push` de W-261 ya estaba hecho por otra sesión cuando se aplicó este spec.
