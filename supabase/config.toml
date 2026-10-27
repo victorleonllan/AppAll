@@ -463,3 +463,7 @@ verify_jwt = true
 enabled = true
 # Mercado Pago no manda JWT: se verifica la firma x-signature (spec 022).
 verify_jwt = false
+
+[functions.cancelar-suscripcion-pro]
+enabled = true
+verify_jwt = true

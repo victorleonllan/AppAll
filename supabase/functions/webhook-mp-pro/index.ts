@@ -91,6 +91,45 @@ serve(async (req) => {
         return ok();
       }
 
+      // Spec 162 — cancelada pasa por pro_cerrar_suscripcion: además del estado,
+      // deja Pro hasta el fin del mes pagado. Es idempotente, así que no importa si
+      // el panel ya la cerró (cancelar-suscripcion-pro) antes de este aviso.
+      if (nuevoEstado === 'cancelada') {
+        const { data: fila, error: errFila } = await supabase
+          .from('pro_suscripciones')
+          .select('id, mp_preapproval_id')
+          .eq('mp_plan_id', planId)
+          .maybeSingle();
+        if (errFila) {
+          console.error('Error buscando la suscripción:', errFila);
+          return new Response('DB read failed', { status: 500 });
+        }
+        if (!fila) {
+          // Puede ser una suscripción a otro plan de la misma cuenta de MP.
+          console.log(`Plan ${planId} desconocido, cancelación ${id} ignorada`);
+          return ok();
+        }
+        if (!fila.mp_preapproval_id) {
+          const { error: errId } = await supabase
+            .from('pro_suscripciones')
+            .update({ mp_preapproval_id: suscripcion.id?.toString() ?? id })
+            .eq('id', fila.id);
+          if (errId) {
+            console.error('Error guardando mp_preapproval_id:', errId);
+            return new Response('DB update failed', { status: 500 });
+          }
+        }
+        const { data: hasta, error: errCerrar } = await supabase.rpc('pro_cerrar_suscripcion', {
+          p_suscripcion_id: fila.id,
+        });
+        if (errCerrar) {
+          console.error('pro_cerrar_suscripcion falló:', errCerrar);
+          return new Response('DB close failed', { status: 500 });
+        }
+        console.log(`Suscripción ${id} (plan ${planId}) cancelada, Pro hasta ${hasta}`);
+        return ok();
+      }
+
       const { data, error } = await supabase
         .from('pro_suscripciones')
         .update({ estado: nuevoEstado, mp_preapproval_id: suscripcion.id?.toString() ?? id })
