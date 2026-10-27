@@ -305,3 +305,4 @@ Fuente de verdad: `TicketStatus` en `src/types/index.ts`.
 - Tablas: venues, events, profiles, tickets
 - MP: Checkout Pro (app Sonópolis, credenciales de prueba — auditoría pre-producción en el spec 072)
 | 161 | El dueño ve su suscripción a Pro (`pro_mi_suscripcion`) y `pro_cerrar_suscripcion` la cancela dejando Pro hasta el fin del mes pagado. Habilita 162 y `sonopolisWeb/specs/w264` | Propuesto (26-oct-2026) — `db push` espera al de W-261 |
+| 162 | `cancelar-suscripcion-pro`: el dueño cancela en Mercado Pago desde el panel; `webhook-mp-pro` cierra igual si cancelan desde Mercado Pago. Habilita `sonopolisWeb/specs/w264` | Propuesto (26-oct-2026) |
