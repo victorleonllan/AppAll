@@ -169,3 +169,13 @@ del spec ya responden 404):
   convierte con `Number()` antes de `p_monto`.
 - `preapproval_id`, `payment.status` y `preapproval_plan_id` coinciden con el spec.
 
+
+## Bug encontrado en producción (27-oct-2026)
+
+- **«Suscribirme con Mercado Pago» fallaba en el navegador** con «Failed to send a request to
+  the Edge Function». Causa: el CORS de `crear-suscripcion-pro` (copiado de
+  `create-preference`) solo permitía `authorization, apikey, content-type`, y `supabase-js`
+  manda además `x-client-info` en cada llamada. El navegador cortaba el preflight y la
+  función nunca recibía el pedido: no quedaba ninguna fila en `pro_suscripciones` ni log de
+  error. Por eso los `curl` de la verificación pasaban: no mandan ese header. Arreglo: la
+  lista de headers de `@supabase/supabase-js/cors`. Desplegada el 27-oct-2026.
