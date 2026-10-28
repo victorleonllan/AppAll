@@ -87,3 +87,10 @@ verify_jwt = true
 - En el webhook, la rama `cancelada` busca la fila por `mp_plan_id`, guarda
   `mp_preapproval_id` solo si faltaba y llama a `pro_cerrar_suscripcion`; los demás estados
   siguen con el `update` del spec 109.
+
+## Bug encontrado en producción (27-oct-2026)
+
+- **Mismo CORS roto que `crear-suscripcion-pro`** (ver addenda del spec 109): faltaba
+  `x-client-info`, así que «Sí, cancelar» habría fallado en el navegador con «Failed to send
+  a request to the Edge Function». Arreglado antes de que nadie lo usara, con la lista de
+  `@supabase/supabase-js/cors`. Desplegada el 27-oct-2026.
