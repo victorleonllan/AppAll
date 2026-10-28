@@ -16,11 +16,13 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 // Misma env var que create-preference: MP valida que back_url sea HTTPS.
 const APP_WEB_URL = Deno.env.get('APP_WEB_URL') ?? 'https://sonopolis.org';
 
-// Los mismos CORS que create-preference: el panel de admin de la web llama desde
-// otro origen.
+// El panel de la web llama desde otro origen. Los headers son los que manda
+// supabase-js (`@supabase/supabase-js/cors`): sin `x-client-info` el navegador
+// corta el preflight y `functions.invoke` falla con «Failed to send a request».
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, apikey, content-type',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type, x-retry-count, traceparent, tracestate, baggage',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
