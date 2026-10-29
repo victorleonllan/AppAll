@@ -1,6 +1,6 @@
 # Spec 154 — Tarjeta «Sonópolis Pro» informativa en los paneles de local y de músico
 
-> Estado: propuesto (19-oct-2026)
+> Estado: aplicado (29-oct-2026) — `tsc` limpio en los archivos del spec, export web limpio, criterio 6 (grep) sin salida y criterio 4 verificado con un script sobre `src/lib/pro.ts` en hora de Chile (30 días, 3 días, 1 día, `9999-12-31`). Pendientes en dispositivo: 3, 5, 7 y V-candidata 154-a
 > Capa: FRONTEND. `src/components/TarjetaPro.tsx` (nuevo), `src/screens/DashboardLocalScreen.tsx`, `src/screens/PerfilMusicoScreen.tsx`.
 > Depende de: spec 148
 > Hermano en la web: `components/CardSonopolisPro.js` (W-052, W-186, W-222, W-243).

@@ -14,6 +14,7 @@ import {
 } from '../lib/profiles';
 import { confirmar } from '../lib/confirm';
 import TarjetaEvento from '../components/TarjetaEvento';
+import TarjetaPro from '../components/TarjetaPro';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export default function PerfilMusicoScreen() {
@@ -254,6 +255,13 @@ export default function PerfilMusicoScreen() {
         </View>
       </View>
 
+      {/* Spec 154 — Pro informativo; un perfil de muestra no tiene fila real. */}
+      {!esMock && (
+        <View style={styles.tarjetaPro}>
+          <TarjetaPro tenant={perfil} etiqueta="tu banda" />
+        </View>
+      )}
+
       <View style={styles.card}>
         <Text style={styles.titulo}>Acciones</Text>
         <TouchableOpacity
@@ -334,6 +342,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
+  tarjetaPro: { marginBottom: spacing.md },
   titulo: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
