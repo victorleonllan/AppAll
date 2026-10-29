@@ -1,6 +1,6 @@
 # Spec 147 — `create-payment-flow` sabe cuándo la llama la app y la devuelve a la app
 
-> Estado: propuesto (19-oct-2026)
+> Estado: aplicado (29-oct-2026) — `deno check` limpio; desplegada en producción (v4, `verify_jwt: false`), el código descargado trae `origen_invalido`, `origen=app` y `ticket_ref`. Criterio 4 (llamada en producción con sesión válida) pendiente: sin sesión de prueba en esta tanda.
 > Capa: LÓGICA. `supabase/functions/create-payment-flow/index.ts`.
 > Depende de: spec 105 (aplicado), spec 117 (aplicado)
 > Hermano en la web: W-251 de `sonopolisWeb` (la ruta de retorno de Flow que lee `origen=app`).
