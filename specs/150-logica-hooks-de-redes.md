@@ -1,6 +1,6 @@
 # Spec 150 — Lógica de las redes del CRM: cuentas, publicaciones, subida de medios y textos del anuncio
 
-> Estado: propuesto (19-oct-2026)
+> Estado: aplicado (29-oct-2026) — `src/lib/redes/` (catálogo, reglas, textos, horario, api, medios), cuatro hooks y `expo-image-manipulator ~56.0.26`. Verificado: criterios 1 (tsc limpio), 2 (`expo export --platform web` ok), 3 (sin `catch {}`), 4 (mismos `textoDelEvento` y `validarPublicacion` que `sonopolisWeb/libs/redes/*.js` con tsx), 5 en Node y 6. Pendientes en dispositivo/servidor: 5 en Hermes, 7 (requiere W-249 y tenant Pro), 8 y 9.
 > Capa: LÓGICA. `src/lib/apiWeb.ts`, `src/lib/redes/catalogo.ts` (nuevo), `src/lib/redes/reglas.ts` (nuevo), `src/lib/redes/textos.ts` (nuevo), `src/lib/redes/horario.ts` (nuevo), `src/lib/redes/api.ts` (nuevo), `src/lib/redes/medios.ts` (nuevo), `src/hooks/useTenantRedes.ts` (nuevo), `src/hooks/useConexionesRedes.ts` (nuevo), `src/hooks/usePublicacionesRedes.ts` (nuevo), `src/hooks/useSubirMediosRedes.ts` (nuevo), `package.json`, `package-lock.json`.
 > Depende de: spec 148, spec 113, W-249 de la web
 > Hermano en la web: `libs/redes/catalogo.js`, `libs/redes/reglas.js`, `libs/redes/textos.js`, `libs/redes/medios.js`, `components/redes/*` (W-233, W-236, W-237, W-238), y W-249 (las rutas `app/api/redes/*` con Bearer).

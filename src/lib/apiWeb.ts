@@ -10,25 +10,29 @@ import { URL_WEB } from '../constants/web';
  * una petición con preflight de CORS no sigue redirecciones, así que en el build web
  * de Expo la llamada se rompería.
  */
-const BASE_WEB = process.env.EXPO_PUBLIC_WEB_URL || URL_WEB;
+export const BASE_WEB = process.env.EXPO_PUBLIC_WEB_URL || URL_WEB;
 
 /** `codigo` es el `error` que devolvió la ruta (`sin_email`, `no_encontrado`…) o
- * `HTTP <status>` si no trajo uno. El mensaje es el mismo código. */
+ * `HTTP <status>` si no trajo uno. El mensaje es el mismo código. `cuerpo` es el JSON
+ * completo de la respuesta (spec 150): el 400 de publicar en redes trae además
+ * `generales` y `porRed`. */
 export class ErrorApiWeb extends Error {
   status: number;
   codigo: string;
+  cuerpo: Record<string, unknown>;
 
-  constructor(status: number, codigo: string) {
+  constructor(status: number, codigo: string, cuerpo: Record<string, unknown> = {}) {
     super(codigo);
     this.name = 'ErrorApiWeb';
     this.status = status;
     this.codigo = codigo;
+    this.cuerpo = cuerpo;
   }
 }
 
 export async function llamarApiWeb<T>(
   ruta: string,
-  opciones?: { metodo?: 'GET' | 'POST'; cuerpo?: unknown }
+  opciones?: { metodo?: 'GET' | 'POST' | 'PATCH' | 'DELETE'; cuerpo?: unknown }
 ): Promise<T> {
   // El token nunca va a un console.*: con él se actúa como esa persona.
   const { data } = await supabase.auth.getSession();
@@ -53,6 +57,9 @@ export async function llamarApiWeb<T>(
     // y el código sale del status.
     body = {};
   }
-  if (!res.ok) throw new ErrorApiWeb(res.status, body?.error ?? `HTTP ${res.status}`);
+  if (!res.ok) {
+    const cuerpo = body && typeof body === 'object' && !Array.isArray(body) ? body : {};
+    throw new ErrorApiWeb(res.status, body?.error ?? `HTTP ${res.status}`, cuerpo);
+  }
   return body as T;
 }
