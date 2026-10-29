@@ -10,6 +10,8 @@ import { useSolicitudes, contrapartesConSolicitudViva } from '../hooks/useSolici
 import { useConexiones, musicosYaConectados } from '../hooks/useConexiones';
 import ModalSolicitud from '../components/ModalSolicitud';
 import BotonSeguir from '../components/BotonSeguir';
+import OptInWhatsApp from '../components/OptInWhatsApp';
+import { useTelefonoPropio } from '../hooks/useOptInWhatsApp';
 import { MENSAJES_SOLICITUD } from '../constants/solicitudes';
 import { etiquetaPais } from '../constants/paises';
 import { TIPO_PROYECTO_LABEL } from '../lib/profiles';
@@ -33,6 +35,7 @@ export default function VerMusicoScreen() {
   const con = useConexiones();
   const [modalVisible, setModalVisible] = useState(false);
   const [enviado, setEnviado] = useState(false);
+  const telefonoPropio = useTelefonoPropio();
 
   const userId = user?.id ?? null;
   const miVenueId = allVenues.find((v) => v.ownerId === userId)?.id ?? null;
@@ -137,6 +140,8 @@ export default function VerMusicoScreen() {
             .filter(Boolean)
             .join(' · ')}
         </Text>
+        {/* Spec 156 — mismas reglas que la ficha del local. */}
+        <OptInWhatsApp tenantTipo="musician" tenantId={musico.id} telefonoInicial={telefonoPropio} />
 
         <View style={styles.separador} />
 

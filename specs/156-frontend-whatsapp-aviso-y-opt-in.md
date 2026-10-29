@@ -1,6 +1,6 @@
 # Spec 156 — «Avisar por WhatsApp» en el detalle del evento y opt-in de WhatsApp en la app
 
-> Estado: propuesto (19-oct-2026)
+> Estado: aplicado (29-oct-2026) — `OptInWhatsApp` y `AvisarWhatsApp` nuevos, opt-in en la compra y aviso del owner en `DetalleEventoScreen`, opt-in en las fichas de local y músico; criterio 1 (`tsc`) sin salida y criterio 2 (export web) limpio. Criterios 3–10 y V-candidata 156-a pendientes (necesitan sesión real, un tenant con Pro y dispositivo)
 > Capa: FRONTEND. `src/components/OptInWhatsApp.tsx` (nuevo), `src/components/AvisarWhatsApp.tsx` (nuevo), `src/screens/DetalleEventoScreen.tsx`, `src/screens/DetalleLocalScreen.tsx`, `src/screens/VerMusicoScreen.tsx`.
 > Depende de: spec 148, spec 149, spec 155
 > Hermano en la web: `components/OptInWhatsApp.js` (W-053, W-104), `app/(marketing)/cartelera/[id]/BotonAvisarWhatsApp.js` (W-054, W-108), `app/(marketing)/cartelera/[id]/BotonComprar.js:80-133`.
