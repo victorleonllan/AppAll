@@ -11,6 +11,8 @@ import MisEntradasScreen from '../screens/MisEntradasScreen';
 import CambiarContrasenaScreen from '../screens/CambiarContrasenaScreen';
 import SolicitudesScreen from '../screens/SolicitudesScreen';
 import CobrarEventoScreen from '../screens/CobrarEventoScreen';
+import ContactosScreen from '../screens/ContactosScreen';
+import type { TipoTenant } from '../hooks/useTenantCrm';
 import { colors, fontSize } from '../theme';
 
 export type MusicoStackParamList = {
@@ -28,6 +30,7 @@ export type MusicoStackParamList = {
   CambiarContrasena: undefined;
   Solicitudes: undefined;
   CobrarEvento: { eventoId: string };
+  Contactos: { tipo: TipoTenant };
 };
 
 const Stack = createNativeStackNavigator<MusicoStackParamList>();
@@ -90,6 +93,8 @@ export default function MusicoStack() {
       <Stack.Screen name="CambiarContrasena" component={CambiarContrasenaScreen} options={{ title: 'Cambiar contraseña' }} />
       <Stack.Screen name="Solicitudes" component={SolicitudesScreen} options={{ title: 'Solicitudes' }} />
       <Stack.Screen name="CobrarEvento" component={CobrarEventoScreen} options={{ title: 'Cobrar' }} />
+      {/* Spec 155 — la misma pantalla en los dos stacks, como Escaner: cambia el tenant, no el código. */}
+      <Stack.Screen name="Contactos" component={ContactosScreen} options={{ title: 'Contactos' }} />
     </Stack.Navigator>
   );
 }
