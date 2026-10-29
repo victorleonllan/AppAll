@@ -8,6 +8,7 @@ import { useEventos } from '../context/EventosContext';
 import { supabase } from '../lib/supabase';
 import { confirmar } from '../lib/confirm';
 import TarjetaEvento from '../components/TarjetaEvento';
+import TarjetaPro from '../components/TarjetaPro';
 import { venueEmoji, venueLabel } from '../lib/venues';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 import { MiLocalStackParamList } from '../navigation/MiLocalStack';
@@ -188,6 +189,11 @@ export default function DashboardLocalScreen() {
             </View>
           </View>
 
+          {/* Spec 154 — Pro informativo, sin precio ni compra: Pro no se vende en la app. */}
+          <View style={styles.tarjetaPro}>
+            <TarjetaPro tenant={miVenue} etiqueta="tu local" />
+          </View>
+
           {/* Botón de crear evento arriba: hasta ahora quedaba al final de toda la lista. */}
           <TouchableOpacity style={styles.botonNuevo} onPress={() => navigation.navigate('CrearEvento')}>
             <Text style={styles.textoBotonNuevo}>+ Crear evento</Text>
@@ -329,6 +335,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginHorizontal: spacing.md,
   },
+  tarjetaPro: { marginHorizontal: spacing.md, marginTop: spacing.md },
   resumenCard: {
     flex: 1,
     backgroundColor: colors.cardBackground,
