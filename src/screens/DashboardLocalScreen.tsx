@@ -222,6 +222,10 @@ export default function DashboardLocalScreen() {
           >
             <Text style={styles.textoBotonSecundario}>👥 Contactos</Text>
           </TouchableOpacity>
+          {/* Spec 157 — también sin Pro: lleva a la explicación neutra, no a una oferta. */}
+          <TouchableOpacity style={styles.botonEscaner} onPress={() => navigation.navigate('Redes')}>
+            <Text style={styles.textoBotonSecundario}>📣 Redes</Text>
+          </TouchableOpacity>
 
           <Text style={styles.tituloSeccion}>Próximos eventos</Text>
           {misEventos.length === 0 && (

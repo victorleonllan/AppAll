@@ -1,6 +1,6 @@
 # Spec 157 — Redes del CRM en la app: cuentas, historial y redactor para local y músico
 
-> Estado: propuesto (19-oct-2026)
+> Estado: aplicado (29-oct-2026) — `npx tsc --noEmit` sin errores fuera de `supabase/functions`, `npx expo export --platform web` termina sin error y `Alert.alert` sin resultados en los archivos nuevos (criterios 1-3). Los criterios 4-11 y la V-candidata 157-a quedan para prueba manual en dispositivo.
 > Capa: FRONTEND. `src/screens/RedesScreen.tsx` (nuevo), `src/screens/PublicarRedesScreen.tsx` (nuevo), `src/components/redes/ComunRedes.tsx` (nuevo), `src/components/redes/MediosRedes.tsx` (nuevo), `src/navigation/MiLocalStack.tsx`, `src/navigation/MusicoStack.tsx`, `src/navigation/CarteleraStack.tsx`, `src/screens/DashboardLocalScreen.tsx`, `src/screens/PerfilMusicoScreen.tsx`, `src/screens/DetalleEventoScreen.tsx`.
 > Depende de: spec 150, spec 155, spec 156
 > Hermano en la web: `app/(private)/local/redes/page.js`, `app/(private)/musico/redes/page.js`, sus `/publicar`, `components/redes/CuentasConectadas.js`, `ListaPublicaciones.js`, `RedactorPublicacion.js`, `SubirMedios.js`, `OpcionesTikTok.js`, `app/(marketing)/cartelera/[id]/BotonPublicarEnRedes.js` (W-237, W-238, W-239), sobre las rutas de W-249.
@@ -289,3 +289,19 @@ información de la cuenta y no una oferta.
   Facebook e Instagram desde la app (pasando por la web), anunciar un evento con su flyer
   en las dos redes programado a 5 minutos, y ver en el historial de la app y en las dos
   cuentas que salió a la hora; después desconectar ambas.
+
+## Bugs encontrados al aplicar (29-oct-2026)
+
+- **«Hora de <país>» sin `pais`.** §4.6 pide `PAISES[pais].nombre`, pero `useTenantRedes`
+  (spec 150) devuelve `zonaHoraria` y no `pais`. El redactor busca el país por la zona
+  (`Object.values(PAISES).find(p => p.zonaHoraria === zona)`); con un país por zona, como hoy
+  (CL, MX), da lo mismo. Si dos países llegan a compartir zona, hay que exponer `pais` en el hook.
+- **`AvisoRedes` decía «no disponible» mientras cargaba.** Con `{ tenant, disponibles }` solos,
+  `disponibles` es `[]` mientras llegan las cuentas y también si su lectura falla, y las dos
+  cosas se veían como «Publicar en redes todavía no está disponible.». Se agregaron las props
+  opcionales `cargando` (→ `ActivityIndicator`), `error` (→ `Text` rojo) y `sinPro` (el 402
+  de §1), evaluadas después de los casos del diseño y en su mismo orden.
+- **`sin_tenant` no dice si es local o músico.** En ese estado `tenantType` y `panelWeb`
+  vienen en `null`; el texto de §1 se elige con `role` de `useAuth`.
+- **`AvisoRedes` usa un hook**, así que la pantalla no puede llamarlo como función para saber
+  si devolvió `null`. Se exporta además `hayAvisoRedes(props)`, pura, con la misma condición.

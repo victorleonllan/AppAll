@@ -10,6 +10,7 @@ import MisEntradasScreen from '../screens/MisEntradasScreen';
 import DetalleLocalScreen from '../screens/DetalleLocalScreen';
 import CobrarEventoScreen from '../screens/CobrarEventoScreen';
 import InvitacionLocalScreen from '../screens/InvitacionLocalScreen';
+import PublicarRedesScreen from '../screens/PublicarRedesScreen';
 import { colors, fontSize } from '../theme';
 
 export type CarteleraStackParamList = {
@@ -32,6 +33,7 @@ export type CarteleraStackParamList = {
   DetalleLocal: { venueId: string };
   CobrarEvento: { eventoId: string };
   InvitacionLocal: { token: string };
+  PublicarRedes: { eventoId?: string } | undefined;
 };
 
 const Stack = createNativeStackNavigator<CarteleraStackParamList>();
@@ -95,6 +97,9 @@ export default function CarteleraStack() {
       <Stack.Screen name="DetalleLocal" component={DetalleLocalScreen} options={{ title: 'Local' }} />
       <Stack.Screen name="CobrarEvento" component={CobrarEventoScreen} options={{ title: 'Cobrar' }} />
       <Stack.Screen name="InvitacionLocal" component={InvitacionLocalScreen} options={{ title: 'Invitación' }} />
+      {/* Spec 157 — el redactor, por el atajo «Publicar en redes» de DetalleEvento: navegar
+          a otra pestaña dejaría «atrás» fuera de la ficha (mismo motivo que Escaner). */}
+      <Stack.Screen name="PublicarRedes" component={PublicarRedesScreen} options={{ title: 'Publicar en redes' }} />
     </Stack.Navigator>
   );
 }
