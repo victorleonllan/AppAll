@@ -65,7 +65,8 @@ serve(async (req) => {
   try {
     // Spec W-253: `especialId` opcional. Con él, `cantidad` son PACKS del ticket especial.
     // Spec W-259: `destinatarios` opcional, correos de las entradas 2..N de un pack.
-    const { evento_id, user_id, cantidad, especialId, destinatarios: destinatariosBody } = await req.json();
+    // Spec 147: `origen` opcional; 'app' devuelve al comprador a la app tras pagar.
+    const { evento_id, user_id, cantidad, especialId, destinatarios: destinatariosBody, origen } = await req.json();
 
     const authHeader = req.headers.get('Authorization')!;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
@@ -83,6 +84,13 @@ serve(async (req) => {
         detail: `cantidad debe ser un entero entre 1 y ${MAX_CANTIDAD_POR_COMPRA}`,
       }, 400);
     }
+
+    // Spec 147. Mismo código y texto que create-preference (spec 117): un valor desconocido
+    // se rechaza en vez de tratarse como web, para que el error no aparezca recién al volver.
+    if (origen !== undefined && origen !== 'app') {
+      return json({ error: 'origen_invalido', detail: "origen debe ser 'app' u omitirse" }, 400);
+    }
+    const desdeApp = origen === 'app';
 
     const { data: evento, error } = await supabase
       .from('events')
@@ -247,7 +255,11 @@ serve(async (req) => {
         // `?cuenta=`: webhook-flow lo lee para saber con qué cuenta preguntarle
         // a Flow por este token.
         urlConfirmation: `${SUPABASE_URL}/functions/v1/webhook-flow?cuenta=${cuenta.pais}`,
-        urlReturn: `${APP_WEB_URL}/api/flow/retorno?ref=${ticketRef}`,
+        // Spec 147 — `origen=app`: /api/flow/retorno (W-251) reenvía a /app/volver, que reabre
+        // la app. Sin él, la vuelta de la web queda byte a byte igual.
+        urlReturn: desdeApp
+          ? `${APP_WEB_URL}/api/flow/retorno?origen=app&ref=${ticketRef}`
+          : `${APP_WEB_URL}/api/flow/retorno?ref=${ticketRef}`,
         timeout: String(TIMEOUT_ORDEN_SEGUNDOS),
         optional: JSON.stringify({ ticket_id: ticket.id }),
       });
@@ -275,6 +287,7 @@ serve(async (req) => {
     return json({
       checkout_url: `${orden.url}?token=${orden.token}`,
       ticket_id: ticket.id,
+      ticket_ref: ticketRef,
       pasarela: 'flow',
     }, 200);
   } catch (err) {
