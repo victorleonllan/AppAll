@@ -1,6 +1,6 @@
 # Spec 151 — La app sabe con qué pasarelas cobra cada país y sabe cobrar con cualquiera
 
-> Estado: propuesto (19-oct-2026)
+> Estado: aplicado (29-oct-2026) — `tsc` limpio, `expo export --platform web` sin error, consulta a `pasarelas_cobro` en producción: CL → `mercadopago`, MX y AR → vacío (criterio 3), llamada de Mercado Pago cotejada con `pedirPreferencia` (criterio 4). Criterio 5 (Flow → `pasarela_inactiva` con sesión real) y V-candidata 151-a quedan para el spec 160.
 > Capa: LÓGICA. `src/lib/pasarelas.ts` (nuevo), `src/lib/pagoCompra.ts` (nuevo).
 > Depende de: spec 104 (aplicado), spec 117 (aplicado), spec 147
 > Hermano en la web: `libs/data/pasarelas.js` y `crearPagoCompra` de `libs/purchase.js` (W-189).
