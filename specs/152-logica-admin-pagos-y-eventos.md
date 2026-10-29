@@ -1,6 +1,6 @@
 # Spec 152 — Lógica del admin de Sonópolis en la app: quién es admin, Pagos y Eventos
 
-> Estado: propuesto (19-oct-2026)
+> Estado: aplicado (29-oct-2026) — `npx tsc --noEmit` sin errores, `expo export --platform web` sin error, sin `catch {}` vacíos (criterios 1-3). Criterios 4-7 (cuenta admin vs. cuenta de prueba, paridad con la web, `cerrar_evento` real) pendientes de verificación manual: V-candidata 152-a.
 > Capa: LÓGICA. `src/lib/admin.ts` (nuevo), `src/hooks/useEsAdmin.ts` (nuevo), `src/hooks/useAdminPagos.ts` (nuevo), `src/hooks/useAdminEventos.ts` (nuevo).
 > Depende de: spec 119, spec 135
 > Hermano en la web: `libs/admin.js`, `libs/data/pagos.js`, `app/(private)/admin/sonopolis/page.js`, `app/(private)/admin/eventos/page.js`, `app/(private)/admin/BotonCerrarEvento.js` (W-083, W-085, W-092, W-172, W-174, W-175).
