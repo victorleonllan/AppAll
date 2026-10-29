@@ -6,6 +6,8 @@ import { useVenues } from '../context/VenuesContext';
 import { useAuth } from '../context/AuthContext';
 import { useEventosDelLocal } from '../hooks/useEventosDelLocal';
 import BotonSeguir from '../components/BotonSeguir';
+import OptInWhatsApp from '../components/OptInWhatsApp';
+import { useTelefonoPropio } from '../hooks/useOptInWhatsApp';
 import MapaLocales from '../components/MapaLocales';
 import { mapaDisponible, puntosDeVenues, urlComoLlegar } from '../lib/mapa';
 import { venueEmoji, venueLabel } from '../lib/venues';
@@ -34,6 +36,7 @@ export default function DetalleLocalScreen() {
   const { user } = useAuth();
   const venue = allVenues.find((v) => v.id === venueId);
   const fechas = useEventosDelLocal(venue?.id);
+  const telefonoPropio = useTelefonoPropio();
 
   if (loading) {
     return (
@@ -86,6 +89,10 @@ export default function DetalleLocalScreen() {
         </View>
         {mostrarSeguir && <BotonSeguir tipo="venue" targetId={venue.id} />}
       </View>
+
+      {/* Spec 156 — para todos, con o sin sesión y con o sin Pro del local (W-053):
+          Pro decide quién manda, no quién recibe. */}
+      <OptInWhatsApp tenantTipo="venue" tenantId={venue.id} telefonoInicial={telefonoPropio} />
 
       <Text style={styles.seccion}>Dónde</Text>
       {!!venue.address && <Text style={styles.texto}>📍 {venue.address}</Text>}

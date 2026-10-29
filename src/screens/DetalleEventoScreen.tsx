@@ -15,6 +15,10 @@ import { useEstadoEventoEnVivo } from '../hooks/useEstadoEventoEnVivo';
 import { usePrecioVigente } from '../hooks/usePrecioVigente';
 import AvisoCancelacion from '../components/AvisoCancelacion';
 import PrecioEvento from '../components/PrecioEvento';
+import OptInWhatsApp from '../components/OptInWhatsApp';
+import AvisarWhatsApp from '../components/AvisarWhatsApp';
+import { useTenantDelEvento } from '../hooks/useTenantCrm';
+import { useTelefonoPropio, dispararOptInDeCompra } from '../hooks/useOptInWhatsApp';
 import { formatearMonto } from '../lib/precio';
 import { URL_WEB, VERSION_PREVIEW_LINK } from '../constants/web';
 import { supabase } from '../lib/supabase';
@@ -54,6 +58,18 @@ export default function DetalleEventoScreen() {
   // Se consulta para todo evento no cancelado: además del precio, el RPC dice si
   // el país del evento vende hoy (`se_vende`, spec 100).
   const { vigente } = usePrecioVigente(evento && !enVivo.cancelado ? evento.id : null);
+
+  // Spec 156 — el tenant solo se resuelve si alguien lo necesita (owner o compra
+  // posible), como la web (`page.js:172-179`): un fan sin sesión no paga tres consultas.
+  const hayCompra = !!user && (evento?.monto ?? 0) > 0 && !enVivo.cancelado;
+  const { tenant: tenantEvento } = useTenantDelEvento(
+    evento && (permisos.rol === 'owner' || hayCompra) ? evento : null
+  );
+  const telefonoPropio = useTelefonoPropio();
+  const [optIn, setOptIn] = useState({ acepta: false, telefono: '' });
+  useEffect(() => {
+    if (telefonoPropio) setOptIn((v) => (v.telefono ? v : { ...v, telefono: telefonoPropio }));
+  }, [telefonoPropio]);
 
   if (!evento) {
     return (
@@ -215,6 +231,15 @@ export default function DetalleEventoScreen() {
     if (monto <= 0) {
       Alert.alert('Sin precio', 'Este evento no tiene un precio definido');
       return;
+    }
+
+    // Spec 156 — sin await, como la web: un número mal escrito o una RPC caída no
+    // pueden frenar una venta. La auto-compra llega con `optIn.acepta` en false.
+    if (hayCompra && tenantEvento && optIn.acepta) {
+      dispararOptInDeCompra({
+        tenantTipo: tenantEvento.tipo, tenantId: tenantEvento.id, telefono: optIn.telefono,
+        userId: user?.id, email: user?.email ?? undefined,
+      });
     }
 
     setStep('comprando');
@@ -402,6 +427,16 @@ export default function DetalleEventoScreen() {
         <Text style={styles.precioLabel}>Precio</Text>
         <PrecioEvento evento={evento} vigente={vigente} alinear="inicio" />
 
+        {hayCompra && tenantEvento && !ventaCerrada && (
+          <OptInWhatsApp
+            tenantTipo={tenantEvento.tipo}
+            tenantId={tenantEvento.id}
+            etiqueta={`Avísame por WhatsApp de los próximos eventos de ${tenantEvento.nombre}`}
+            valor={optIn}
+            onCambiar={setOptIn}
+          />
+        )}
+
         {/* El monto del botón es solo lo que se muestra: lo que se cobra lo decide
             el servidor con la preventa vigente (create-preference). */}
         <TouchableOpacity
@@ -487,6 +522,9 @@ export default function DetalleEventoScreen() {
               </TouchableOpacity>
             )}
           </View>
+          {permisos.rol === 'owner' && !cancelado && tenantEvento && (
+            <AvisarWhatsApp eventoId={evento.id} tenant={tenantEvento} />
+          )}
           {errorGestion && <Text style={styles.errorGestion}>{errorGestion}</Text>}
         </View>
       )}
