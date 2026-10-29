@@ -15,6 +15,7 @@ import {
 import { confirmar } from '../lib/confirm';
 import TarjetaEvento from '../components/TarjetaEvento';
 import TarjetaPro from '../components/TarjetaPro';
+import BotonAdmin from '../components/BotonAdmin';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export default function PerfilMusicoScreen() {
@@ -166,6 +167,7 @@ export default function PerfilMusicoScreen() {
           )}
         </TouchableOpacity>
         {/* Spec 128 — también sin perfil: la contraseña es de la cuenta. */}
+        <BotonAdmin style={styles.botonEscaner} textStyle={styles.textoBotonSecundario} />
         <TouchableOpacity
           style={styles.botonEscaner}
           onPress={() => (navigation as any).navigate('CambiarContrasena')}
@@ -337,6 +339,7 @@ export default function PerfilMusicoScreen() {
           <Text style={styles.textoBotonSecundario}>📨 Solicitudes</Text>
         </TouchableOpacity>
       </View>
+      <BotonAdmin style={styles.botonEscaner} textStyle={styles.textoBotonSecundario} />
       <TouchableOpacity
         style={styles.botonEscaner}
         onPress={() => (navigation as any).navigate('CambiarContrasena')}

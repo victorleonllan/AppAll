@@ -9,6 +9,7 @@ import { supabase } from '../lib/supabase';
 import { confirmar } from '../lib/confirm';
 import TarjetaEvento from '../components/TarjetaEvento';
 import TarjetaPro from '../components/TarjetaPro';
+import BotonAdmin from '../components/BotonAdmin';
 import { venueEmoji, venueLabel } from '../lib/venues';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 import { MiLocalStackParamList } from '../navigation/MiLocalStack';
@@ -129,6 +130,7 @@ export default function DashboardLocalScreen() {
           <Text style={styles.textoBotonNuevo}>+ Registrar mi local</Text>
         </TouchableOpacity>
         {/* Spec 128 — también sin local: la contraseña es de la cuenta. */}
+        <BotonAdmin style={styles.botonEscaner} textStyle={styles.textoBotonSecundario} />
         <TouchableOpacity style={styles.botonEscaner} onPress={() => navigation.navigate('CambiarContrasena')}>
           <Text style={styles.textoBotonSecundario}>🔑 Contraseña de tu cuenta</Text>
         </TouchableOpacity>
@@ -267,6 +269,7 @@ export default function DashboardLocalScreen() {
               <Text style={styles.textoBotonSecundario}>📨 Solicitudes</Text>
             </TouchableOpacity>
           </View>
+          <BotonAdmin style={styles.botonEscaner} textStyle={styles.textoBotonSecundario} />
           <TouchableOpacity style={styles.botonEscaner} onPress={() => navigation.navigate('CambiarContrasena')}>
             <Text style={styles.textoBotonSecundario}>🔑 Contraseña de tu cuenta</Text>
           </TouchableOpacity>
