@@ -15,6 +15,7 @@ import ContactosScreen from '../screens/ContactosScreen';
 import RedesScreen from '../screens/RedesScreen';
 import PublicarRedesScreen from '../screens/PublicarRedesScreen';
 import type { TipoTenant } from '../hooks/useTenantCrm';
+import { pantallasAdmin, AdminParamList } from './pantallasAdmin';
 import { colors, fontSize } from '../theme';
 
 export type MusicoStackParamList = {
@@ -35,7 +36,7 @@ export type MusicoStackParamList = {
   Contactos: { tipo: TipoTenant };
   Redes: undefined;
   PublicarRedes: { eventoId?: string } | undefined;
-};
+} & AdminParamList;
 
 const Stack = createNativeStackNavigator<MusicoStackParamList>();
 
@@ -102,6 +103,8 @@ export default function MusicoStack() {
       {/* Spec 157 — igual que Contactos: el tenant sale de useTenantRedes, no de la ruta. */}
       <Stack.Screen name="Redes" component={RedesScreen} options={{ title: 'Redes' }} />
       <Stack.Screen name="PublicarRedes" component={PublicarRedesScreen} options={{ title: 'Publicar en redes' }} />
+      {/* Spec 158 — el back office: admin es una fila en platform_admins, no un rol. */}
+      {pantallasAdmin(Stack)}
     </Stack.Navigator>
   );
 }

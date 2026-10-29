@@ -3,6 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { confirmar } from '../lib/confirm';
+import BotonAdmin from '../components/BotonAdmin';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 import { PerfilStackParamList } from '../navigation/PerfilStack';
 
@@ -49,6 +50,7 @@ export default function PerfilScreen() {
         <TouchableOpacity style={styles.botonAccion} onPress={() => navigation.navigate('PanelFan')}>
           <Text style={styles.textoAccion}>⭐ Mi panel</Text>
         </TouchableOpacity>
+        <BotonAdmin style={styles.botonAccion} textStyle={styles.textoAccion} />
         <TouchableOpacity style={styles.botonAccion} onPress={() => navigation.navigate('CambiarContrasena')}>
           <Text style={styles.textoAccion}>🔑 Contraseña de tu cuenta</Text>
         </TouchableOpacity>

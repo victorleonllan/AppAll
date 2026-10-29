@@ -5,6 +5,7 @@ import PanelFanScreen from '../screens/PanelFanScreen';
 import CambiarContrasenaScreen from '../screens/CambiarContrasenaScreen';
 import ElegirRolScreen from '../screens/ElegirRolScreen';
 import { useAuth } from '../context/AuthContext';
+import { pantallasAdmin, AdminParamList } from './pantallasAdmin';
 import { colors, fontSize } from '../theme';
 
 export type PerfilStackParamList = {
@@ -13,7 +14,7 @@ export type PerfilStackParamList = {
   PanelFan: undefined;
   CambiarContrasena: undefined;
   ElegirRol: undefined;
-};
+} & AdminParamList;
 
 const Stack = createNativeStackNavigator<PerfilStackParamList>();
 
@@ -37,6 +38,8 @@ export default function PerfilStack() {
       <Stack.Screen name="PanelFan" component={PanelFanScreen} options={{ title: 'Mi panel' }} />
       <Stack.Screen name="CambiarContrasena" component={CambiarContrasenaScreen} options={{ title: 'Cambiar contraseña' }} />
       <Stack.Screen name="ElegirRol" component={ElegirRolScreen} options={{ title: '¿Quién eres?' }} />
+      {/* Spec 158 — el back office: admin es una fila en platform_admins, no un rol. */}
+      {pantallasAdmin(Stack)}
     </Stack.Navigator>
   );
 }

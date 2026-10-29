@@ -1,6 +1,6 @@
 # Spec 158 — Admin de Sonópolis en la app: entrada desde el perfil, Pagos y Eventos
 
-> Estado: propuesto (19-oct-2026)
+> Estado: aplicado (29-oct-2026) — `npx tsc --noEmit` sin errores fuera de `supabase/functions` y `npx expo export --platform web` sin error (criterios 1-2). Criterios 3-7 y V-candidatas 158-a/158-b pendientes de prueba manual con la cuenta admin y cuentas de prueba.
 > Capa: FRONTEND. `src/navigation/pantallasAdmin.tsx` (nuevo), `src/navigation/PerfilStack.tsx`, `src/navigation/MiLocalStack.tsx`, `src/navigation/MusicoStack.tsx`, `src/components/BotonAdmin.tsx` (nuevo), `src/components/BotonCerrarEvento.tsx` (nuevo), `src/screens/AdminScreen.tsx` (nuevo), `src/screens/AdminPagosScreen.tsx` (nuevo), `src/screens/AdminEventosScreen.tsx` (nuevo), `src/screens/PerfilScreen.tsx`, `src/screens/DashboardLocalScreen.tsx`, `src/screens/PerfilMusicoScreen.tsx`.
 > Depende de: spec 152, spec 157
 > Hermano en la web: `app/(private)/admin/layout.js`, `app/(private)/admin/AdminNav.js`, `app/(private)/admin/sonopolis/page.js`, `app/(private)/admin/sonopolis/FilaPago.js`, `app/(private)/admin/BotonCerrarEvento.js`, `app/(private)/admin/eventos/page.js` (W-083, W-092, W-095, W-172, W-175).
