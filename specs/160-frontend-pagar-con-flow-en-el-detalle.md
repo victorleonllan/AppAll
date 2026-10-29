@@ -1,6 +1,6 @@
 # Spec 160 — Pagar con Flow desde el detalle del evento
 
-> Estado: propuesto (19-oct-2026)
+> Estado: aplicado (29-oct-2026) — `npx tsc --noEmit` sin errores en `DetalleEventoScreen.tsx` (los únicos errores son de `src/navigation/pantallasAdmin.tsx`, archivo sin trackear de otro spec en curso), `npx expo export --platform web` sin error y `rg "pedirPreferencia|functions/v1/create-preference" src/screens` sin resultados (criterios 1, 2, 6). Criterios 3-5 y V-candidatas 160-a/160-b quedan para prueba manual en dispositivo.
 > Capa: FRONTEND. `src/screens/DetalleEventoScreen.tsx`.
 > Depende de: spec 151, spec 157 (también edita esta pantalla: se aplica después), y W-251 de `sonopolisWeb` desplegado antes de encender Flow.
 > Hermano en la web: `app/(marketing)/cartelera/[id]/BotonComprar.js` (W-190).
