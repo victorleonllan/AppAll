@@ -258,7 +258,11 @@ export default function PerfilMusicoScreen() {
       {/* Spec 154 — Pro informativo; un perfil de muestra no tiene fila real. */}
       {!esMock && (
         <View style={styles.tarjetaPro}>
-          <TarjetaPro tenant={perfil} etiqueta="tu banda" />
+          <TarjetaPro
+            tenant={perfil}
+            etiqueta="tu banda"
+            onVerContactos={() => (navigation as any).navigate('Contactos', { tipo: 'musician' })}
+          />
         </View>
       )}
 
@@ -291,6 +295,13 @@ export default function PerfilMusicoScreen() {
           onPress={() => (navigation as any).navigate('Escaner')}
         >
           <Text style={styles.textoBotonSecundario}>📷 Escanear entradas</Text>
+        </TouchableOpacity>
+        {/* Spec 155 — con y sin Pro, como la pestaña de la web: sin Pro muestra cuántos son. */}
+        <TouchableOpacity
+          style={styles.botonEscaner}
+          onPress={() => (navigation as any).navigate('Contactos', { tipo: 'musician' })}
+        >
+          <Text style={styles.textoBotonSecundario}>👥 Contactos</Text>
         </TouchableOpacity>
       </View>
 

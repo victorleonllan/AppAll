@@ -1,6 +1,6 @@
 # Spec 155 — Contactos y «Escribir a tu público» en la app, para local y músico
 
-> Estado: propuesto (19-oct-2026)
+> Estado: aplicado (29-oct-2026) — `ContactosScreen` y `RedactarCorreo` nuevos, ruta `Contactos` en los dos stacks y botón «👥 Contactos» + `onVerContactos` en «Mi Local» y «Mi Perfil»; criterio 1 (`tsc`) sin salida y criterio 2 (export web) limpio. Criterios 3–9 y V-candidata 155-a pendientes (necesitan sesión real, un tenant con Pro y dispositivo)
 > Capa: FRONTEND. `src/screens/ContactosScreen.tsx` (nuevo), `src/components/RedactarCorreo.tsx` (nuevo), `src/navigation/MiLocalStack.tsx`, `src/navigation/MusicoStack.tsx`, `src/screens/DashboardLocalScreen.tsx`, `src/screens/PerfilMusicoScreen.tsx`.
 > Depende de: spec 148, spec 149, spec 154
 > Hermano en la web: `app/(private)/local/contactos/page.js`, `app/(private)/musico/contactos/page.js`, `components/TablaContactos.js`, `components/RedactarCorreo.js` (W-101, W-177, W-187, W-197, W-200).

@@ -191,7 +191,11 @@ export default function DashboardLocalScreen() {
 
           {/* Spec 154 — Pro informativo, sin precio ni compra: Pro no se vende en la app. */}
           <View style={styles.tarjetaPro}>
-            <TarjetaPro tenant={miVenue} etiqueta="tu local" />
+            <TarjetaPro
+              tenant={miVenue}
+              etiqueta="tu local"
+              onVerContactos={() => navigation.navigate('Contactos', { tipo: 'venue' })}
+            />
           </View>
 
           {/* Botón de crear evento arriba: hasta ahora quedaba al final de toda la lista. */}
@@ -210,6 +214,13 @@ export default function DashboardLocalScreen() {
               evento en los params: la pantalla pide cuál antes de la cámara. */}
           <TouchableOpacity style={styles.botonEscaner} onPress={() => navigation.navigate('Escaner')}>
             <Text style={styles.textoBotonSecundario}>📷 Escanear entradas</Text>
+          </TouchableOpacity>
+          {/* Spec 155 — con y sin Pro, como la pestaña de la web: sin Pro muestra cuántos son. */}
+          <TouchableOpacity
+            style={styles.botonEscaner}
+            onPress={() => navigation.navigate('Contactos', { tipo: 'venue' })}
+          >
+            <Text style={styles.textoBotonSecundario}>👥 Contactos</Text>
           </TouchableOpacity>
 
           <Text style={styles.tituloSeccion}>Próximos eventos</Text>
