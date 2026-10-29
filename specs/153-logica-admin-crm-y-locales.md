@@ -1,6 +1,6 @@
 # Spec 153 — Lógica del admin en la app: CRM de cada tenant, Sonópolis Pro y Locales
 
-> Estado: propuesto (19-oct-2026)
+> Estado: aplicado (29-oct-2026) — `npx tsc --noEmit` sin errores, `expo export --platform web` sin error, sin `catch {}` vacíos (criterios 1-3); criterio 9 verificado con tsx sobre `filtrarLocales`. Criterios 4-8 (cuenta admin, paridad con la web, `darPro` y códigos reales, W-249/W-250 desplegados) pendientes: V-candidata 153-a y 153-b
 > Capa: LÓGICA. `src/lib/adminPro.ts` (nuevo), `src/hooks/useAdminCrm.ts` (nuevo), `src/hooks/useTenantAdmin.ts` (nuevo), `src/hooks/useAdminLocales.ts` (nuevo).
 > Depende de: spec 152, spec 148, spec 150, W-249 de la web, W-250 de la web
 > Hermano en la web: `libs/data/adminCrm.js`, `libs/data/proAdmin.js`, `libs/data/proSuscripcion.js`, `libs/data/invitacionesLocal.js`, `app/(private)/admin/crm/`, `app/(private)/admin/locales/`, `app/api/crm/correo/route.js`, `app/api/admin/locales/invitar/route.js` (W-193, W-212, W-216, W-219, W-220, W-232, W-243).
