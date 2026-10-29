@@ -23,7 +23,8 @@ import { useConexionesRedes } from '../hooks/useConexionesRedes';
 import { useTelefonoPropio, dispararOptInDeCompra } from '../hooks/useOptInWhatsApp';
 import { formatearMonto } from '../lib/precio';
 import { URL_WEB, VERSION_PREVIEW_LINK } from '../constants/web';
-import { supabase } from '../lib/supabase';
+import { Pasarela, getPasarelas, NOMBRE_PASARELA } from '../lib/pasarelas';
+import { crearPagoCompra, ErrorPago, mensajeErrorPago } from '../lib/pagoCompra';
 import { confirmar } from '../lib/confirm';
 import { CarteleraStackParamList } from '../navigation/CarteleraStack';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
@@ -61,6 +62,26 @@ export default function DetalleEventoScreen() {
   // el país del evento vende hoy (`se_vende`, spec 100).
   const { vigente } = usePrecioVigente(evento && !enVivo.cancelado ? evento.id : null);
 
+  // Spec 160 — pasarelas activas del país del evento, como la web (W-190).
+  const [pasarelas, setPasarelas] = useState<Pasarela[] | null>(null); // null = cargando
+  const [recargaPasarelas, setRecargaPasarelas] = useState(0);
+  const [pasarelaEnCurso, setPasarelaEnCurso] = useState<Pasarela | null>(null);
+  const [errorCompra, setErrorCompra] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!evento?.pais || enVivo.cancelado) return;
+    let activo = true;
+    getPasarelas(evento.pais)
+      .then((p) => { if (activo) setPasarelas(p); })
+      .catch((err) => {
+        // Mercado Pago y no `[]` como la web: es lo que la app hacía antes, y un error de
+        // red no debe esconder la compra. La base vuelve a validar la pasarela al reservar.
+        console.error('[DetalleEvento] getPasarelas falló:', err);
+        if (activo) setPasarelas(['mercadopago']);
+      });
+    return () => { activo = false; };
+  }, [evento?.pais, enVivo.cancelado, recargaPasarelas]);
+
   // Spec 156 — el tenant solo se resuelve si alguien lo necesita (owner o compra
   // posible), como la web (`page.js:172-179`): un fan sin sesión no paga tres consultas.
   const hayCompra = !!user && (evento?.monto ?? 0) > 0 && !enVivo.cancelado;
@@ -92,7 +113,10 @@ export default function DetalleEventoScreen() {
   const monto = evento.monto ?? 0;
   // Si el RPC falló (`vigente === null`) no se bloquea: la base lo vuelve a
   // revisar al reservar, y un error de red no debe esconder la compra.
-  const ventaCerrada = vigente?.seVende === false;
+  // Spec 160 — sin pasarelas activas tampoco se vende, como la web (W-190).
+  const ventaCerrada = vigente?.seVende === false || pasarelas?.length === 0;
+  // Mientras carga se dibuja el botón de siempre: con una sola pasarela no hay parpadeo.
+  const opciones: Pasarela[] = pasarelas ?? ['mercadopago'];
 
   // Spec 120 — link a la web (quien lo recibe puede no tener la app) con `?v=` y
   // ningún otro parámetro, igual que BotonCompartir.js. Solo `message`: en iOS
@@ -150,7 +174,8 @@ export default function DetalleEventoScreen() {
         // En nativo el await de arriba abre un hueco donde dos ejecuciones del
         // efecto pueden solaparse y comprar dos veces. El chequeo del candado y
         // su marcado van juntos, sin await en medio, para cerrarlo.
-        if (pendingId !== evento.id || !user || autoCompraIniciada.current) return;
+        // Spec 160 — espera a las pasarelas: sin saber cuántas hay no se sabe si comprar.
+        if (pendingId !== evento.id || !user || pasarelas === null || autoCompraIniciada.current) return;
         autoCompraIniciada.current = true;
 
         if (Platform.OS === 'web') {
@@ -158,13 +183,15 @@ export default function DetalleEventoScreen() {
         } else {
           await AsyncStorage.removeItem('pending_ticket');
         }
-        handleComprarLogueado();
+        // Con varias no compra sola (W-190): elegir una por defecto mandaría a Mercado
+        // Pago a quien quería Flow. Sin pasarelas no hay nada que comprar.
+        if (pasarelas.length === 1) handleComprarLogueado(pasarelas[0]);
       } catch (e) {
         console.error('[DetalleEvento] auto-compra: no se pudo leer pending_ticket:', e);
       }
     };
     checkPending();
-  }, [user, evento.id]);
+  }, [user, evento.id, pasarelas]);
 
   // ────────────── FLUJO: email → magic link ──────────────
 
@@ -193,50 +220,9 @@ export default function DetalleEventoScreen() {
 
   // ────────────── FLUJO: usuario logueado ──────────────
 
-  /**
-   * Spec 118 — pide la preferencia a create-preference. Común a web y nativo; en
-   * nativo manda `origen: 'app'` para que el pago vuelva a la app por la página
-   * puente (spec 117) en vez de a sonopolis.org/mis-entradas.
-   */
-  const pedirPreferencia = async (desdeApp: boolean) => {
-    // create-preference identifica al comprador con supabase.auth.getUser().
-    // Con la anon key eso devuelve null y la function corta en 401: hay que
-    // mandar el access_token de la sesión.
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error('Sesión no encontrada');
-
-    const res = await fetch(
-      `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/create-preference`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-          'apikey': process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
-        },
-        body: JSON.stringify({
-          evento_id: evento.id,
-          user_id: user!.id,
-          cantidad: 1,
-          ...(desdeApp ? { origen: 'app' } : {}),
-        }),
-      }
-    );
-
-    if (!res.ok) {
-      const detalle = await res.text();
-      throw new Error(`create-preference ${res.status}: ${detalle}`);
-    }
-
-    return res.json() as Promise<{
-      init_point?: string;
-      sandbox_init_point?: string;
-      ticket_id?: string;
-      ticket_ref?: string;
-    }>;
-  };
-
-  const handleComprarLogueado = async () => {
+  // Spec 160 — `crearPagoCompra` (spec 151) cobra con la pasarela elegida y decide el
+  // `origen` por plataforma: en nativo la vuelta reabre la app (specs 117 y 147).
+  const handleComprarLogueado = async (pasarela: Pasarela) => {
     if (monto <= 0) {
       Alert.alert('Sin precio', 'Este evento no tiene un precio definido');
       return;
@@ -251,20 +237,19 @@ export default function DetalleEventoScreen() {
       });
     }
 
+    setErrorCompra(null);
+    setPasarelaEnCurso(pasarela);
     setStep('comprando');
     setLoading(true);
     try {
-      if (Platform.OS === 'web') {
-        const data = await pedirPreferencia(false);
+      const pago = await crearPagoCompra({ eventoId: evento.id, userId: user!.id, pasarela });
 
-        // Con credenciales de prueba, init_point ya opera en modo test.
-        // sandbox_init_point es el flujo viejo y no siempre resuelve.
-        const checkoutUrl = data.init_point || data.sandbox_init_point;
-        window.open(checkoutUrl, '_blank');
+      if (Platform.OS === 'web') {
+        window.open(pago.checkoutUrl, '_blank');
 
         navigation.replace('ConfirmacionCompra', {
           eventoId: evento.id,
-          ticketId: data.ticket_id,
+          ticketId: pago.ticketId ?? undefined,
           status: 'pending',
         });
         return;
@@ -272,14 +257,11 @@ export default function DetalleEventoScreen() {
 
       // Nativo: `window` no tiene `open`. openAuthSessionAsync espera a que el
       // navegador vuelva por appall://compra y lo cierra solo.
-      const { init_point, sandbox_init_point, ticket_id, ticket_ref } = await pedirPreferencia(true);
-      const resultado = await WebBrowser.openAuthSessionAsync(
-        (init_point || sandbox_init_point)!,
-        'appall://compra',
-      );
+      const resultado = await WebBrowser.openAuthSessionAsync(pago.checkoutUrl, 'appall://compra');
 
       // Si cerró el navegador sin volver, el ticket existe y pudo haberse pagado:
       // se va igual a la confirmación como 'pending' y ella lo resuelve preguntando.
+      // Flow vuelve siempre con `pending` (W-251): la confirmación pregunta el estado real.
       let status: 'success' | 'failure' | 'pending' = 'pending';
       if (resultado.type === 'success' && resultado.url) {
         const s = new URL(resultado.url).searchParams.get('status');
@@ -290,17 +272,24 @@ export default function DetalleEventoScreen() {
       // así el retorno que además llega por el linking cae en la misma pantalla.
       navigation.navigate('ConfirmacionCompra', {
         eventoId: evento.id,
-        ticketId: ticket_id,
-        ref: ticket_ref,
+        ticketId: pago.ticketId ?? undefined,
+        ref: pago.ticketRef ?? undefined,
         status,
       });
       setStep('idle');
     } catch (err) {
       console.error('Error al comprar:', err);
-      Alert.alert('Error', 'No se pudo procesar la compra');
+      // A un Text y no a Alert.alert, que no hace nada en el build web (spec 137).
+      setErrorCompra(mensajeErrorPago(err));
+      // La pasarela se apagó con la pantalla abierta: releer quita el botón que solo
+      // puede volver a fallar.
+      if (err instanceof ErrorPago && err.codigo === 'pasarela_inactiva') {
+        setRecargaPasarelas((n) => n + 1);
+      }
       setStep('idle');
     } finally {
       setLoading(false);
+      setPasarelaEnCurso(null);
     }
   };
 
@@ -370,10 +359,10 @@ export default function DetalleEventoScreen() {
 
   // ────────────── BOTON PRINCIPAL ──────────────
 
-  const handleBotonComprar = () => {
+  const handleBotonComprar = (pasarela: Pasarela) => {
     if (cancelado) return;
     if (user) {
-      handleComprarLogueado();
+      handleComprarLogueado(pasarela);
     } else if (Platform.OS === 'web') {
       setStep('email');
     } else {
@@ -448,23 +437,43 @@ export default function DetalleEventoScreen() {
 
         {/* El monto del botón es solo lo que se muestra: lo que se cobra lo decide
             el servidor con la preventa vigente (create-preference). */}
-        <TouchableOpacity
-          style={[styles.botonComprar, (!monto || cancelado || ventaCerrada) && styles.botonDesactivado]}
-          onPress={handleBotonComprar}
-          disabled={!monto || cancelado || ventaCerrada || step === 'comprando'}
-        >
-          <Text style={styles.textoBotonComprar}>
-            {cancelado
-              ? 'Evento cancelado'
-              : step === 'comprando'
-                ? 'Procesando...'
-                : ventaCerrada
-                  ? 'Venta no habilitada todavía en este país'
-                  : monto > 0
-                    ? `Comprar entrada — ${formatearMonto(vigente?.monto ?? monto, evento.moneda)}`
-                    : 'Evento gratuito'}
-          </Text>
-        </TouchableOpacity>
+        {!monto || cancelado || ventaCerrada || opciones.length === 1 ? (
+          <TouchableOpacity
+            style={[styles.botonComprar, (!monto || cancelado || ventaCerrada) && styles.botonDesactivado]}
+            onPress={() => handleBotonComprar(opciones[0])}
+            disabled={!monto || cancelado || ventaCerrada || step === 'comprando'}
+          >
+            <Text style={styles.textoBotonComprar}>
+              {cancelado
+                ? 'Evento cancelado'
+                : step === 'comprando'
+                  ? 'Procesando...'
+                  : ventaCerrada
+                    ? 'Venta no habilitada todavía en este país'
+                    : monto > 0
+                      ? `Comprar entrada — ${formatearMonto(vigente?.monto ?? monto, evento.moneda)}`
+                      : 'Evento gratuito'}
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          // Spec 160 — un botón por pasarela en el orden de `pasarelas_cobro`; el primero
+          // es el sugerido (W-190). Sin monto en el texto: ya está en PrecioEvento.
+          <View style={styles.listaPasarelas}>
+            {opciones.map((p, i) => (
+              <TouchableOpacity
+                key={p}
+                style={[i === 0 ? styles.botonComprar : styles.botonPasarelaSecundaria, styles.botonEnLista]}
+                onPress={() => handleBotonComprar(p)}
+                disabled={step === 'comprando'}
+              >
+                <Text style={i === 0 ? styles.textoBotonComprar : styles.textoBotonPasarelaSecundaria}>
+                  {pasarelaEnCurso === p ? 'Procesando...' : `Pagar con ${NOMBRE_PASARELA[p]}`}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        {errorCompra && <Text style={styles.errorCompra}>{errorCompra}</Text>}
       </View>
 
       {/* Spec 120 — mismas condiciones que la web (W-244): sin imagen la ruta da
@@ -613,6 +622,23 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: fontSize.md,
   },
+  // Spec 160 — selector de pasarelas: el margen superior lo pone la lista.
+  listaPasarelas: { marginTop: spacing.lg, gap: spacing.sm },
+  botonEnLista: { marginTop: 0 },
+  botonPasarelaSecundaria: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.accent,
+    padding: 16,
+    borderRadius: borderRadius.sm,
+    alignItems: 'center',
+  },
+  textoBotonPasarelaSecundaria: {
+    color: colors.accent,
+    fontWeight: 'bold',
+    fontSize: fontSize.md,
+  },
+  errorCompra: { fontSize: fontSize.sm, color: colors.danger, marginTop: spacing.sm },
   errorTexto: {
     fontSize: fontSize.md,
     color: colors.muted,
