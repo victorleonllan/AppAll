@@ -1,6 +1,6 @@
 # Spec 149 — Hooks del CRM: tenant, contactos, correo, aviso por WhatsApp y opt-in
 
-> Estado: propuesto (19-oct-2026)
+> Estado: aplicado (29-oct-2026) — los cinco hooks creados; `npx tsc --noEmit` y `expo export --platform web` limpios; `normalizarE164` da los tres resultados del criterio 8. Criterios 4–7 y 9 y V-candidata 149-a pendientes (necesitan sesión real y las pantallas 155/156).
 > Capa: LÓGICA. `src/hooks/useTenantCrm.ts` (nuevo), `src/hooks/useContactosCrm.ts` (nuevo), `src/hooks/useCorreoCrm.ts` (nuevo), `src/hooks/useAvisoWhatsApp.ts` (nuevo), `src/hooks/useOptInWhatsApp.ts` (nuevo).
 > Depende de: spec 148. Además, W-249 de la web desplegado en producción (las rutas del CRM aceptan el Bearer de la app).
 > Hermano en la web: `libs/data/crm.js`, `libs/data/crmCorreo.js`, `libs/data/whatsapp.js`, `libs/telefono.js`, `components/RedactarCorreo.js`, `app/(marketing)/cartelera/[id]/BotonAvisarWhatsApp.js`.
