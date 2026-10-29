@@ -13,9 +13,15 @@ import { colors, spacing, borderRadius, fontSize } from '../theme';
 type NavProp = NativeStackNavigationProp<AdminParamList, 'Admin'>;
 
 // Las bajadas son los subtítulos de cada página de la web.
-const DESTINOS: { ruta: keyof AdminParamList; titulo: string; bajada: string }[] = [
+const DESTINOS: { ruta: 'AdminPagos' | 'AdminEventos' | 'AdminCrm' | 'AdminLocales'; titulo: string; bajada: string }[] = [
   { ruta: 'AdminPagos', titulo: 'Pagos', bajada: 'Lo que hay que transferirle a los locales después de cada show.' },
   { ruta: 'AdminEventos', titulo: 'Eventos', bajada: 'Todos los eventos de la plataforma, incluidos los borradores.' },
+  { ruta: 'AdminCrm', titulo: 'CRM', bajada: 'El público de cada local y banda, como lo ve cada uno.' },
+  {
+    ruta: 'AdminLocales',
+    titulo: 'Locales',
+    bajada: 'Busca el local por nombre o dirección e invita a su dueño real con su correo oficial.',
+  },
 ];
 
 export default function AdminScreen() {

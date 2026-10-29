@@ -1,6 +1,6 @@
 # Spec 159 — Admin de Sonópolis en la app: CRM de cada tenant, Pro y Locales
 
-> Estado: propuesto (19-oct-2026)
+> Estado: aplicado (29-oct-2026) — CRM, detalle del tenant (Pro, código de suscripción, eventos, correo y WhatsApp en vista, contactos) y Locales (invitar, reenviar, cancelar). Verificado: `npx tsc --noEmit` sin salida fuera de `supabase/functions` y `npx expo export --platform web` sin error; no toca los tres stacks. Criterios 4-8 y V-candidatas 159-a/159-b pendientes en dispositivo (7 y 8 requieren W-249 y W-250 en producción)
 > Capa: FRONTEND. `src/navigation/pantallasAdmin.tsx`, `src/screens/AdminScreen.tsx`, `src/components/BotonesPro.tsx` (nuevo), `src/screens/AdminCrmScreen.tsx` (nuevo), `src/screens/AdminTenantScreen.tsx` (nuevo), `src/screens/AdminLocalesScreen.tsx` (nuevo).
 > Depende de: spec 153, spec 158
 > Hermano en la web: `app/(private)/admin/crm/page.js`, `app/(private)/admin/crm/[tipo]/[id]/page.js`, `app/(private)/admin/crm/piezas.js`, `app/(private)/admin/crm/BotonesPro.js`, `app/(private)/admin/crm/CodigoSuscripcionPro.js`, `app/(private)/admin/locales/BuscadorLocales.js` (W-193, W-212, W-216, W-219, W-220, W-232, W-243).
