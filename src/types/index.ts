@@ -33,6 +33,9 @@ export interface Venue {
   distance?: string;
   image?: string | null;
   avatar?: string | null; // spec 085
+  // Spec 148 — Sonópolis Pro (W-048). Solo lectura: la base rechaza escribirlo
+  // desde el cliente (guard_sonopolis_pro). null = nunca fue Pro.
+  sonopolisProHasta?: string | null;
 }
 
 /** Spec 033 — estado del evento. 'draft' solo lo ve el equipo; 'cancelled'
@@ -211,6 +214,9 @@ export interface PerfilMusico {
   pais?: string;            // spec 106 — ISO alpha-2
   avatar?: string | null;   // spec 085 — logo chico; `foto` es la imagen grande
   available?: boolean;      // spec 051 — «disponible este finde»
+  // Spec 148 — Sonópolis Pro (W-048). Solo lectura: la base rechaza escribirlo
+  // desde el cliente (guard_sonopolis_pro). null = nunca fue Pro.
+  sonopolisProHasta?: string | null;
 }
 
 // Spec 123 — seguir músicos y locales (tablas del spec 047).

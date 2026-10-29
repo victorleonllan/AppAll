@@ -46,6 +46,9 @@ function mapVenueFromDB(db: any): Venue {
     distance: undefined,
     image: db.image,
     avatar: db.avatar ?? null,
+    // Spec 148 — solo lectura; mapVenueToDB no la manda (el trigger guard_sonopolis_pro
+    // rechazaría el update entero).
+    sonopolisProHasta: db.sonopolis_pro_hasta ?? null,
   };
 }
 

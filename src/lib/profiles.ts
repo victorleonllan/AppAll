@@ -44,6 +44,9 @@ export function mapProfileFromDB(db: any): PerfilMusico {
     pais: db.pais ?? undefined,
     avatar: db.avatar ?? null,
     available: db.available ?? false,
+    // Spec 148 — solo lectura; mapProfileToDB no la manda (el trigger guard_sonopolis_pro
+    // rechazaría el upsert entero).
+    sonopolisProHasta: db.sonopolis_pro_hasta ?? null,
   };
 }
 

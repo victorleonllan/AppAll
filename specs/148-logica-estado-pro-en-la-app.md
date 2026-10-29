@@ -1,6 +1,6 @@
 # Spec 148 — La app lee si un local o una banda tiene Sonópolis Pro
 
-> Estado: propuesto (19-oct-2026)
+> Estado: aplicado (29-oct-2026) — `tsc` y export web limpios; criterios 4, 5 y 7 verificados con un script en hora de Chile. Pendientes en dispositivo/base: 3, 6 y V-candidata 148-a
 > Capa: LÓGICA. `src/types/index.ts`, `src/context/VenuesContext.tsx`, `src/lib/profiles.ts`, `src/lib/pro.ts` (nuevo).
 > Depende de: ninguno (W-048 y W-242 de la web, aplicados en la base).
 > Hermano en la web: `libs/pro.js` (W-048, W-243).
