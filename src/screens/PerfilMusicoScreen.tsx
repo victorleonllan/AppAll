@@ -303,6 +303,13 @@ export default function PerfilMusicoScreen() {
         >
           <Text style={styles.textoBotonSecundario}>👥 Contactos</Text>
         </TouchableOpacity>
+        {/* Spec 157 — también sin Pro: lleva a la explicación neutra, no a una oferta. */}
+        <TouchableOpacity
+          style={styles.botonEscaner}
+          onPress={() => (navigation as any).navigate('Redes')}
+        >
+          <Text style={styles.textoBotonSecundario}>📣 Redes</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.card}>

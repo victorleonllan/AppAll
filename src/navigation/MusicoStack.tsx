@@ -12,6 +12,8 @@ import CambiarContrasenaScreen from '../screens/CambiarContrasenaScreen';
 import SolicitudesScreen from '../screens/SolicitudesScreen';
 import CobrarEventoScreen from '../screens/CobrarEventoScreen';
 import ContactosScreen from '../screens/ContactosScreen';
+import RedesScreen from '../screens/RedesScreen';
+import PublicarRedesScreen from '../screens/PublicarRedesScreen';
 import type { TipoTenant } from '../hooks/useTenantCrm';
 import { colors, fontSize } from '../theme';
 
@@ -31,6 +33,8 @@ export type MusicoStackParamList = {
   Solicitudes: undefined;
   CobrarEvento: { eventoId: string };
   Contactos: { tipo: TipoTenant };
+  Redes: undefined;
+  PublicarRedes: { eventoId?: string } | undefined;
 };
 
 const Stack = createNativeStackNavigator<MusicoStackParamList>();
@@ -95,6 +99,9 @@ export default function MusicoStack() {
       <Stack.Screen name="CobrarEvento" component={CobrarEventoScreen} options={{ title: 'Cobrar' }} />
       {/* Spec 155 — la misma pantalla en los dos stacks, como Escaner: cambia el tenant, no el código. */}
       <Stack.Screen name="Contactos" component={ContactosScreen} options={{ title: 'Contactos' }} />
+      {/* Spec 157 — igual que Contactos: el tenant sale de useTenantRedes, no de la ruta. */}
+      <Stack.Screen name="Redes" component={RedesScreen} options={{ title: 'Redes' }} />
+      <Stack.Screen name="PublicarRedes" component={PublicarRedesScreen} options={{ title: 'Publicar en redes' }} />
     </Stack.Navigator>
   );
 }

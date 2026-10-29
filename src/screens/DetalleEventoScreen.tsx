@@ -18,6 +18,8 @@ import PrecioEvento from '../components/PrecioEvento';
 import OptInWhatsApp from '../components/OptInWhatsApp';
 import AvisarWhatsApp from '../components/AvisarWhatsApp';
 import { useTenantDelEvento } from '../hooks/useTenantCrm';
+import { useTenantRedes } from '../hooks/useTenantRedes';
+import { useConexionesRedes } from '../hooks/useConexionesRedes';
 import { useTelefonoPropio, dispararOptInDeCompra } from '../hooks/useOptInWhatsApp';
 import { formatearMonto } from '../lib/precio';
 import { URL_WEB, VERSION_PREVIEW_LINK } from '../constants/web';
@@ -66,6 +68,13 @@ export default function DetalleEventoScreen() {
     evento && (permisos.rol === 'owner' || hayCompra) ? evento : null
   );
   const telefonoPropio = useTelefonoPropio();
+
+  // Spec 157 — el tenant es el de quien publica, no el del evento: un local puede anunciar
+  // el show de una banda en su sala. La API vuelve a revisar el rol (`event_role_of`).
+  const tenantRedes = useTenantRedes();
+  const redesHabilitado =
+    tenantRedes.estado === 'listo' && tenantRedes.esPro && !!permisos.rol && evento?.status !== 'cancelled';
+  const { disponibles: redesDisponibles } = useConexionesRedes(tenantRedes.tenantType, redesHabilitado);
   const [optIn, setOptIn] = useState({ acepta: false, telefono: '' });
   useEffect(() => {
     if (telefonoPropio) setOptIn((v) => (v.telefono ? v : { ...v, telefono: telefonoPropio }));
@@ -497,6 +506,16 @@ export default function DetalleEventoScreen() {
                 onPress={() => (navigation as any).navigate('EquipoEvento', { eventoId: evento.id })}
               >
                 <Text style={styles.textoBotonGestion}>👥 Equipo</Text>
+              </TouchableOpacity>
+            )}
+            {/* Spec 157 — solo con Pro y las redes encendidas: sin Pro sería un botón que
+                no lleva a nada que se pueda hacer en la app. */}
+            {redesHabilitado && redesDisponibles.length > 0 && (
+              <TouchableOpacity
+                style={styles.botonGestion}
+                onPress={() => navigation.navigate('PublicarRedes', { eventoId: evento.id })}
+              >
+                <Text style={styles.textoBotonGestion}>📣 Publicar en redes</Text>
               </TouchableOpacity>
             )}
             {/* Spec 114 — que el show ya haya terminado lo exige la pantalla
