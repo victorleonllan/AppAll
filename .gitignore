@@ -45,3 +45,6 @@ yarn-error.*
 
 # Respaldos de datos — nunca a git (spec 025)
 backups/
+
+# Lockfile que Deno genera al revisar las funciones de Supabase en local; el deploy no lo usa
+deno.lock
