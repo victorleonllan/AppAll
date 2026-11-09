@@ -1,6 +1,6 @@
 # Spec 163 — El admin ve cada cobro de Pro tal como lo ve Mercado Pago
 
-> Estado: diseñado (09-nov-2026)
+> Estado: aplicado y **desplegado** (09-nov-2026) — `cobros-pro` v1. Criterios 1-5 verificados contra producción: sin sesión 401; JWT anon 403 `solo admin`; admin + Quintal → `W5Q3DXJN` con el cobro `185824675617` `refunded`/`debit_card`/`debvisa`, 1 devolución, `registrado: false`, y `suscripciones_mp` con 1 fila `cancelled` (creada 12:26:39 y cancelada 12:26:42 hora MP, `payment_method_id: null`); tenant inexistente → `[]`; token de MP falso (función corrida local con `deno run`) → 200 con `mp_error: "MP /v1/payments/search → 401"`; sin `payer`/`email`/`first_name`/`identification`. Lógica pura en `cruce.ts` con `cruce_test.ts` (6/6, `deno test`)
 > Capa: LÓGICA. Edge Function nueva `supabase/functions/cobros-pro/index.ts`. Sin migración.
 > Depende de: spec 109 (`crear-suscripcion-pro` crea el plan con `external_reference = codigo`),
 > spec 110 (`pro_suscripciones`, `pro_pagos`), `_shared/cuentasMP.ts`,
