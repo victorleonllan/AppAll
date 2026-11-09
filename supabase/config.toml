@@ -467,3 +467,8 @@ verify_jwt = false
 [functions.cancelar-suscripcion-pro]
 enabled = true
 verify_jwt = true
+
+[functions.cobros-pro]
+enabled = true
+# Spec 163. Solo admin: el permiso lo decide es_admin_sonopolis con la sesión.
+verify_jwt = true
