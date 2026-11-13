@@ -13,7 +13,9 @@ import { mapaDisponible, puntosDeVenues, urlComoLlegar } from '../lib/mapa';
 import { venueEmoji, venueLabel } from '../lib/venues';
 import { LocalesStackParamList } from '../navigation/LocalesStack';
 import { RootTabParamList } from '../navigation/linking';
-import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { spacing, fontSize, borderRadius, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 // Montada en LocalesStack y CarteleraStack con los mismos params; el tipo de
 // LocalesStack alcanza para leerlos.
@@ -30,6 +32,8 @@ function urlSitio(sitio: string): string {
 
 // Spec 127 — ficha del local, hermana de /locales/[id] en la web.
 export default function DetalleLocalScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const { venueId } = useRoute<DetalleLocalRoute>().params;
   const navigation = useNavigation();
   const { allVenues, loading } = useVenues();
@@ -41,7 +45,7 @@ export default function DetalleLocalScreen() {
   if (loading) {
     return (
       <View style={styles.centro}>
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={colores.accent} />
       </View>
     );
   }
@@ -145,7 +149,7 @@ export default function DetalleLocalScreen() {
 
       <Text style={styles.seccion}>Próximas fechas</Text>
       {fechas.cargando ? (
-        <ActivityIndicator color={colors.accent} />
+        <ActivityIndicator color={colores.accent} />
       ) : fechas.error ? (
         <Text style={styles.error}>{fechas.error}</Text>
       ) : fechas.eventos.length === 0 ? (
@@ -167,33 +171,33 @@ export default function DetalleLocalScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   contenido: { padding: spacing.md, paddingBottom: spacing.xl },
-  centro: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+  centro: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: c.background },
   cabecera: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  nombre: { fontSize: fontSize.xl, fontWeight: 'bold', color: colors.primary },
-  tipo: { fontSize: fontSize.md, color: colors.secondary, marginTop: 2 },
-  seccion: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary, marginTop: spacing.lg, marginBottom: spacing.sm },
-  texto: { fontSize: fontSize.md, color: colors.primary, marginBottom: 4 },
-  textoSuave: { fontSize: fontSize.sm, color: colors.secondary, marginBottom: 4 },
+  nombre: { fontSize: fontSize.xl, fontWeight: 'bold', color: c.primary },
+  tipo: { fontSize: fontSize.md, color: c.secondary, marginTop: 2 },
+  seccion: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary, marginTop: spacing.lg, marginBottom: spacing.sm },
+  texto: { fontSize: fontSize.md, color: c.primary, marginBottom: 4 },
+  textoSuave: { fontSize: fontSize.sm, color: c.secondary, marginBottom: 4 },
   miniMapa: { height: 180, borderRadius: borderRadius.md, overflow: 'hidden', marginVertical: spacing.sm },
-  boton: { alignSelf: 'flex-start', backgroundColor: colors.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: borderRadius.sm, marginTop: spacing.sm },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.sm },
-  fila: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.border },
-  etiqueta: { fontSize: fontSize.sm, color: colors.secondary },
-  valor: { fontSize: fontSize.sm, color: colors.primary, fontWeight: '600', flexShrink: 1, textAlign: 'right', marginLeft: spacing.sm },
+  boton: { alignSelf: 'flex-start', backgroundColor: c.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: borderRadius.sm, marginTop: spacing.sm },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.sm },
+  fila: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: c.border },
+  etiqueta: { fontSize: fontSize.sm, color: c.secondary },
+  valor: { fontSize: fontSize.sm, color: c.primary, fontWeight: '600', flexShrink: 1, textAlign: 'right', marginLeft: spacing.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
-  chip: { backgroundColor: colors.accentLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: borderRadius.sm },
-  textoChip: { color: colors.accent, fontSize: fontSize.sm },
-  enlace: { fontSize: fontSize.md, color: colors.accent, paddingVertical: 6 },
+  chip: { backgroundColor: c.accentLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: borderRadius.sm },
+  textoChip: { color: c.accent, fontSize: fontSize.sm },
+  enlace: { fontSize: fontSize.md, color: c.accent, paddingVertical: 6 },
   fecha: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.cardBackground,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: c.cardBackground,
     padding: 12, borderRadius: borderRadius.md, marginBottom: spacing.sm,
-    borderLeftWidth: 4, borderLeftColor: colors.accent,
+    borderLeftWidth: 4, borderLeftColor: c.accent,
   },
-  artista: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary },
-  cancelado: { color: colors.danger, fontWeight: 'bold', fontSize: fontSize.sm, marginLeft: spacing.sm },
-  error: { color: colors.danger, fontSize: fontSize.sm },
-  vacio: { color: colors.muted, fontSize: fontSize.md },
+  artista: { fontSize: fontSize.md, fontWeight: '600', color: c.primary },
+  cancelado: { color: c.danger, fontWeight: 'bold', fontSize: fontSize.sm, marginLeft: spacing.sm },
+  error: { color: c.danger, fontSize: fontSize.sm },
+  vacio: { color: c.muted, fontSize: fontSize.md },
 });

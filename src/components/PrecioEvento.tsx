@@ -1,7 +1,8 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Evento, PrecioVigente } from '../types';
 import { formatearMonto } from '../lib/precio';
-import { colors, borderRadius } from '../theme';
+import { borderRadius, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
 
 interface Props {
   evento: Evento;
@@ -16,6 +17,7 @@ interface Props {
  * la moneda de su evento, no en la que traiga la preventa.
  */
 export default function PrecioEvento({ evento, vigente, alinear = 'inicio' }: Props) {
+  const styles = useEstilos(crearEstilos);
   const alineacion = alinear === 'fin' ? styles.fin : styles.inicio;
 
   if (!vigente?.preventaId) {
@@ -44,19 +46,19 @@ export default function PrecioEvento({ evento, vigente, alinear = 'inicio' }: Pr
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   columna: { marginTop: 6, gap: 2 },
   inicio: { alignSelf: 'flex-start' },
   fin: { alignSelf: 'flex-end' },
-  monto: { fontSize: 15, fontWeight: 'bold', color: colors.success, marginTop: 6 },
-  restantes: { fontWeight: 'normal', color: colors.muted },
+  monto: { fontSize: 15, fontWeight: 'bold', color: c.success, marginTop: 6 },
+  restantes: { fontWeight: 'normal', color: c.muted },
   badge: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     borderRadius: borderRadius.sm,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  badgeTexto: { fontSize: 12, fontWeight: '600', color: colors.accent },
-  puerta: { fontSize: 11, color: colors.muted },
+  badgeTexto: { fontSize: 12, fontWeight: '600', color: c.accent },
+  puerta: { fontSize: 11, color: c.muted },
 });

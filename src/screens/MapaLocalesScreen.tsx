@@ -8,7 +8,8 @@ import { COLOR_TIPO_LOCAL, mapaDisponible, puntosDeVenues } from '../lib/mapa';
 import { venueEmoji, venueLabel } from '../lib/venues';
 import { Venue, VenueType } from '../types';
 import { LocalesStackParamList } from '../navigation/LocalesStack';
-import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { spacing, fontSize, borderRadius, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
 
 type NavigationProp = NativeStackNavigationProp<LocalesStackParamList, 'MapaLocales'>;
 
@@ -22,6 +23,7 @@ const FILTROS: { tipo: VenueType | null; etiqueta: string }[] = [
 
 // Spec 127 — hermana de /locales en la web, que ES el mapa (W-149).
 export default function MapaLocalesScreen() {
+  const styles = useEstilos(crearEstilos);
   const navigation = useNavigation<NavigationProp>();
   // Los locales del país activo, los mismos que lista LocalesScreen (spec 096).
   const { venuesDelPais: locales } = useVenues();
@@ -119,32 +121,32 @@ export default function MapaLocalesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   filtros: { flexGrow: 0 },
   filtrosContenido: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, gap: spacing.sm },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: colors.cardBackground, borderWidth: 1, borderColor: colors.border,
+    backgroundColor: c.cardBackground, borderWidth: 1, borderColor: c.border,
     paddingHorizontal: 12, paddingVertical: 6, borderRadius: borderRadius.lg,
   },
-  chipActivo: { backgroundColor: colors.accent, borderColor: colors.accent },
+  chipActivo: { backgroundColor: c.accent, borderColor: c.accent },
   punto: { width: 10, height: 10, borderRadius: 5 },
-  textoChip: { color: colors.primary, fontSize: fontSize.sm },
-  textoChipActivo: { color: colors.white, fontWeight: 'bold' },
+  textoChip: { color: c.primary, fontSize: fontSize.sm },
+  textoChipActivo: { color: c.onAccent, fontWeight: 'bold' },
   mapa: { flex: 3 },
-  aviso: { color: colors.secondary, fontSize: fontSize.sm, marginHorizontal: spacing.md, marginVertical: spacing.sm },
+  aviso: { color: c.secondary, fontSize: fontSize.sm, marginHorizontal: spacing.md, marginVertical: spacing.sm },
   listaConMapa: { flex: 2 },
   lista: { flex: 1 },
   listaContenido: { paddingHorizontal: spacing.md, paddingBottom: spacing.lg },
-  grupo: { fontSize: fontSize.md, fontWeight: 'bold', color: colors.primary, marginTop: spacing.md, marginBottom: spacing.xs },
+  grupo: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary, marginTop: spacing.md, marginBottom: spacing.xs },
   fila: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.cardBackground,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: c.cardBackground,
     padding: 12, borderRadius: borderRadius.md, marginVertical: 3,
-    borderLeftWidth: 4, borderLeftColor: colors.accent,
+    borderLeftWidth: 4, borderLeftColor: c.accent,
   },
-  filaSeleccionada: { borderLeftColor: colors.warning, backgroundColor: colors.accentLight },
-  nombre: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary },
-  info: { fontSize: fontSize.sm, color: colors.secondary, marginTop: 2 },
-  ver: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm, marginLeft: spacing.sm },
+  filaSeleccionada: { borderLeftColor: c.warning, backgroundColor: c.accentLight },
+  nombre: { fontSize: fontSize.md, fontWeight: '600', color: c.primary },
+  info: { fontSize: fontSize.sm, color: c.secondary, marginTop: 2 },
+  ver: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm, marginLeft: spacing.sm },
 });

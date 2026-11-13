@@ -4,7 +4,9 @@ import MapView, { Marker, Callout } from 'react-native-maps';
 import {
   PropsMapaLocales, COLOR_TIPO_LOCAL, clusterPrincipal, regionDe, mapaDisponible,
 } from '../lib/mapa';
-import { colors, fontSize } from '../theme';
+// Spec 176 — el mapa queda claro en los dos temas, como en la web (W-272, «Fuera de
+// alcance»): la burbuja del Callout es nativa y blanca, así que su texto usa la paleta clara.
+import { paletaClara, fontSize } from '../theme';
 
 // Spec 127 — iOS usa Apple Maps; Android, Google Maps con la clave de
 // app.config.js. En web se resuelve MapaLocales.web.tsx.
@@ -66,6 +68,6 @@ export default function MapaLocales({
 const styles = StyleSheet.create({
   mapa: { flex: 1 },
   callout: { minWidth: 140, padding: 4 },
-  nombre: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary },
-  ver: { fontSize: fontSize.sm, color: colors.accent, marginTop: 2 },
+  nombre: { fontSize: fontSize.md, fontWeight: '600', color: paletaClara.primary },
+  ver: { fontSize: fontSize.sm, color: paletaClara.accent, marginTop: 2 },
 });

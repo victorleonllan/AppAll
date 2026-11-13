@@ -3,7 +3,9 @@ import { TouchableOpacity, Text, ActivityIndicator, StyleSheet, Alert } from 're
 import { useAuth } from '../context/AuthContext';
 import { useSeguir } from '../hooks/useSeguir';
 import { TipoSeguible } from '../types';
-import { colors, borderRadius, fontSize } from '../theme';
+import { borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 interface Props {
   tipo: TipoSeguible;
@@ -14,6 +16,8 @@ interface Props {
 // Spec 124 — hermano de components/BotonSeguir.js de la web. Chico a propósito:
 // va en el pie de una tarjeta del directorio y al lado de un nombre.
 export default function BotonSeguir({ tipo, targetId, onCambio }: Props) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const { user } = useAuth();
   const s = useSeguir(tipo, targetId);
   // `s` dentro de `tocar` es el del render del toque: el error que deja
@@ -58,7 +62,7 @@ export default function BotonSeguir({ tipo, targetId, onCambio }: Props) {
       disabled={s.cargando}
     >
       {s.cargando ? (
-        <ActivityIndicator size="small" color={s.siguiendo ? colors.accent : colors.white} />
+        <ActivityIndicator size="small" color={s.siguiendo ? colores.accent : colores.onAccent} />
       ) : (
         <Text style={[styles.texto, s.siguiendo ? styles.textoSiguiendo : styles.textoSeguir]}>
           {s.siguiendo ? '✓ Siguiendo' : 'Seguir'}
@@ -68,7 +72,7 @@ export default function BotonSeguir({ tipo, targetId, onCambio }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   boton: {
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -77,9 +81,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  seguir: { backgroundColor: colors.accent, borderColor: colors.accent },
-  siguiendo: { backgroundColor: 'transparent', borderColor: colors.accent },
+  seguir: { backgroundColor: c.accent, borderColor: c.accent },
+  siguiendo: { backgroundColor: 'transparent', borderColor: c.accent },
   texto: { fontSize: fontSize.sm, fontWeight: '600' },
-  textoSeguir: { color: colors.white },
-  textoSiguiendo: { color: colors.accent },
+  textoSeguir: { color: c.onAccent },
+  textoSiguiendo: { color: c.accent },
 });

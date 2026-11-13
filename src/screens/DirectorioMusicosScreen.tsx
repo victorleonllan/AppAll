@@ -11,7 +11,9 @@ import { PAISES, banderaPais } from '../constants/paises';
 import { TIPO_PROYECTO_LABEL } from '../lib/profiles';
 import BotonSeguir from '../components/BotonSeguir';
 import { PerfilMusico } from '../types';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 import { LocalesStackParamList } from '../navigation/LocalesStack';
 
 type NavigationProp = NativeStackNavigationProp<LocalesStackParamList, 'DirectorioMusicos'>;
@@ -20,6 +22,8 @@ type NavigationProp = NativeStackNavigationProp<LocalesStackParamList, 'Director
 // del país activo, buscables por nombre. Sin filtro de género: la web lo apagó
 // (24-ago-2026) porque no es lo principal de esta pantalla.
 export default function DirectorioMusicosScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const navigation = useNavigation<NavigationProp>();
   const { pais } = usePais();
   const { musicos, loading, error, refrescar } = useMusicos({ pais });
@@ -40,7 +44,7 @@ export default function DirectorioMusicosScreen() {
       <TextInput
         style={styles.buscador}
         placeholder="Buscar por nombre"
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={colores.muted}
         value={q}
         onChangeText={setQ}
         autoCorrect={false}
@@ -56,7 +60,7 @@ export default function DirectorioMusicosScreen() {
   if (loading && musicos.length === 0 && !error) {
     return (
       <View style={styles.centro}>
-        <ActivityIndicator color={colors.accent} />
+        <ActivityIndicator color={colores.accent} />
       </View>
     );
   }
@@ -109,6 +113,7 @@ export default function DirectorioMusicosScreen() {
 }
 
 function TarjetaMusico({ musico, onPress }: { musico: PerfilMusico; onPress: () => void }) {
+  const styles = useEstilos(crearEstilos);
   const imagen = musico.foto ?? musico.avatar;
   const tipo = musico.tipoProyecto ? TIPO_PROYECTO_LABEL[musico.tipoProyecto] : null;
   const lugar = [banderaPais(musico.pais), musico.ciudad].filter(Boolean).join(' ');
@@ -152,40 +157,40 @@ function TarjetaMusico({ musico, onPress }: { musico: PerfilMusico; onPress: () 
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   content: { padding: spacing.md, gap: spacing.md },
-  centro: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  centro: { flex: 1, backgroundColor: c.background, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
   encabezado: { marginBottom: spacing.xs },
-  titulo: { fontSize: fontSize.xl, fontWeight: 'bold', color: colors.primary },
-  subtitulo: { fontSize: fontSize.md, color: colors.secondary, marginTop: spacing.xs, lineHeight: 22 },
+  titulo: { fontSize: fontSize.xl, fontWeight: 'bold', color: c.primary },
+  subtitulo: { fontSize: fontSize.md, color: c.secondary, marginTop: spacing.xs, lineHeight: 22 },
   buscador: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     marginTop: spacing.md,
   },
-  contador: { fontSize: fontSize.sm, color: colors.muted, marginTop: spacing.sm },
-  tarjeta: { backgroundColor: colors.cardBackground, borderRadius: borderRadius.md, overflow: 'hidden' },
+  contador: { fontSize: fontSize.sm, color: c.muted, marginTop: spacing.sm },
+  tarjeta: { backgroundColor: c.cardBackground, borderRadius: borderRadius.md, overflow: 'hidden' },
   imagen: { width: '100%', aspectRatio: 4 / 3 },
-  sinFoto: { backgroundColor: colors.accentLight, alignItems: 'center', justifyContent: 'center' },
+  sinFoto: { backgroundColor: c.accentLight, alignItems: 'center', justifyContent: 'center' },
   sinFotoIcono: { fontSize: fontSize.xxl },
-  sinFotoTexto: { fontSize: fontSize.sm, color: colors.muted, marginTop: spacing.xs },
+  sinFotoTexto: { fontSize: fontSize.sm, color: c.muted, marginTop: spacing.xs },
   cuerpo: { padding: spacing.md },
-  nombre: { fontSize: fontSize.md, fontWeight: 'bold', color: colors.primary },
-  contexto: { fontSize: fontSize.sm, color: colors.secondary, marginTop: 2 },
-  incompleto: { fontSize: fontSize.sm, color: colors.muted, marginTop: 2 },
-  bio: { fontSize: fontSize.sm, color: colors.secondary, marginTop: spacing.sm, lineHeight: 18 },
+  nombre: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary },
+  contexto: { fontSize: fontSize.sm, color: c.secondary, marginTop: 2 },
+  incompleto: { fontSize: fontSize.sm, color: c.muted, marginTop: 2 },
+  bio: { fontSize: fontSize.sm, color: c.secondary, marginTop: spacing.sm, lineHeight: 18 },
   pie: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.sm },
-  escuchar: { fontSize: fontSize.sm, color: colors.accent, fontWeight: '600' },
+  escuchar: { fontSize: fontSize.sm, color: c.accent, fontWeight: '600' },
   vacio: { alignItems: 'center', marginTop: spacing.lg },
-  aviso: { fontSize: fontSize.md, color: colors.muted, textAlign: 'center' },
-  avisoSecundario: { fontSize: fontSize.sm, color: colors.muted, textAlign: 'center', marginTop: spacing.sm },
-  boton: { backgroundColor: colors.accent, paddingHorizontal: spacing.lg, paddingVertical: 10, borderRadius: borderRadius.sm, marginTop: spacing.md },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.sm },
+  aviso: { fontSize: fontSize.md, color: c.muted, textAlign: 'center' },
+  avisoSecundario: { fontSize: fontSize.sm, color: c.muted, textAlign: 'center', marginTop: spacing.sm },
+  boton: { backgroundColor: c.accent, paddingHorizontal: spacing.lg, paddingVertical: 10, borderRadius: borderRadius.sm, marginTop: spacing.md },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.sm },
 });

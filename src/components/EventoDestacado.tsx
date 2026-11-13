@@ -2,7 +2,8 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Evento } from '../types';
 import { usePrecioVigente } from '../hooks/usePrecioVigente';
 import PrecioEvento from './PrecioEvento';
-import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { spacing, fontSize, borderRadius, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
 
 interface Props {
   evento: Evento;
@@ -17,6 +18,7 @@ interface Props {
  * Superficie oscura del W-016 con los tokens de esta app.
  */
 export default function EventoDestacado({ evento, onPress, packEspecial }: Props) {
+  const styles = useEstilos(crearEstilos);
   const cancelado = evento.status === 'cancelled';
   // Solo vale la pena cotizar preventas cuando el evento se vende en puerta y sigue en pie.
   const { vigente } = usePrecioVigente(
@@ -66,9 +68,9 @@ export default function EventoDestacado({ evento, onPress, packEspecial }: Props
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   tarjeta: {
-    backgroundColor: colors.primary,
+    backgroundColor: c.block,
     marginHorizontal: spacing.md,
     marginVertical: 6,
     padding: 14,
@@ -81,28 +83,28 @@ const styles = StyleSheet.create({
   cuerpo: { flex: 1 },
   chips: { flexDirection: 'row', gap: 6, marginBottom: 6 },
   chipDestacado: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     borderRadius: borderRadius.sm,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  chipDestacadoTexto: { fontSize: fontSize.xs, fontWeight: '600', color: colors.accent },
+  chipDestacadoTexto: { fontSize: fontSize.xs, fontWeight: '600', color: c.accent },
   chipEspecial: {
-    backgroundColor: colors.especial,
+    backgroundColor: c.especial,
     borderRadius: borderRadius.sm,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  chipEspecialTexto: { fontSize: fontSize.xs, fontWeight: '600', color: colors.especialContenido },
+  chipEspecialTexto: { fontSize: fontSize.xs, fontWeight: '600', color: c.especialContenido },
   chipCancelado: {
-    backgroundColor: colors.danger,
+    backgroundColor: c.danger,
     borderRadius: borderRadius.sm,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  chipCanceladoTexto: { fontSize: fontSize.xs, fontWeight: '600', color: colors.white },
-  artista: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.white },
-  genero: { fontSize: fontSize.sm, color: colors.white, opacity: 0.8, marginTop: 2 },
-  detalle: { fontSize: fontSize.xs, color: colors.white, opacity: 0.8, marginTop: 4 },
-  descripcion: { fontSize: fontSize.sm, color: colors.white, opacity: 0.9, marginTop: 6 },
+  chipCanceladoTexto: { fontSize: fontSize.xs, fontWeight: '600', color: c.white },
+  artista: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.white },
+  genero: { fontSize: fontSize.sm, color: c.white, opacity: 0.8, marginTop: 2 },
+  detalle: { fontSize: fontSize.xs, color: c.white, opacity: 0.8, marginTop: 4 },
+  descripcion: { fontSize: fontSize.sm, color: c.white, opacity: 0.9, marginTop: 6 },
 });

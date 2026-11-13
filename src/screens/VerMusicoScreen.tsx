@@ -15,13 +15,17 @@ import { useTelefonoPropio } from '../hooks/useOptInWhatsApp';
 import { MENSAJES_SOLICITUD } from '../constants/solicitudes';
 import { etiquetaPais } from '../constants/paises';
 import { TIPO_PROYECTO_LABEL } from '../lib/profiles';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 type ParamList = {
   VerMusico: { musicoId: string };
 };
 
 export default function VerMusicoScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const route = useRoute<RouteProp<ParamList, 'VerMusico'>>();
   const { musicoId } = route.params;
   // Spec 122 — el perfil real desde `profiles` (spec 121), no el mock.
@@ -98,7 +102,7 @@ export default function VerMusicoScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator color={colors.accent} style={{ marginTop: 40 }} />
+        <ActivityIndicator color={colores.accent} style={{ marginTop: 40 }} />
       </View>
     );
   }
@@ -222,11 +226,11 @@ export default function VerMusicoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   content: { padding: spacing.md },
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
   },
@@ -241,48 +245,48 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.xl,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
   },
   genero: {
     fontSize: fontSize.md,
-    color: colors.secondary,
+    color: c.secondary,
     marginTop: spacing.xs,
   },
   separador: {
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: c.border,
     marginVertical: spacing.md,
   },
   bio: {
     fontSize: fontSize.md,
-    color: colors.secondary,
+    color: c.secondary,
     lineHeight: 22,
     marginBottom: spacing.md,
   },
   datosFila: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginBottom: spacing.md },
-  dato: { fontSize: fontSize.sm, color: colors.secondary },
+  dato: { fontSize: fontSize.sm, color: c.secondary },
   rider: { marginBottom: spacing.md },
-  riderTitulo: { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary, marginBottom: spacing.xs },
-  contacto: { fontSize: fontSize.md, color: colors.secondary, marginTop: spacing.xs },
+  riderTitulo: { fontSize: fontSize.sm, fontWeight: '600', color: c.primary, marginBottom: spacing.xs },
+  contacto: { fontSize: fontSize.md, color: c.secondary, marginTop: spacing.xs },
   enlace: {
     fontSize: fontSize.md,
-    color: colors.accent,
+    color: c.accent,
     textDecorationLine: 'underline',
     marginTop: spacing.sm,
   },
   botonSolicitud: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     borderRadius: borderRadius.sm,
     paddingVertical: spacing.sm,
     alignItems: 'center',
     marginTop: spacing.lg,
   },
-  botonSolicitudDeshabilitado: { backgroundColor: colors.border },
-  textoBotonSolicitud: { color: colors.white, fontWeight: '600', fontSize: fontSize.md },
-  textoBotonDeshabilitado: { color: colors.secondary },
+  botonSolicitudDeshabilitado: { backgroundColor: c.border },
+  textoBotonSolicitud: { color: c.onAccent, fontWeight: '600', fontSize: fontSize.md },
+  textoBotonDeshabilitado: { color: c.secondary },
   aviso: {
     fontSize: fontSize.md,
-    color: colors.muted,
+    color: c.muted,
     textAlign: 'center',
     marginTop: 40,
   },

@@ -1,6 +1,6 @@
 # Spec 176 — Tema oscuro en la cartelera, los locales y los músicos
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — receta de 173 §6 en los 13 archivos de pantalla y componente; `MapaLocales.tsx` y `lib/mapa.ts` con `paletaClara`. Criterios 1-4 verificados (tsc sin errores en estos archivos, `expo export` web OK, sin `colors` ni hex); 5-9 y V-candidata 176-a a probar en dispositivo
 > Capa: FRONTEND. `src/screens/CarteleraScreen.tsx`, `src/components/EventoDestacado.tsx`,
 > `src/components/TarjetaEvento.tsx`, `src/components/TarjetaEventoExterno.tsx`,
 > `src/components/PrecioEvento.tsx`, `src/components/GeneroPicker.tsx`,
