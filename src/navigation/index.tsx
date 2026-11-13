@@ -1,4 +1,5 @@
-import { NavigationContainer } from '@react-navigation/native';
+import { useMemo } from 'react';
+import { NavigationContainer, DarkTheme, DefaultTheme, Theme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, View } from 'react-native';
@@ -10,7 +11,7 @@ import LocalesStack from './LocalesStack';
 import MiLocalStack from './MiLocalStack';
 import { linking } from './linking';
 import { useAuth, UserRole } from '../context/AuthContext';
-import { colors } from '../theme';
+import { useTema } from '../context/TemaContext';
 
 const Tab = createBottomTabNavigator();
 
@@ -25,11 +26,30 @@ function getThirdTab(session: unknown, role: UserRole) {
 
 export default function AppNavigator() {
   const { session, role, loading } = useAuth();
+  const { tema, colores } = useTema();
+
+  // Spec 174 — sin `theme`, React Navigation usa su DefaultTheme y el fondo detrás de
+  // cada pantalla y la barra de pestañas quedan claros en oscuro. Se parte del tema
+  // base porque en v7 el tema exige también `fonts`.
+  const temaNavegacion = useMemo<Theme>(() => {
+    const base = tema === 'dark' ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      colors: {
+        primary: colores.accent,
+        background: colores.background,
+        card: colores.cardBackground,
+        text: colores.primary,
+        border: colores.border,
+        notification: colores.danger,
+      },
+    };
+  }, [tema, colores]);
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.accent} />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colores.background }}>
+        <ActivityIndicator size="large" color={colores.accent} />
       </View>
     );
   }
@@ -37,7 +57,7 @@ export default function AppNavigator() {
   const thirdTab = getThirdTab(session, role);
 
   return (
-    <NavigationContainer linking={linking}>
+    <NavigationContainer linking={linking} theme={temaNavegacion}>
       <Tab.Navigator
         screenOptions={({ route }) => ({
           tabBarIcon: ({ color, size }) => {
@@ -47,10 +67,10 @@ export default function AppNavigator() {
             else iconName = thirdTab.icon;
             return <Ionicons name={iconName} size={size} color={color} />;
           },
-          tabBarActiveTintColor: colors.accent,
-          tabBarInactiveTintColor: colors.muted,
-          headerStyle: { backgroundColor: colors.primary },
-          headerTintColor: colors.white,
+          tabBarActiveTintColor: colores.accent,
+          tabBarInactiveTintColor: colores.muted,
+          headerStyle: { backgroundColor: colores.block },
+          headerTintColor: colores.white,
         })}
       >
         <Tab.Screen
