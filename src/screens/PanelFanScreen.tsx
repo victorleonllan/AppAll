@@ -15,7 +15,8 @@ import { TIPO_PROYECTO_LABEL } from '../lib/profiles';
 import { venueLabel } from '../lib/venues';
 import { PerfilStackParamList } from '../navigation/PerfilStack';
 import { RootTabParamList } from '../navigation/linking';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
 
 type NavProp = NativeStackNavigationProp<PerfilStackParamList, 'PanelFan'>;
 
@@ -46,6 +47,7 @@ function haceCuanto(iso: string | undefined, ahora: number): string {
 
 // Spec 124 — hermano de /fan de la web (W-042, W-075, W-194, W-195).
 export default function PanelFanScreen() {
+  const styles = useEstilos(crearEstilos);
   const navigation = useNavigation<NavProp>();
   const { user } = useAuth();
   const seguidos = useSeguidos();
@@ -242,46 +244,46 @@ export default function PanelFanScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   content: { padding: spacing.md, gap: spacing.lg },
-  centro: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
-  saludo: { fontSize: fontSize.xl, fontWeight: 'bold', color: colors.primary },
-  subtitulo: { fontSize: fontSize.md, color: colors.secondary, marginTop: spacing.xs },
-  proxima: { backgroundColor: colors.primary, borderRadius: borderRadius.md, padding: spacing.md },
-  proximaRotulo: { fontSize: fontSize.xs, fontWeight: 'bold', color: colors.white, letterSpacing: 1, opacity: 0.8 },
-  proximaArtista: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.white, marginTop: spacing.xs },
-  proximaDetalle: { fontSize: fontSize.sm, color: colors.white, marginTop: spacing.xs },
+  centro: { flex: 1, backgroundColor: c.background, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  saludo: { fontSize: fontSize.xl, fontWeight: 'bold', color: c.primary },
+  subtitulo: { fontSize: fontSize.md, color: c.secondary, marginTop: spacing.xs },
+  proxima: { backgroundColor: c.block, borderRadius: borderRadius.md, padding: spacing.md },
+  proximaRotulo: { fontSize: fontSize.xs, fontWeight: 'bold', color: c.white, letterSpacing: 1, opacity: 0.8 },
+  proximaArtista: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.white, marginTop: spacing.xs },
+  proximaDetalle: { fontSize: fontSize.sm, color: c.white, marginTop: spacing.xs },
   proximaBoton: {
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: colors.white,
+    borderColor: c.white,
     borderRadius: borderRadius.sm,
     paddingVertical: 6,
     paddingHorizontal: 12,
     marginTop: spacing.md,
   },
-  proximaBotonTexto: { color: colors.white, fontWeight: '600', fontSize: fontSize.sm },
+  proximaBotonTexto: { color: c.white, fontWeight: '600', fontSize: fontSize.sm },
   seccion: { gap: spacing.sm },
-  tituloSeccion: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
+  tituloSeccion: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
   itemFeed: { gap: spacing.xs },
   filaAutor: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  autor: { flex: 1, fontSize: fontSize.sm, color: colors.secondary, fontWeight: '600' },
-  hace: { fontSize: fontSize.xs, color: colors.muted },
+  autor: { flex: 1, fontSize: fontSize.sm, color: c.secondary, fontWeight: '600' },
+  hace: { fontSize: fontSize.xs, color: c.muted },
   fila: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.md,
     padding: spacing.sm,
   },
   filaCuerpo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   avatar: { width: 36, height: 36, borderRadius: 18 },
-  avatarVacio: { backgroundColor: colors.accentLight, alignItems: 'center', justifyContent: 'center' },
-  filaNombre: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary },
-  filaContexto: { fontSize: fontSize.sm, color: colors.secondary, marginTop: 2 },
-  enlace: { fontSize: fontSize.md, color: colors.accent, fontWeight: '600', marginTop: spacing.xs },
-  aviso: { fontSize: fontSize.md, color: colors.muted, textAlign: 'center' },
-  avisoIzq: { fontSize: fontSize.md, color: colors.muted },
+  avatarVacio: { backgroundColor: c.accentLight, alignItems: 'center', justifyContent: 'center' },
+  filaNombre: { fontSize: fontSize.md, fontWeight: '600', color: c.primary },
+  filaContexto: { fontSize: fontSize.sm, color: c.secondary, marginTop: 2 },
+  enlace: { fontSize: fontSize.md, color: c.accent, fontWeight: '600', marginTop: spacing.xs },
+  aviso: { fontSize: fontSize.md, color: c.muted, textAlign: 'center' },
+  avisoIzq: { fontSize: fontSize.md, color: c.muted },
 });

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { ErrorApiWeb } from '../lib/apiWeb';
-import { colors, borderRadius, fontSize } from '../theme';
+import { borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 interface Props {
   ticketId: string;
@@ -23,6 +25,8 @@ function textoError(codigo: string | null): string {
 // llegó (spam, buzón lleno), y reenviar tiene que seguir disponible. El error va en
 // la fila y no en Alert.alert: en web Alert.alert no hace nada.
 export default function BotonReenviarEntrada({ ticketId, cantidadEnCompra, enviadoAt, onReenviar }: Props) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const [estado, setEstado] = useState<Estado>('idle');
   const [recienEnviado, setRecienEnviado] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,17 +63,17 @@ export default function BotonReenviarEntrada({ ticketId, cantidadEnCompra, envia
 
   let linea: { texto: string; color: string };
   if (estado === 'error') {
-    linea = { texto: textoError(error), color: colors.danger };
+    linea = { texto: textoError(error), color: colores.danger };
   } else if (recienEnviado) {
-    linea = { texto: 'Enviado ahora', color: colors.success };
+    linea = { texto: 'Enviado ahora', color: colores.success };
   } else if (!enviadoAt) {
     // Ámbar y no gris: alguien pagó y no tiene su entrada en el buzón.
-    linea = { texto: 'Nunca se envió', color: colors.warning };
+    linea = { texto: 'Nunca se envió', color: colores.warning };
   } else {
     const fecha = new Date(enviadoAt).toLocaleString('es-CL', {
       day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
     });
-    linea = { texto: `Enviado ${fecha}`, color: colors.muted };
+    linea = { texto: `Enviado ${fecha}`, color: colores.muted };
   }
 
   return (
@@ -82,15 +86,15 @@ export default function BotonReenviarEntrada({ ticketId, cantidadEnCompra, envia
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   contenedor: { alignItems: 'flex-end', marginTop: 6 },
   boton: {
     borderWidth: 1,
-    borderColor: colors.accent,
+    borderColor: c.accent,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: borderRadius.sm,
   },
-  texto: { color: colors.accent, fontWeight: '600', fontSize: fontSize.xs },
+  texto: { color: c.accent, fontWeight: '600', fontSize: fontSize.xs },
   linea: { fontSize: fontSize.xs, marginTop: 2 },
 });

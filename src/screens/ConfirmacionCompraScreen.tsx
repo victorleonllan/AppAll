@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -8,7 +8,9 @@ import { CarteleraStackParamList } from '../navigation/CarteleraStack';
 import { TicketStatus } from '../types';
 import { supabase } from '../lib/supabase';
 import { etiquetaDeEspecial, getPackDeTicket } from '../lib/especiales';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 type ConfirmacionRoute = RouteProp<CarteleraStackParamList, 'ConfirmacionCompra'>;
 type NavProp = NativeStackNavigationProp<CarteleraStackParamList, 'ConfirmacionCompra'>;
@@ -57,34 +59,38 @@ async function pedirConfirmacion(cuerpo: { ticket_id?: string; ticket_ref?: stri
   }
 }
 
-const config: Record<VistaStatus, { icon: keyof typeof Ionicons.glyphMap; color: string; titulo: string; mensaje: string }> = {
+// Spec 177 — función de la paleta y no objeto fijo: un objeto de módulo no seguiría el tema.
+const estadosCompra = (c: Paleta): Record<VistaStatus, { icon: keyof typeof Ionicons.glyphMap; color: string; titulo: string; mensaje: string }> => ({
   success: {
     icon: 'checkmark-circle',
-    color: colors.success,
+    color: c.success,
     titulo: 'Compra exitosa!',
     mensaje: 'Tu entrada ha sido confirmada. Te esperamos en el evento.',
   },
   failure: {
     icon: 'close-circle',
-    color: '#B71C1C',
+    color: c.dangerText,
     titulo: 'Compra no completada',
     mensaje: 'El pago no pudo procesarse. Intenta nuevamente.',
   },
   pending: {
     icon: 'time',
-    color: '#F57F17',
+    color: c.warningText,
     titulo: 'Pago pendiente',
     mensaje: 'El pago esta siendo procesado. La pantalla se actualizara automaticamente cuando se confirme.',
   },
   timeout: {
     icon: 'help-circle',
-    color: '#F57F17',
+    color: c.warningText,
     titulo: 'Sin confirmacion todavia',
     mensaje: 'Mercado Pago aun no confirma el pago. Si ya pagaste, tu entrada se registrara igual: puedes revisarla mas tarde en tus entradas.',
   },
-};
+});
 
 export default function ConfirmacionCompraScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
+  const config = useMemo(() => estadosCompra(colores), [colores]);
   const route = useRoute<ConfirmacionRoute>();
   const navigation = useNavigation<NavProp>();
   const { eventos } = useEventos();
@@ -281,10 +287,10 @@ export default function ConfirmacionCompraScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: c.background,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
@@ -297,13 +303,13 @@ const styles = StyleSheet.create({
   },
   mensaje: {
     fontSize: fontSize.md,
-    color: colors.secondary,
+    color: c.secondary,
     textAlign: 'center',
     marginTop: spacing.sm,
     lineHeight: 22,
   },
   eventoInfo: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginTop: spacing.lg,
@@ -313,28 +319,28 @@ const styles = StyleSheet.create({
   eventoNombre: {
     fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.primary,
+    color: c.primary,
   },
   eventoDetalle: {
     fontSize: fontSize.sm,
-    color: colors.muted,
+    color: c.muted,
     marginTop: spacing.xs,
   },
-  correoDestinatario: { fontWeight: 'bold', color: colors.primary },
+  correoDestinatario: { fontWeight: 'bold', color: c.primary },
   pollingIndicator: {
     marginTop: spacing.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: '#FFF3E0',
+    backgroundColor: c.warningBg,
     borderRadius: borderRadius.sm,
   },
   pollingText: {
     fontSize: fontSize.sm,
-    color: '#F57F17',
+    color: c.warningText,
     fontWeight: '500',
   },
   boton: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: borderRadius.sm,
@@ -343,9 +349,9 @@ const styles = StyleSheet.create({
   botonSecundario: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: colors.accent,
+    borderColor: c.accent,
     marginTop: spacing.lg,
   },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
-  textoBotonSecundario: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.md },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
+  textoBotonSecundario: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.md },
 });

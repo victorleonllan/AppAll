@@ -14,7 +14,9 @@ import { useAuth } from '../context/AuthContext';
 import { useMisEntradas, EntradaPropia, CompraEnEmision } from '../hooks/useMisEntradas';
 import TalonEntrada from '../components/TalonEntrada';
 import { RootTabParamList } from '../navigation/linking';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 // Spec 126 — misma ventana que PollTrasCompra.js de la web: 6 intentos cada 3 s (~18 s).
 const INTERVALO_EMISION_MS = 3000;
@@ -29,6 +31,8 @@ function textoEmision(compra: CompraEnEmision): string {
 }
 
 export default function MisEntradasScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const { user } = useAuth();
   const { cargando, error, proximas, pasadas, comprasEnEmision, refrescar } = useMisEntradas();
   const navigation = useNavigation();
@@ -78,7 +82,7 @@ export default function MisEntradasScreen() {
   if (cargando && sinDatos && !error) {
     return (
       <View style={styles.centrado}>
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={colores.accent} />
       </View>
     );
   }
@@ -136,59 +140,59 @@ export default function MisEntradasScreen() {
         </View>
       )}
       stickySectionHeadersEnabled={false}
-      refreshControl={<RefreshControl refreshing={cargando} onRefresh={refrescar} tintColor={colors.accent} />}
+      refreshControl={<RefreshControl refreshing={cargando} onRefresh={refrescar} tintColor={colores.accent} />}
     />
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   centrado: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: c.background,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
   },
-  textoCentrado: { fontSize: fontSize.md, color: colors.secondary, textAlign: 'center' },
+  textoCentrado: { fontSize: fontSize.md, color: c.secondary, textAlign: 'center' },
   boton: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     paddingHorizontal: spacing.lg,
     paddingVertical: 14,
     borderRadius: borderRadius.sm,
     marginTop: spacing.lg,
   },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
-  lista: { flex: 1, backgroundColor: colors.background },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
+  lista: { flex: 1, backgroundColor: c.background },
   contenido: { alignItems: 'center', paddingVertical: spacing.md },
   aviso: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.md,
     alignItems: 'center',
   },
-  textoError: { color: colors.danger, fontSize: fontSize.sm, textAlign: 'center' },
+  textoError: { color: c.danger, fontSize: fontSize.sm, textAlign: 'center' },
   botonReintentar: {
     marginTop: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.accent,
+    borderColor: c.accent,
     borderRadius: borderRadius.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
-  textoBotonReintentar: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  textoBotonReintentar: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm },
   tarjetaEmision: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.md,
   },
-  textoEmision: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '600' },
-  textoEmisionAyuda: { color: colors.secondary, fontSize: fontSize.xs, marginTop: spacing.xs },
+  textoEmision: { color: c.primary, fontSize: fontSize.sm, fontWeight: '600' },
+  textoEmisionAyuda: { color: c.secondary, fontSize: fontSize.xs, marginTop: spacing.xs },
   encabezadoSeccion: {
     fontSize: fontSize.md,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     marginTop: spacing.sm,
     marginBottom: spacing.md,
   },

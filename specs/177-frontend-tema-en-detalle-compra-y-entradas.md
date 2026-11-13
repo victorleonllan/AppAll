@@ -1,6 +1,6 @@
 # Spec 177 — Tema oscuro en el detalle del evento, la compra y las entradas
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — receta de 173 §6 en los 13 archivos; hex a `dangerBg`/`dangerText`/`warningBg`/`warningText`; `estadosCompra(c)` y el mapa del talón pasan a función; cabecera del talón y «próxima» en `block`; QR en `paletaClara`; `onAccent` sobre todo fondo de acento. Criterios 1-4 verificados (`tsc` sin salida, `expo export --platform web` OK, sin `colors` ni hex en los 13 archivos); 5-8 y V-candidata 177-a a probar en dispositivo
 > Capa: FRONTEND. `src/screens/DetalleEventoScreen.tsx`, `src/components/AccionesEvento.tsx`,
 > `src/components/AvisoCancelacion.tsx`, `src/components/PreventasEvento.tsx`,
 > `src/screens/ConfirmacionCompraScreen.tsx`, `src/screens/MisEntradasScreen.tsx`,

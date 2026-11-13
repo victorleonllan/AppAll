@@ -4,7 +4,9 @@ import { BorradorPreventa, CierreTipo, Preventa } from '../types';
 import { CIERRE_RECOMENDADO, usePreventas } from '../hooks/usePreventas';
 import { armarFechaHora, fechaHoraValidas, formatearFechaEs, separarFechaHora } from '../lib/fecha';
 import { confirmar } from '../lib/confirm';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 /**
  * Spec 136 — equivalente de `PreventasManager.js` de la web. Dos modos:
@@ -29,6 +31,7 @@ export default function PreventasEvento(props: PreventasEventoProps) {
 }
 
 function PreventasBorrador({ value, onChange }: { value: BorradorPreventa[]; onChange: (v: BorradorPreventa[]) => void }) {
+  const styles = useEstilos(crearEstilos);
   return (
     <View>
       {value.map((b, i) => (
@@ -45,11 +48,13 @@ function PreventasBorrador({ value, onChange }: { value: BorradorPreventa[]; onC
 }
 
 function PreventasEnVivo({ eventoId }: { eventoId: string }) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const { preventas, cargando, error, crear, actualizar, cerrar } = usePreventas(eventoId);
 
   return (
     <View>
-      {cargando && <ActivityIndicator color={colors.accent} />}
+      {cargando && <ActivityIndicator color={colores.accent} />}
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {preventas.map((p) => (
         <FilaPreventaEnVivo
@@ -73,6 +78,8 @@ function FilaPreventaEnVivo({
   onGuardar: (cambios: { precio?: string; cupo?: number }) => Promise<unknown>;
   onCerrar: () => Promise<unknown>;
 }) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const [precio, setPrecio] = useState(preventa.precio);
   const [cupo, setCupo] = useState(String(preventa.cupo));
   const [error, setError] = useState<string | null>(null);
@@ -135,7 +142,7 @@ function FilaPreventaEnVivo({
               onChangeText={setPrecio}
               onEndEditing={handleFinPrecio}
               placeholder="Precio"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={colores.muted}
             />
             <TextInput
               style={[styles.input, styles.campo]}
@@ -143,7 +150,7 @@ function FilaPreventaEnVivo({
               onChangeText={setCupo}
               onEndEditing={handleFinCupo}
               placeholder="Cupo"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={colores.muted}
               keyboardType="number-pad"
             />
           </View>
@@ -158,6 +165,8 @@ function FilaPreventaEnVivo({
 }
 
 function FormNuevaPreventa({ onConfirmar }: { onConfirmar: (b: BorradorPreventa) => Promise<void> }) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const recomendadas = String(CIERRE_RECOMENDADO.cierreHorasAntes);
   const [precio, setPrecio] = useState('');
   const [cupo, setCupo] = useState('');
@@ -218,14 +227,14 @@ function FormNuevaPreventa({ onConfirmar }: { onConfirmar: (b: BorradorPreventa)
           value={precio}
           onChangeText={setPrecio}
           placeholder="Precio (ej: $4.000)"
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colores.muted}
         />
         <TextInput
           style={[styles.input, styles.campo]}
           value={cupo}
           onChangeText={setCupo}
           placeholder="Cupo *"
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colores.muted}
           keyboardType="number-pad"
         />
       </View>
@@ -271,7 +280,7 @@ function FormNuevaPreventa({ onConfirmar }: { onConfirmar: (b: BorradorPreventa)
           value={fechaCierre}
           onChangeText={setFechaCierre}
           placeholder="2026-11-28 18:00"
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colores.muted}
         />
       )}
 
@@ -285,7 +294,7 @@ function FormNuevaPreventa({ onConfirmar }: { onConfirmar: (b: BorradorPreventa)
         disabled={guardando}
       >
         {guardando ? (
-          <ActivityIndicator color={colors.white} />
+          <ActivityIndicator color={colores.onAccent} />
         ) : (
           <Text style={styles.textoBoton}>✓ Confirmar preventa</Text>
         )}
@@ -294,33 +303,33 @@ function FormNuevaPreventa({ onConfirmar }: { onConfirmar: (b: BorradorPreventa)
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   fila: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: spacing.xs,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: c.border,
   },
   filaEnVivo: {
     paddingVertical: spacing.xs,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: c.border,
   },
-  filaTexto: { fontSize: fontSize.sm, color: colors.primary, flexShrink: 1 },
+  filaTexto: { fontSize: fontSize.sm, color: c.primary, flexShrink: 1 },
   filaCampos: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.xs },
   campo: { flex: 1 },
   nueva: { marginTop: spacing.sm },
-  sublabel: { fontSize: fontSize.xs, color: colors.muted, marginTop: spacing.sm, marginBottom: spacing.xs },
+  sublabel: { fontSize: fontSize.xs, color: c.muted, marginTop: spacing.sm, marginBottom: spacing.xs },
   input: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     padding: 12,
     borderRadius: borderRadius.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.xs },
   chip: {
@@ -328,23 +337,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     borderRadius: borderRadius.sm,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
-  chipActivo: { backgroundColor: colors.accent, borderColor: colors.accent },
-  chipTexto: { fontSize: fontSize.sm, color: colors.primary },
-  chipTextoActivo: { color: colors.white, fontWeight: '600' },
+  chipActivo: { backgroundColor: c.accent, borderColor: c.accent },
+  chipTexto: { fontSize: fontSize.sm, color: c.primary },
+  chipTextoActivo: { color: c.onAccent, fontWeight: '600' },
   filaHoras: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   campoHoras: { width: 72 },
-  recomendado: { fontSize: fontSize.sm, color: colors.success, fontWeight: '600' },
-  enlace: { fontSize: fontSize.sm, color: colors.accent, fontWeight: '600', marginTop: spacing.xs },
-  error: { fontSize: fontSize.sm, color: colors.danger, marginTop: spacing.xs },
+  recomendado: { fontSize: fontSize.sm, color: c.success, fontWeight: '600' },
+  enlace: { fontSize: fontSize.sm, color: c.accent, fontWeight: '600', marginTop: spacing.xs },
+  error: { fontSize: fontSize.sm, color: c.danger, marginTop: spacing.xs },
   boton: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     padding: 12,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     marginTop: spacing.sm,
   },
   botonDesactivado: { opacity: 0.6 },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.sm },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.sm },
 });

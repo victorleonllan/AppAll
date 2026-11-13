@@ -3,7 +3,9 @@ import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'rea
 import { cerrarEvento } from '../lib/admin';
 import { formatearMonto } from '../lib/precio';
 import { confirmar } from '../lib/confirm';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 interface Props {
   eventoId: string;
@@ -22,6 +24,8 @@ interface Props {
  * muestra tal cual debajo del botón.
  */
 export default function BotonCerrarEvento({ eventoId, monto, moneda, artista, titular, cancelado, onCerrado }: Props) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const [cerrando, setCerrando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // W-175: un cancelado nunca dice «Pagado y cerrado» — el RPC lo cierra sin marcar
@@ -60,7 +64,7 @@ export default function BotonCerrarEvento({ eventoId, monto, moneda, artista, ti
         onPress={onCerrar}
         disabled={cerrando}
       >
-        {cerrando && <ActivityIndicator size="small" color={colors.white} />}
+        {cerrando && <ActivityIndicator size="small" color={colores.onAccent} />}
         <Text style={styles.texto}>{texto}</Text>
       </TouchableOpacity>
       {error && <Text style={styles.error}>{error}</Text>}
@@ -68,18 +72,18 @@ export default function BotonCerrarEvento({ eventoId, monto, moneda, artista, ti
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   boton: {
     flexDirection: 'row',
     alignSelf: 'flex-start',
     alignItems: 'center',
     gap: spacing.xs,
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.sm,
   },
   deshabilitado: { opacity: 0.6 },
-  texto: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.sm },
-  error: { color: colors.danger, fontSize: fontSize.sm, marginTop: spacing.xs },
+  texto: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.sm },
+  error: { color: c.danger, fontSize: fontSize.sm, marginTop: spacing.xs },
 });

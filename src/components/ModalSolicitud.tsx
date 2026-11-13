@@ -4,7 +4,9 @@ import {
   KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { CampoFecha, CampoHora } from './CampoFecha';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 interface ModalSolicitudProps {
   visible: boolean;
@@ -55,6 +57,8 @@ export default function ModalSolicitud({
   onCancelar,
   onEnviar,
 }: ModalSolicitudProps) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const [mensaje, setMensaje] = useState(mensajeInicial);
   const [fecha, setFecha] = useState('');
   const [hora, setHora] = useState('');
@@ -148,7 +152,7 @@ export default function ModalSolicitud({
                 disabled={enviando}
               >
                 {enviando ? (
-                  <ActivityIndicator color={colors.white} />
+                  <ActivityIndicator color={colores.onAccent} />
                 ) : (
                   <Text style={styles.textoEnviar}>Enviar solicitud</Text>
                 )}
@@ -161,28 +165,28 @@ export default function ModalSolicitud({
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   fondo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
   centro: { flexGrow: 1, justifyContent: 'center', padding: spacing.md },
   caja: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
   },
-  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
-  subtitulo: { fontSize: fontSize.sm, color: colors.secondary, marginTop: spacing.xs, marginBottom: spacing.md },
-  label: { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary, marginBottom: spacing.xs, marginTop: spacing.sm },
+  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
+  subtitulo: { fontSize: fontSize.sm, color: c.secondary, marginTop: spacing.xs, marginBottom: spacing.md },
+  label: { fontSize: fontSize.sm, fontWeight: '600', color: c.primary, marginBottom: spacing.xs, marginTop: spacing.sm },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     padding: spacing.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
-    backgroundColor: colors.background,
+    color: c.primary,
+    backgroundColor: c.background,
   },
   inputMensaje: { minHeight: 90 },
   // Uno bajo el otro: en iOS el calendario se abre debajo del campo y en media
@@ -196,9 +200,9 @@ const styles = StyleSheet.create({
     minWidth: 100,
     alignItems: 'center',
   },
-  botonCancelar: { borderWidth: 1, borderColor: colors.border },
-  botonEnviar: { backgroundColor: colors.accent },
+  botonCancelar: { borderWidth: 1, borderColor: c.border },
+  botonEnviar: { backgroundColor: c.accent },
   deshabilitado: { opacity: 0.6 },
-  textoCancelar: { color: colors.secondary, fontWeight: '600' },
-  textoEnviar: { color: colors.white, fontWeight: '600' },
+  textoCancelar: { color: c.secondary, fontWeight: '600' },
+  textoEnviar: { color: c.onAccent, fontWeight: '600' },
 });

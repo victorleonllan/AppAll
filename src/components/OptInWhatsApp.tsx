@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Switch, StyleSheet } from 'react-native';
 import { useOptInWhatsApp } from '../hooks/useOptInWhatsApp';
 import type { TipoTenant } from '../hooks/useTenantCrm';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 interface ValorOptIn {
   acepta: boolean;
@@ -26,6 +28,8 @@ const ETIQUETA_DEFAULT = 'Avísame por WhatsApp de sus próximos eventos';
 export default function OptInWhatsApp({
   tenantTipo, tenantId, telefonoInicial, etiqueta = ETIQUETA_DEFAULT, valor, onCambiar,
 }: Props) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const controlado = !!onCambiar;
   const { guardando, guardar } = useOptInWhatsApp();
 
@@ -82,7 +86,7 @@ export default function OptInWhatsApp({
         <Switch
           value={acepta}
           onValueChange={cambiarAcepta}
-          trackColor={{ true: colors.accent, false: colors.border }}
+          trackColor={{ true: colores.accent, false: colores.border }}
         />
         <Text style={styles.etiqueta}>{etiqueta}</Text>
       </View>
@@ -96,7 +100,7 @@ export default function OptInWhatsApp({
           onChangeText={cambiarTelefono}
           keyboardType="phone-pad"
           placeholder="+56 9 1234 5678"
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colores.muted}
         />
       )}
 
@@ -116,29 +120,29 @@ export default function OptInWhatsApp({
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   bloque: { marginTop: spacing.md, gap: spacing.sm },
   fila: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  etiqueta: { flex: 1, fontSize: fontSize.sm, color: colors.primary },
+  etiqueta: { flex: 1, fontSize: fontSize.sm, color: c.primary },
   input: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     borderRadius: borderRadius.sm,
     padding: 12,
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
   boton: {
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: colors.accent,
+    borderColor: c.accent,
     borderRadius: borderRadius.sm,
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
   botonDeshabilitado: { opacity: 0.5 },
-  textoBoton: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
-  error: { fontSize: fontSize.sm, color: colors.danger },
-  listo: { marginTop: spacing.md, fontSize: fontSize.sm, color: colors.success },
+  textoBoton: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  error: { fontSize: fontSize.sm, color: c.danger },
+  listo: { marginTop: spacing.md, fontSize: fontSize.sm, color: c.success },
 });

@@ -5,7 +5,8 @@ import {
 } from '../hooks/useAvisoWhatsApp';
 import type { TenantCrm } from '../hooks/useTenantCrm';
 import { formatearFechaEs, separarFechaHora } from '../lib/fecha';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
 
 interface Props {
   eventoId: string;
@@ -17,6 +18,7 @@ const personas = (n: number) => `${n} ${n === 1 ? 'persona' : 'personas'}`;
 // Spec 156 — hermano de cartelera/[id]/BotonAvisarWhatsApp.js (W-054, W-108). La
 // pantalla solo lo monta para el owner con el evento no cancelado: no se repite aquí.
 export default function AvisarWhatsApp({ eventoId, tenant }: Props) {
+  const styles = useEstilos(crearEstilos);
   const aviso = useAvisoWhatsApp({ eventoId, tenant, habilitado: true });
   const [abierto, setAbierto] = useState(false);
   const [segmento, setSegmento] = useState<SegmentoBroadcast>(SEGMENTO_BROADCAST_DEFAULT);
@@ -142,20 +144,20 @@ export default function AvisarWhatsApp({ eventoId, tenant }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   bloque: { marginTop: spacing.sm, gap: spacing.xs, alignItems: 'flex-start' },
-  sinPro: { marginTop: spacing.sm, fontSize: fontSize.sm, color: colors.secondary },
+  sinPro: { marginTop: spacing.sm, fontSize: fontSize.sm, color: c.secondary },
   // Mismo estilo que botonGestion de DetalleEventoScreen.
   botonGestion: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: borderRadius.sm,
   },
   botonDeshabilitado: { opacity: 0.5 },
-  textoBotonGestion: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
-  resultadoOk: { fontSize: fontSize.sm, color: colors.success },
-  resultadoInfo: { fontSize: fontSize.sm, color: colors.secondary },
+  textoBotonGestion: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  resultadoOk: { fontSize: fontSize.sm, color: c.success },
+  resultadoInfo: { fontSize: fontSize.sm, color: c.secondary },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -163,13 +165,13 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   modal: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     gap: spacing.sm,
   },
-  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
-  subtitulo: { fontSize: fontSize.sm, color: colors.secondary, marginBottom: spacing.xs },
+  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
+  subtitulo: { fontSize: fontSize.sm, color: c.secondary, marginBottom: spacing.xs },
   opcion: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -182,27 +184,27 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: colors.accent,
+    borderColor: c.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radioLleno: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent },
-  opcionTexto: { flex: 1, fontSize: fontSize.sm, color: colors.primary },
-  opcionConteo: { fontSize: fontSize.sm, fontWeight: 'bold', color: colors.primary },
-  error: { fontSize: fontSize.sm, color: colors.danger },
+  radioLleno: { width: 10, height: 10, borderRadius: 5, backgroundColor: c.accent },
+  opcionTexto: { flex: 1, fontSize: fontSize.sm, color: c.primary },
+  opcionConteo: { fontSize: fontSize.sm, fontWeight: 'bold', color: c.primary },
+  error: { fontSize: fontSize.sm, color: c.danger },
   acciones: { flexDirection: 'row', justifyContent: 'flex-end', gap: spacing.sm, marginTop: spacing.sm },
   botonSecundario: {
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: borderRadius.sm,
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
   },
   botonPrimario: {
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: borderRadius.sm,
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
   },
-  botonPrimarioDeshabilitado: { backgroundColor: colors.muted },
-  textoBotonPrimario: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.sm },
+  botonPrimarioDeshabilitado: { backgroundColor: c.muted },
+  textoBotonPrimario: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.sm },
 });

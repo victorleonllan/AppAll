@@ -31,7 +31,9 @@ import { Pasarela, getPasarelas, NOMBRE_PASARELA } from '../lib/pasarelas';
 import { crearPagoCompra, ErrorPago, mensajeErrorPago } from '../lib/pagoCompra';
 import { confirmar } from '../lib/confirm';
 import { CarteleraStackParamList } from '../navigation/CarteleraStack';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 type DetalleRoute = RouteProp<CarteleraStackParamList, 'DetalleEvento'>;
 type NavProp = NativeStackNavigationProp<CarteleraStackParamList, 'DetalleEvento'>;
@@ -40,6 +42,8 @@ type NavProp = NativeStackNavigationProp<CarteleraStackParamList, 'DetalleEvento
 type CompraElegida = { especialId: string | null; cantidad: number; destinatarios: string[] };
 
 export default function DetalleEventoScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const route = useRoute<DetalleRoute>();
   const navigation = useNavigation<NavProp>();
   const { user, signInOtp } = useAuth();
@@ -463,7 +467,7 @@ export default function DetalleEventoScreen() {
             <TextInput
               style={styles.input}
               placeholder="tu@email.com"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={colores.muted}
               keyboardType="email-address"
               autoCapitalize="none"
               value={email}
@@ -783,27 +787,27 @@ export default function DetalleEventoScreen() {
 
 // ────────────── ESTILOS ──────────────
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   content: { padding: spacing.md, paddingBottom: 100 },
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
   },
   artista: {
     fontSize: fontSize.xl,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
   },
   genero: {
     fontSize: fontSize.md,
-    color: colors.secondary,
+    color: c.secondary,
     marginTop: spacing.xs,
   },
   divisor: {
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: c.border,
     marginVertical: spacing.md,
   },
   infoRow: {
@@ -813,31 +817,31 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: fontSize.md,
-    color: colors.muted,
+    color: c.muted,
   },
   infoValor: {
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     fontWeight: '500',
   },
-  infoValorEnlace: { color: colors.accent },
+  infoValorEnlace: { color: c.accent },
   precioLabel: {
     fontSize: fontSize.sm,
-    color: colors.muted,
+    color: c.muted,
     marginBottom: spacing.xs,
   },
   botonComprar: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     padding: 16,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     marginTop: spacing.lg,
   },
   botonDesactivado: {
-    backgroundColor: colors.muted,
+    backgroundColor: c.muted,
   },
   textoBotonComprar: {
-    color: colors.white,
+    color: c.onAccent,
     fontWeight: 'bold',
     fontSize: fontSize.md,
   },
@@ -847,17 +851,17 @@ const styles = StyleSheet.create({
   botonPasarelaSecundaria: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: colors.accent,
+    borderColor: c.accent,
     padding: 16,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
   },
   textoBotonPasarelaSecundaria: {
-    color: colors.accent,
+    color: c.accent,
     fontWeight: 'bold',
     fontSize: fontSize.md,
   },
-  errorCompra: { fontSize: fontSize.sm, color: colors.danger, marginTop: spacing.sm },
+  errorCompra: { fontSize: fontSize.sm, color: c.danger, marginTop: spacing.sm },
   // Spec 166 — contador de packs y total del pack.
   filaPacks: {
     flexDirection: 'row',
@@ -865,38 +869,38 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: spacing.md,
   },
-  etiquetaPacks: { fontSize: fontSize.md, color: colors.primary, fontWeight: '500' },
+  etiquetaPacks: { fontSize: fontSize.md, color: c.primary, fontWeight: '500' },
   contador: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   botonContador: {
     width: 38,
     height: 38,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
   botonContadorOff: { opacity: 0.4 },
-  textoContador: { fontSize: fontSize.lg, color: colors.primary },
+  textoContador: { fontSize: fontSize.lg, color: c.primary },
   numeroContador: {
     minWidth: 24,
     textAlign: 'center',
     fontSize: fontSize.md,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
   },
-  totalPack: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary, marginTop: spacing.md },
-  detallePack: { fontSize: fontSize.sm, color: colors.muted },
+  totalPack: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary, marginTop: spacing.md },
+  detallePack: { fontSize: fontSize.sm, color: c.muted },
   errorTexto: {
     fontSize: fontSize.md,
-    color: colors.muted,
+    color: c.muted,
     textAlign: 'center',
     marginTop: 40,
   },
   filaTitulo: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   artistaFlex: { flex: 1 },
   botonCompartir: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: borderRadius.sm,
@@ -904,12 +908,12 @@ const styles = StyleSheet.create({
   },
   seccionTitulo: {
     fontSize: fontSize.sm,
-    color: colors.muted,
+    color: c.muted,
     marginBottom: spacing.xs,
   },
   descripcion: {
     fontSize: fontSize.md,
-    color: colors.secondary,
+    color: c.secondary,
     lineHeight: 22,
   },
   cardSeparada: { marginTop: spacing.md },
@@ -919,31 +923,31 @@ const styles = StyleSheet.create({
     aspectRatio: 4 / 5,
     borderRadius: borderRadius.sm,
     alignSelf: 'center',
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
   },
   tituloGestion: {
     fontSize: fontSize.md,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     marginBottom: 2,
   },
   rolActual: {
     fontSize: fontSize.xs,
-    color: colors.muted,
+    color: c.muted,
     marginBottom: spacing.sm,
     textTransform: 'capitalize',
   },
   filaGestion: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   botonGestion: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: borderRadius.sm,
   },
-  textoBotonGestion: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
-  botonPeligro: { backgroundColor: '#FDECEA' },
-  textoBotonPeligro: { color: '#B71C1C' },
-  errorGestion: { fontSize: fontSize.sm, color: colors.danger, marginTop: spacing.sm },
+  textoBotonGestion: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  botonPeligro: { backgroundColor: c.dangerBg },
+  textoBotonPeligro: { color: c.dangerText },
+  errorGestion: { fontSize: fontSize.sm, color: c.danger, marginTop: spacing.sm },
   // Modal
   overlay: {
     position: 'absolute',
@@ -955,60 +959,60 @@ const styles = StyleSheet.create({
   modalTitulo: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     marginBottom: spacing.sm,
   },
   modalSubtitulo: {
     fontSize: fontSize.md,
-    color: colors.secondary,
+    color: c.secondary,
     marginBottom: spacing.md,
     lineHeight: 22,
   },
   emailResaltado: {
     fontWeight: 'bold',
-    color: colors.accent,
+    color: c.accent,
   },
   input: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     borderRadius: borderRadius.sm,
     padding: 14,
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     marginBottom: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
   errorText: {
-    color: '#B71C1C',
+    color: c.dangerText,
     fontSize: fontSize.sm,
     marginBottom: spacing.sm,
   },
   boton: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     marginTop: spacing.sm,
   },
   textoBoton: {
-    color: colors.white,
+    color: c.onAccent,
     fontWeight: 'bold',
     fontSize: fontSize.md,
   },
   instruccionesBox: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     borderRadius: borderRadius.sm,
     padding: spacing.md,
     marginBottom: spacing.md,
   },
   instruccionesTitulo: {
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     marginBottom: spacing.xs,
   },
   instruccionesTexto: {
     fontSize: fontSize.sm,
-    color: colors.secondary,
+    color: c.secondary,
     lineHeight: 22,
   },
 });
