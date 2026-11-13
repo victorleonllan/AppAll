@@ -2,7 +2,8 @@ import { Modal, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import FormElegirRol from './FormElegirRol';
-import { colors } from '../theme';
+import { Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
 
 // Spec 128 — la guarda de /quien-eres: una sesión sin rol (Google, enlace de la
 // web) no usa la app hasta elegir. Modal global y no pantalla de la navegación:
@@ -10,6 +11,7 @@ import { colors } from '../theme';
 // una guarda dentro de Perfil nunca se vería. `onRequestClose` vacío: el atrás de
 // Android no la cierra; las salidas son elegir o «¿No eres tú?».
 export default function GuardaRol() {
+  const styles = useEstilos(crearEstilos);
   const { session, role, loading } = useAuth();
   const visible = !loading && !!session && role === null;
   return (
@@ -23,6 +25,6 @@ export default function GuardaRol() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
 });

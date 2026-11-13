@@ -1,6 +1,6 @@
 # Spec 178 — Tema oscuro en el ingreso, el registro, los roles y el perfil
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — criterios 1-3 verificados: `tsc` limpio, `expo export --platform web` sin error, `rg "colors\b"` vacío en los 11 archivos. 4-7 y V 178-a sin verificar en dispositivo. `FormElegirRol` no tiene opción elegida con fondo `accent`/`accentLight` (las tarjetas son `cardBackground`), así que la Decisión 2 no le aplica
 > Capa: FRONTEND. `src/screens/AuthScreen.tsx`, `src/screens/LoginScreen.tsx`,
 > `src/screens/RegisterScreen.tsx`, `src/screens/CambiarContrasenaScreen.tsx`,
 > `src/screens/OAuthErrorScreen.tsx`, `src/screens/ElegirRolScreen.tsx`,

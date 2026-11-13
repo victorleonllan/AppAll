@@ -3,7 +3,9 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { colors, spacing, borderRadius, fontSize } from "../theme";
+import { spacing, borderRadius, fontSize, Paleta } from "../theme";
+import { useEstilos } from "../hooks/useEstilos";
+import { useTema } from "../context/TemaContext";
 
 interface Props {
   onSwitchToRegister: () => void;
@@ -11,6 +13,8 @@ interface Props {
 }
 
 export default function LoginScreen({ onSwitchToRegister, onBack }: Props) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [cargandoGoogle, setCargandoGoogle] = useState(false);
@@ -75,7 +79,7 @@ export default function LoginScreen({ onSwitchToRegister, onBack }: Props) {
             <TextInput
               style={styles.input}
               placeholder="Correo electrónico"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={colores.muted}
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -115,7 +119,7 @@ export default function LoginScreen({ onSwitchToRegister, onBack }: Props) {
       <TextInput
         style={styles.input}
         placeholder="Correo electrónico"
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={colores.muted}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -124,7 +128,7 @@ export default function LoginScreen({ onSwitchToRegister, onBack }: Props) {
       <TextInput
         style={styles.input}
         placeholder="Contraseña"
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={colores.muted}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -161,54 +165,54 @@ export default function LoginScreen({ onSwitchToRegister, onBack }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: c.background,
     alignItems: "center",
     justifyContent: "center",
     padding: spacing.lg,
   },
   botonVolver: { alignSelf: "flex-start", marginBottom: spacing.sm },
-  textoVolver: { fontSize: fontSize.md, color: colors.accent, fontWeight: "600" },
+  textoVolver: { fontSize: fontSize.md, color: c.accent, fontWeight: "600" },
   icono: { fontSize: fontSize.xxl },
   titulo: {
     fontSize: fontSize.xl,
     fontWeight: "bold",
-    color: colors.primary,
+    color: c.primary,
     marginTop: spacing.sm,
     marginBottom: spacing.lg,
   },
   input: {
     width: "100%",
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     padding: 14,
     borderRadius: borderRadius.sm,
     marginBottom: spacing.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
   boton: {
     width: "100%",
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: "center",
     marginTop: spacing.sm,
   },
-  textoBoton: { color: colors.white, fontWeight: "bold", fontSize: fontSize.md },
+  textoBoton: { color: c.onAccent, fontWeight: "bold", fontSize: fontSize.md },
   botonDeshabilitado: { opacity: 0.6 },
   texto: {
-    color: colors.primary,
+    color: c.primary,
     fontSize: fontSize.md,
     textAlign: "center",
     marginBottom: spacing.md,
   },
   textoError: {
     alignSelf: "flex-start",
-    color: colors.danger,
+    color: c.danger,
     fontSize: fontSize.sm,
     marginBottom: spacing.sm,
   },
@@ -218,25 +222,25 @@ const styles = StyleSheet.create({
     width: "100%",
     marginTop: spacing.md,
   },
-  lineaDivisor: { flex: 1, height: 1, backgroundColor: colors.border },
+  lineaDivisor: { flex: 1, height: 1, backgroundColor: c.border },
   textoDivisor: {
-    color: colors.muted,
+    color: c.muted,
     fontSize: fontSize.sm,
     marginHorizontal: spacing.sm,
   },
   botonGoogle: {
     width: "100%",
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: "center",
     marginTop: spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
-  textoBotonGoogle: { color: colors.primary, fontWeight: "600", fontSize: fontSize.md },
+  textoBotonGoogle: { color: c.primary, fontWeight: "600", fontSize: fontSize.md },
   link: {
-    color: colors.accent,
+    color: c.accent,
     marginTop: spacing.md,
     fontSize: fontSize.sm,
   },

@@ -3,13 +3,17 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { REGLA_CONTRASENA, faltaEnContrasena, mensajeDeErrorAuth, cambiarContrasena } from '../lib/contrasena';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 // Spec 128 — hermana de /perfil/contrasena en la web (W-228). Un solo campo con
 // «Mostrar» en vez de campo de confirmación: en un teclado de teléfono el error
 // de tipeo es más probable, y verlo escrito lo evita mejor que repetirlo.
 // Registrada en PerfilStack, MusicoStack y MiLocalStack: solo usa goBack.
 export default function CambiarContrasenaScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const navigation = useNavigation();
   const { user, signOut } = useAuth();
   const [password, setPassword] = useState('');
@@ -68,7 +72,7 @@ export default function CambiarContrasenaScreen() {
           textContentType="newPassword"
           autoCapitalize="none"
           autoCorrect={false}
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colores.muted}
         />
         <TouchableOpacity style={styles.botonMostrar} onPress={() => setMostrar((m) => !m)}>
           <Text style={styles.textoMostrar}>{mostrar ? 'Ocultar' : 'Mostrar'}</Text>
@@ -79,7 +83,7 @@ export default function CambiarContrasenaScreen() {
         {REGLA_CONTRASENA.map((r) => {
           const cumple = r.cumple(password);
           return (
-            <Text key={r.texto} style={[styles.requisito, { color: cumple ? colors.success : colors.muted }]}>
+            <Text key={r.texto} style={[styles.requisito, { color: cumple ? colores.success : colores.muted }]}>
               {cumple ? '✓' : '○'} {r.texto}
             </Text>
           );
@@ -108,33 +112,33 @@ export default function CambiarContrasenaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   contenido: { padding: spacing.lg },
-  centrado: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
-  texto: { fontSize: fontSize.md, color: colors.secondary, textAlign: 'center', marginBottom: spacing.lg },
-  titulo: { fontSize: fontSize.xl, fontWeight: 'bold', color: colors.primary },
-  correo: { fontSize: fontSize.md, color: colors.secondary, marginTop: spacing.xs, marginBottom: spacing.lg },
-  label: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary, marginBottom: spacing.sm },
+  centrado: { flex: 1, backgroundColor: c.background, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  texto: { fontSize: fontSize.md, color: c.secondary, textAlign: 'center', marginBottom: spacing.lg },
+  titulo: { fontSize: fontSize.xl, fontWeight: 'bold', color: c.primary },
+  correo: { fontSize: fontSize.md, color: c.secondary, marginTop: spacing.xs, marginBottom: spacing.lg },
+  label: { fontSize: fontSize.md, fontWeight: '600', color: c.primary, marginBottom: spacing.sm },
   filaCampo: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   input: {
     flex: 1,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     padding: 12,
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
   },
   botonMostrar: { paddingVertical: 12, paddingHorizontal: spacing.sm },
-  textoMostrar: { color: colors.accent, fontWeight: '600', fontSize: fontSize.sm },
+  textoMostrar: { color: c.accent, fontWeight: '600', fontSize: fontSize.sm },
   requisitos: { marginTop: spacing.md, marginBottom: spacing.lg, gap: spacing.xs },
   requisito: { fontSize: fontSize.sm },
-  boton: { backgroundColor: colors.accent, paddingVertical: 14, paddingHorizontal: spacing.lg, borderRadius: borderRadius.sm, alignItems: 'center' },
+  boton: { backgroundColor: c.accent, paddingVertical: 14, paddingHorizontal: spacing.lg, borderRadius: borderRadius.sm, alignItems: 'center' },
   botonDesactivado: { opacity: 0.5 },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
-  error: { color: colors.danger, fontSize: fontSize.sm, marginTop: spacing.md },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
+  error: { color: c.danger, fontSize: fontSize.sm, marginTop: spacing.md },
   botonSalir: { marginTop: spacing.md, alignItems: 'center', paddingVertical: spacing.sm },
-  textoSalir: { color: colors.danger, fontWeight: '600', fontSize: fontSize.md },
+  textoSalir: { color: c.danger, fontWeight: '600', fontSize: fontSize.md },
 });

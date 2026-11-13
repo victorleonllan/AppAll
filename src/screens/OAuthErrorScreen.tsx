@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet, Linking } from "react-native";
-import { colors, spacing, borderRadius, fontSize } from "../theme";
+import { spacing, borderRadius, fontSize, Paleta } from "../theme";
+import { useEstilos } from "../hooks/useEstilos";
 
 interface Props {
   errorDescription: string | null;
@@ -14,6 +15,7 @@ const LOGIN_URL = "https://sonopolis.org/unete";
 // otra ventana). Esto solo deja la lógica funcionando: lee el error, lo
 // muestra, y da un único camino de salida.
 export default function OAuthErrorScreen({ errorDescription }: Props) {
+  const styles = useEstilos(crearEstilos);
   const handleVolver = () => {
     Linking.openURL(LOGIN_URL);
   };
@@ -32,10 +34,10 @@ export default function OAuthErrorScreen({ errorDescription }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: c.background,
     alignItems: "center",
     justifyContent: "center",
     padding: spacing.lg,
@@ -44,21 +46,21 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: fontSize.xl,
     fontWeight: "bold",
-    color: colors.primary,
+    color: c.primary,
     textAlign: "center",
     marginBottom: spacing.sm,
   },
   mensaje: {
     fontSize: fontSize.md,
-    color: colors.secondary,
+    color: c.secondary,
     textAlign: "center",
     marginBottom: spacing.lg,
   },
   boton: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     paddingVertical: 14,
     paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.sm,
   },
-  textoBoton: { color: colors.white, fontWeight: "bold", fontSize: fontSize.md },
+  textoBoton: { color: c.onAccent, fontWeight: "bold", fontSize: fontSize.md },
 });

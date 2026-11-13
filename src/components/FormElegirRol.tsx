@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { elegirMiRol, RolElegible } from '../lib/rol';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 // Mismos textos que DETALLE_ROL de /quien-eres en la web.
 const ROLES: { rol: RolElegible; titulo: string; descripcion: string; habilita: string[] }[] = [
@@ -34,6 +36,8 @@ interface Props {
 // navegador. Al elegir no navega: el refresh de sesión cambia `role` en
 // AuthContext y getThirdTab cambia sola la tercera pestaña.
 export default function FormElegirRol({ onListo }: Props) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const { user, signOut } = useAuth();
   const [enviando, setEnviando] = useState<RolElegible | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +86,7 @@ export default function FormElegirRol({ onListo }: Props) {
           >
             <View style={styles.cabeceraTarjeta}>
               <Text style={styles.tituloTarjeta}>{r.titulo}</Text>
-              {esteEnvia && <ActivityIndicator color={colors.accent} />}
+              {esteEnvia && <ActivityIndicator color={colores.accent} />}
             </View>
             <Text style={styles.descripcion}>{r.descripcion}</Text>
             <Text style={styles.habilita}>{r.habilita.join(' · ')}</Text>
@@ -107,7 +111,7 @@ export default function FormElegirRol({ onListo }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   container: { padding: spacing.lg },
   filaCuenta: {
     flexDirection: 'row',
@@ -116,32 +120,32 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: c.border,
   },
-  cuenta: { flex: 1, fontSize: fontSize.sm, color: colors.secondary },
-  noEresTu: { fontSize: fontSize.sm, color: colors.accent, fontWeight: '600' },
-  titulo: { fontSize: fontSize.xl, fontWeight: 'bold', color: colors.primary, marginTop: spacing.lg },
-  texto: { fontSize: fontSize.md, color: colors.secondary, marginTop: spacing.sm, marginBottom: spacing.lg },
+  cuenta: { flex: 1, fontSize: fontSize.sm, color: c.secondary },
+  noEresTu: { fontSize: fontSize.sm, color: c.accent, fontWeight: '600' },
+  titulo: { fontSize: fontSize.xl, fontWeight: 'bold', color: c.primary, marginTop: spacing.lg },
+  texto: { fontSize: fontSize.md, color: c.secondary, marginTop: spacing.sm, marginBottom: spacing.lg },
   tarjeta: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.md,
   },
   tarjetaDesactivada: { opacity: 0.5 },
   cabeceraTarjeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  tituloTarjeta: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
-  descripcion: { fontSize: fontSize.md, color: colors.secondary, marginTop: spacing.xs },
-  habilita: { fontSize: fontSize.xs, color: colors.muted, marginTop: spacing.sm },
+  tituloTarjeta: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
+  descripcion: { fontSize: fontSize.md, color: c.secondary, marginTop: spacing.xs },
+  habilita: { fontSize: fontSize.xs, color: c.muted, marginTop: spacing.sm },
   recuadroError: {
     borderWidth: 1,
-    borderColor: colors.danger,
+    borderColor: c.danger,
     borderRadius: borderRadius.sm,
     padding: spacing.md,
     gap: spacing.sm,
   },
-  error: { color: colors.danger, fontSize: fontSize.sm },
-  reintentar: { color: colors.accent, fontWeight: '600', fontSize: fontSize.sm },
+  error: { color: c.danger, fontSize: fontSize.sm },
+  reintentar: { color: c.accent, fontWeight: '600', fontSize: fontSize.sm },
 });
