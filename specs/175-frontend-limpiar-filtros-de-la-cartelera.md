@@ -1,6 +1,6 @@
 # Spec 175 — Cartelera: botón «Limpiar filtros (n)» en píldora de acento
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — criterios 1-2 verificados (`tsc --noEmit` limpio, `expo export --platform web` sin error); 3-7 pendientes de prueba en dispositivo
 > Capa: FRONTEND. `src/screens/CarteleraScreen.tsx`.
 > Depende de: spec 119 (aplicado), spec 146 (aplicado)
 > Hermano en la web: W-156 (el botón, `components/Cartelera.js:28-45,144-163,399-414`) y
