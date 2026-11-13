@@ -1,6 +1,6 @@
 # Spec 170 — Cobros de Pro en la ficha del tenant del admin en la app: si se recibió, si falló y por qué
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — criterios 1 y 2 verificados sobre HEAD + los dos archivos del spec (`tsc` sin salida fuera de `supabase/functions`; `expo export --platform web` sin error). En el worktree compartido `tsc` no corre limpio por `RegisterScreen.tsx` a medio editar por otra terminal, ajeno a este spec. Criterios 3-7 (Quintal, Café La Palma, sin red, «Datos de Mercado Pago», 375 px) y V-candidata 170-a sin ver: se ven con la cuenta admin en dispositivo
 > Capa: FRONTEND. `src/screens/AdminTenantScreen.tsx`, `src/components/CobrosPro.tsx` (nuevo).
 > Depende de: spec 168 (`useCobrosPro`, `src/lib/cobrosPro.ts`), spec 159, spec 173 (los archivos nuevos de este spec arman sus estilos con `useEstilos` y leen los colores de JSX con `useTema().colores`, según la receta §6 del 173; los archivos que ya existen siguen con `colors` hasta su spec de migración).
 > Hermano en la web: `app/(private)/admin/crm/[tipo]/[id]/page.js`, `app/(private)/admin/crm/CobrosPro.js` (W-271).
