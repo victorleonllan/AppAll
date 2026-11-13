@@ -7,6 +7,7 @@ import { useEventos } from '../context/EventosContext';
 import { CarteleraStackParamList } from '../navigation/CarteleraStack';
 import { TicketStatus } from '../types';
 import { supabase } from '../lib/supabase';
+import { etiquetaDeEspecial, getPackDeTicket } from '../lib/especiales';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 type ConfirmacionRoute = RouteProp<CarteleraStackParamList, 'ConfirmacionCompra'>;
@@ -196,6 +197,18 @@ export default function ConfirmacionCompraScreen() {
     };
   }, [status, idTicket, ref, resolviendo, consultarTicket]);
 
+  // Spec 166 — con qué pack se compró y a quién se mandó cada entrada. Una sola consulta
+  // al aprobarse: el pack no cambia mientras se espera el pago (`Confirmacion.js:162-165`).
+  const [pack, setPack] = useState<Awaited<ReturnType<typeof getPackDeTicket>> | null>(null);
+  const packPedido = useRef(false);
+  useEffect(() => {
+    if (actualStatus !== 'success' || !idTicket || packPedido.current) return;
+    packPedido.current = true;
+    // Sin cancelación: con el candado, cancelar dejaría el pack sin pedir si el efecto
+    // se desmonta y remonta (StrictMode en el build web).
+    getPackDeTicket(idTicket).then(setPack);
+  }, [actualStatus, idTicket]);
+
   const reintentarConsulta = async () => {
     setConsultando(true);
     const resuelto = await consultarTicket();
@@ -219,6 +232,16 @@ export default function ConfirmacionCompraScreen() {
           <Text style={styles.eventoDetalle}>
             {evento.venueName} · {evento.fecha} · {evento.hora}
           </Text>
+          {pack?.especial && (
+            <Text style={styles.eventoDetalle}>
+              {pack.cantidad} entradas · Pack {etiquetaDeEspecial(pack.especial)}
+            </Text>
+          )}
+          {pack?.destinatariosExtra.map((correo, k) => (
+            <Text key={correo + k} style={styles.eventoDetalle}>
+              Enviamos la entrada {k + 2} a <Text style={styles.correoDestinatario}>{correo}</Text>
+            </Text>
+          ))}
         </View>
       )}
 
@@ -297,6 +320,7 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginTop: spacing.xs,
   },
+  correoDestinatario: { fontWeight: 'bold', color: colors.primary },
   pollingIndicator: {
     marginTop: spacing.md,
     paddingHorizontal: spacing.md,
