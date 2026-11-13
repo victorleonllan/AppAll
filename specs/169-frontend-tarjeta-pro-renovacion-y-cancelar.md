@@ -1,6 +1,6 @@
 # Spec 169 — La tarjeta Pro de la app dice cuándo se renueva, deja cancelar y dice hasta qué día queda Pro
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — `tsc` limpio fuera de `supabase/functions` (criterio 1), export web limpio (criterio 2), grep del criterio 6 sin salida, estado del 154 actualizado (criterio 8). Pendientes en dispositivo: criterios 3, 4, 5 y 7 y V-candidatas 169-a y 169-b
 > Capa: FRONTEND. `src/components/TarjetaPro.tsx`, `src/components/BotonCancelarSuscripcionPro.tsx` (nuevo), `src/screens/DashboardLocalScreen.tsx`, `src/screens/PerfilMusicoScreen.tsx`, `src/screens/ContactosScreen.tsx`.
 > Depende de: spec 168 (`useMiSuscripcionPro`, `cancelarMiSuscripcionPro`, `fechaLargaPro`, `fechaFinSiCancela`), spec 154, spec 155, spec 173 (los archivos nuevos de este spec arman sus estilos con `useEstilos` y leen los colores de JSX con `useTema().colores`, según la receta §6 del 173; los archivos que ya existen siguen con `colors` hasta su spec de migración).
 > Hermano en la web: `components/CardSonopolisPro.js`, `components/BotonCancelarSuscripcionPro.js`, `app/(private)/local/page.js`, `local/contactos/page.js`, `musico/page.js`, `musico/contactos/page.js` (W-265 y su addenda).
@@ -190,3 +190,18 @@ Props: `{ tipo: TipoTenant; id: string; finTexto: string; onCancelada?: () => vo
 - Riesgo de tienda a revisar al publicar, no lo decide este spec: la guía 3.1.3(b) de Apple
   (ver 154). Mostrar que existe una suscripción contratada fuera de la app puede llevar a la
   revisión a preguntar por la compra integrada.
+
+## Bugs encontrados al aplicar (13-nov-2026)
+
+- **El comentario de cabecera que pide el spec no pasa el criterio 6.** La sección de
+  `TarjetaPro.tsx` pide sumar «sigue sin precio ni Mercado Pago (Decisión 2)», pero el grep
+  del criterio 6 busca `mercado ?pago` en todo el archivo, comentarios incluidos. Se aplicó
+  con «sigue sin precio ni nombre del medio de pago externo (Decisión 2)»: mismo sentido, y
+  el grep queda como prueba sin excepciones.
+- **«Listo. Tienes Pro hasta el…» casi no se ve.** `onCancelada` recarga la suscripción; al
+  pasar a `cancelada` la tarjeta deja de dibujar el botón (solo va en `activa`/`pausada`), y
+  con él el texto de éxito. La persona igual ve la fecha: la tarjeta pasa a «Cancelaste tu
+  suscripción. Puedes seguir usando Sonópolis Pro hasta el {fecha}». No se cambió el diseño.
+- `MiSuscripcionPro.proHasta` y `proximoCobroAt` pueden ser `null` en el tipo del 168 y
+  `fechaLargaPro` pide `string`: sin fecha en la suscripción, la tarjeta usa la del tenant
+  (`fechaHastaPro`), la misma que mostraba antes.

@@ -32,6 +32,7 @@ import {
 } from '../hooks/useContactosCrm';
 import RedactarCorreo from '../components/RedactarCorreo';
 import TarjetaPro from '../components/TarjetaPro';
+import { useMiSuscripcionPro } from '../hooks/useMiSuscripcionPro';
 import { esPro } from '../lib/pro';
 import { formatearMonto } from '../lib/precio';
 import { formatearFechaEs, separarFechaHora } from '../lib/fecha';
@@ -96,6 +97,9 @@ export default function ContactosScreen() {
   const { tipo } = route.params;
   const { tenant, cargando: cargandoTenant, error: errorTenant } = useTenantPropio(tipo);
   const { contactos, cargando, refrescar } = useContactosCrm(tenant);
+  // Spec 169 — con suscripción, la tarjeta de Pro también va acá para que cancelar sea
+  // fácil desde el CRM (addenda de W-265). Antes de los return tempranos.
+  const { suscripcion, recargar: recargarSuscripcion } = useMiSuscripcionPro(tipo, tenant?.id ?? null);
   const etiqueta = tipo === 'venue' ? 'tu local' : 'tu banda';
   const [busqueda, setBusqueda] = useState('');
   const [filtro, setFiltro] = useState<FiltroContactos>('todos');
@@ -160,6 +164,20 @@ export default function ContactosScreen() {
   // remontaría el encabezado y los TextInput perderían el foco a cada letra.
   const encabezado = (
     <View>
+      {/* Spec 169 — solo con suscripción; con Pro regalado por el admin, como antes.
+          Sin onVerContactos: ya está en Contactos. */}
+      {suscripcion && (
+        <View style={styles.tarjetaPro}>
+          <TarjetaPro
+            tenant={tenant}
+            tipo={tipo}
+            etiqueta={etiqueta}
+            suscripcion={suscripcion}
+            onCambio={recargarSuscripcion}
+          />
+        </View>
+      )}
+
       <RedactarCorreo tipo={tipo} nombreTenant={tenant.nombre} />
 
       <View style={styles.resumenFila}>
