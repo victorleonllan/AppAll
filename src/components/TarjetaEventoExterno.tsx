@@ -1,6 +1,7 @@
 import { View, Text, Image, TouchableOpacity, StyleSheet, Linking } from 'react-native';
 import { EventoExterno } from '../types';
-import { colors, spacing, borderRadius } from '../theme';
+import { spacing, borderRadius, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
 
 interface Props {
   evento: EventoExterno;
@@ -13,6 +14,7 @@ interface Props {
  * republicarlo.
  */
 export default function TarjetaEventoExterno({ evento }: Props) {
+  const styles = useEstilos(crearEstilos);
   const abrir = () => {
     Linking.openURL(evento.sourceUrl).catch((e) =>
       console.error('[TarjetaEventoExterno] no se pudo abrir la fuente:', e)
@@ -38,21 +40,21 @@ export default function TarjetaEventoExterno({ evento }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   tarjeta: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     marginHorizontal: spacing.md,
     marginVertical: 4,
     padding: 12,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     flexDirection: 'row',
     gap: 12,
   },
   flyer: { width: 72, height: 96, borderRadius: borderRadius.sm },
-  titulo: { fontSize: 15, fontWeight: '600', color: colors.primary },
-  detalle: { fontSize: 12, color: colors.secondary, marginTop: 4 },
-  fuente: { fontSize: 12, color: colors.muted, marginTop: 4 },
-  entradas: { fontSize: 11, color: colors.muted, marginTop: 2 },
+  titulo: { fontSize: 15, fontWeight: '600', color: c.primary },
+  detalle: { fontSize: 12, color: c.secondary, marginTop: 4 },
+  fuente: { fontSize: 12, color: c.muted, marginTop: 4 },
+  entradas: { fontSize: 11, color: c.muted, marginTop: 2 },
 });

@@ -1,7 +1,8 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Evento } from '../types';
 import PrecioEvento from './PrecioEvento';
-import { colors, spacing, borderRadius } from '../theme';
+import { spacing, borderRadius, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
 
 interface Props {
   evento: Evento;
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function TarjetaEvento({ evento, onPress, onComprar }: Props) {
+  const styles = useEstilos(crearEstilos);
   const contenido = (
     <View style={styles.tarjeta}>
       <View style={{ flex: 1 }}>
@@ -40,21 +42,21 @@ export default function TarjetaEvento({ evento, onPress, onComprar }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   tarjeta: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     marginHorizontal: spacing.md,
     marginVertical: 4,
     padding: 14,
     borderRadius: borderRadius.md,
     borderLeftWidth: 4,
-    borderLeftColor: colors.accent,
+    borderLeftColor: c.accent,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  artista: { fontSize: 16, fontWeight: '600', color: colors.primary },
-  genero: { fontSize: 13, color: colors.secondary, marginTop: 2 },
-  detalle: { fontSize: 12, color: colors.muted, marginTop: 4 },
-  boton: { backgroundColor: colors.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: borderRadius.sm, marginLeft: 12 },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: 13 },
+  artista: { fontSize: 16, fontWeight: '600', color: c.primary },
+  genero: { fontSize: 13, color: c.secondary, marginTop: 2 },
+  detalle: { fontSize: 12, color: c.muted, marginTop: 4 },
+  boton: { backgroundColor: c.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: borderRadius.sm, marginLeft: 12 },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: 13 },
 });

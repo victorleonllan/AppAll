@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Modal, View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { buscarGeneros } from '../lib/generos';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 const TODOS = '__todos__';
 
@@ -33,6 +35,8 @@ export default function GeneroPicker({
   permitirTodos = false,
   opciones,
 }: GeneroPickerProps) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const [query, setQuery] = useState('');
   const resultados = buscarGeneros(query, opciones);
   const sinOpciones = opciones !== undefined && opciones.length === 0;
@@ -70,7 +74,7 @@ export default function GeneroPicker({
             value={query}
             onChangeText={setQuery}
             placeholder="Buscar género…"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colores.muted}
             autoCapitalize="none"
           />
 
@@ -106,10 +110,10 @@ export default function GeneroPicker({
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   hoja: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderTopLeftRadius: borderRadius.lg,
     borderTopRightRadius: borderRadius.lg,
     maxHeight: '80%',
@@ -122,16 +126,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
   },
-  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
-  cerrar: { fontSize: fontSize.md, color: colors.accent, fontWeight: '600' },
+  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
+  cerrar: { fontSize: fontSize.md, color: c.accent, fontWeight: '600' },
   buscador: {
     marginHorizontal: spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     padding: spacing.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     marginBottom: spacing.sm,
   },
   lista: { paddingHorizontal: spacing.md },
@@ -141,10 +145,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: c.border,
   },
-  itemTexto: { fontSize: fontSize.md, color: colors.primary },
-  itemTextoActivo: { color: colors.accent, fontWeight: '600' },
-  check: { color: colors.accent, fontWeight: 'bold' },
-  vacio: { textAlign: 'center', color: colors.muted, paddingVertical: spacing.lg },
+  itemTexto: { fontSize: fontSize.md, color: c.primary },
+  itemTextoActivo: { color: c.accent, fontWeight: '600' },
+  check: { color: c.accent, fontWeight: 'bold' },
+  vacio: { textAlign: 'center', color: c.muted, paddingVertical: spacing.lg },
 });

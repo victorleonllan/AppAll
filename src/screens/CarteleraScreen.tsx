@@ -19,7 +19,9 @@ import { getPacksMinimosDeEventos, nombreDeEspecial } from '../lib/especiales';
 import { claveDiaLocal, formatearDiaLargo, rangoFecha, FiltroFecha } from '../lib/fechaCartelera';
 import { EventoExterno } from '../types';
 import { CarteleraStackParamList } from '../navigation/CarteleraStack';
-import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { spacing, fontSize, borderRadius, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 type NavigationProp = NativeStackNavigationProp<CarteleraStackParamList, 'CarteleraList'>;
 
@@ -65,6 +67,7 @@ function enRango(iso: string | null | undefined, rango: [Date, Date] | null): bo
  * selector aparece solo.
  */
 function SelectorPais() {
+  const styles = useEstilos(crearEstilos);
   const { pais, setPais } = usePais();
   const [abierto, setAbierto] = useState(false);
   const paises = Object.values(PAISES);
@@ -116,6 +119,8 @@ function SelectorPais() {
 }
 
 export default function CarteleraScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const navigation = useNavigation<NavigationProp>();
   // Spec 096 — la Cartelera lista solo el país activo; el filtro vive en el
   // contexto (Decisión 2), la pantalla no filtra por país.
@@ -264,7 +269,7 @@ export default function CarteleraScreen() {
   if ((loading && !refrescando) || !listo) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={colores.accent} />
       </View>
     );
   }
@@ -291,7 +296,7 @@ export default function CarteleraScreen() {
         value={busqueda}
         onChangeText={setBusqueda}
         placeholder="Buscar por artista, género o local…"
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={colores.muted}
         autoCorrect={false}
       />
 
@@ -329,7 +334,7 @@ export default function CarteleraScreen() {
           <Switch
             value={soloSonopolis}
             onValueChange={setSoloSonopolis}
-            trackColor={{ true: colors.accent, false: colors.border }}
+            trackColor={{ true: colores.accent, false: colores.border }}
           />
         </View>
       )}
@@ -389,43 +394,43 @@ export default function CarteleraScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, paddingTop: 20 },
-  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary, marginLeft: spacing.md, marginBottom: spacing.sm },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background, paddingTop: 20 },
+  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary, marginLeft: spacing.md, marginBottom: spacing.sm },
   filaFiltros: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginLeft: spacing.md, marginBottom: spacing.sm },
   filtro: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.md,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
   },
-  filtroTexto: { fontSize: fontSize.sm, color: colors.accent, fontWeight: '600' },
-  filtroActivo: { backgroundColor: colors.accent, borderColor: colors.accent },
-  filtroTextoActivo: { color: colors.white },
+  filtroTexto: { fontSize: fontSize.sm, color: c.accent, fontWeight: '600' },
+  filtroActivo: { backgroundColor: c.accent, borderColor: c.accent },
+  filtroTextoActivo: { color: c.onAccent },
   // Spec 175 (W-275) — píldora de acento, mismo tratamiento que la píldora activa.
   limpiar: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     borderRadius: 999,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.md,
     alignSelf: 'flex-start',
   },
-  limpiarTexto: { fontSize: fontSize.sm, fontWeight: '600', color: colors.white },
-  contador: { fontSize: fontSize.sm, color: colors.muted, marginLeft: spacing.md, marginBottom: spacing.sm },
+  limpiarTexto: { fontSize: fontSize.sm, fontWeight: '600', color: c.onAccent },
+  contador: { fontSize: fontSize.sm, color: c.muted, marginLeft: spacing.md, marginBottom: spacing.sm },
   busqueda: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.md,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     marginHorizontal: spacing.md,
     marginBottom: spacing.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
   },
   filaSwitch: {
     flexDirection: 'row',
@@ -434,46 +439,46 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     marginBottom: spacing.sm,
   },
-  textoSwitch: { fontSize: fontSize.sm, color: colors.primary, fontWeight: '600' },
+  textoSwitch: { fontSize: fontSize.sm, color: c.primary, fontWeight: '600' },
   dia: {
     fontSize: fontSize.md,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     marginLeft: spacing.md,
     marginTop: spacing.md,
     marginBottom: spacing.xs,
   },
-  avisoExternos: { fontSize: fontSize.sm, color: colors.muted, marginHorizontal: spacing.md, marginTop: spacing.sm },
+  avisoExternos: { fontSize: fontSize.sm, color: c.muted, marginHorizontal: spacing.md, marginTop: spacing.sm },
   centrado: { justifyContent: 'center', alignItems: 'center' },
   botonReintentar: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.sm,
     marginTop: spacing.md,
   },
-  textoReintentar: { color: colors.white, fontWeight: 'bold' },
-  vacio: { textAlign: 'center', color: colors.muted, marginTop: spacing.lg },
+  textoReintentar: { color: c.onAccent, fontWeight: 'bold' },
+  vacio: { textAlign: 'center', color: c.muted, marginTop: spacing.lg },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   hoja: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderTopLeftRadius: borderRadius.lg,
     borderTopRightRadius: borderRadius.lg,
     padding: spacing.md,
     paddingBottom: spacing.lg,
   },
   encabezado: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
-  tituloHoja: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
-  cerrar: { fontSize: fontSize.md, color: colors.accent, fontWeight: '600' },
+  tituloHoja: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
+  cerrar: { fontSize: fontSize.md, color: c.accent, fontWeight: '600' },
   item: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: c.border,
   },
-  itemTexto: { fontSize: fontSize.md, color: colors.primary },
-  itemTextoActivo: { color: colors.accent, fontWeight: '600' },
-  check: { color: colors.accent, fontWeight: 'bold' },
+  itemTexto: { fontSize: fontSize.md, color: c.primary },
+  itemTextoActivo: { color: c.accent, fontWeight: '600' },
+  check: { color: c.accent, fontWeight: 'bold' },
 });

@@ -2,7 +2,9 @@ import { Platform, StyleProp, ViewStyle } from 'react-native';
 // Solo el tipo: un import de valor arrastraría el módulo nativo al bundle web.
 import type { Region } from 'react-native-maps';
 import { Venue, VenueType } from '../types';
-import { colors } from '../theme';
+// Spec 176 — los marcadores van sobre teselas claras en los dos temas (W-272, «Fuera de
+// alcance»): su color sale de la paleta clara, no del tema activo.
+import { paletaClara } from '../theme';
 
 // Spec 127 — hermano de sonopolisWeb/libs/mapa.js. Funciones puras sobre datos
 // ya cargados; la región de react-native-maps es centro + deltas, no esquinas.
@@ -21,10 +23,10 @@ export interface PropsMapaLocales {
 
 /** El color dice el tipo de local, igual que en la web (W-138). */
 export const COLOR_TIPO_LOCAL: Record<VenueType, string> = {
-  cafe: colors.accent,
-  bar: colors.warning,
-  sala: colors.primary,
-  centro_cultural: colors.success,
+  cafe: paletaClara.accent,
+  bar: paletaClara.warning,
+  sala: paletaClara.primary,
+  centro_cultural: paletaClara.success,
 };
 
 /** Solo los locales con lat y lng: un local sin coordenadas no se dibuja, no se

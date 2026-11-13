@@ -6,13 +6,15 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVenues } from '../context/VenuesContext';
 import { usePais } from '../context/PaisContext';
 import { PAISES } from '../constants/paises';
-import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { spacing, fontSize, borderRadius, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
 import { venueEmoji, venueLabel } from '../lib/venues';
 import { LocalesStackParamList } from '../navigation/LocalesStack';
 
 type NavigationProp = NativeStackNavigationProp<LocalesStackParamList, 'LocalesList'>;
 
 export default function LocalesScreen() {
+  const styles = useEstilos(crearEstilos);
   const navigation = useNavigation<NavigationProp>();
   // Un solo listado de locales (spec 018): la separación por tipo venía de
   // usar `type` como si fuera un tier de asociación, que nunca fue.
@@ -77,34 +79,34 @@ export default function LocalesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, paddingTop: 20 },
-  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary, marginLeft: spacing.md, marginTop: spacing.md, marginBottom: spacing.sm },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background, paddingTop: 20 },
+  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary, marginLeft: spacing.md, marginTop: spacing.md, marginBottom: spacing.sm },
   filaTitulo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: spacing.md },
-  botonMapa: { backgroundColor: colors.accentLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: borderRadius.sm, marginTop: spacing.md, marginBottom: spacing.sm },
-  textoBotonMapa: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  botonMapa: { backgroundColor: c.accentLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: borderRadius.sm, marginTop: spacing.md, marginBottom: spacing.sm },
+  textoBotonMapa: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm },
   tarjetaMusicos: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     marginHorizontal: spacing.md,
     marginBottom: spacing.sm,
     padding: 14,
     borderRadius: borderRadius.md,
     borderLeftWidth: 4,
-    borderLeftColor: colors.accent,
+    borderLeftColor: c.accent,
   },
-  tituloMusicos: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
+  tituloMusicos: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
   tarjetaVenue: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     marginHorizontal: spacing.md,
     marginVertical: 4,
     padding: 14,
     borderRadius: borderRadius.md,
     borderLeftWidth: 4,
-    borderLeftColor: colors.accent,
+    borderLeftColor: c.accent,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  nombreVenue: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary },
-  infoVenue: { fontSize: fontSize.sm, color: colors.secondary, marginTop: 2 },
-  vacio: { textAlign: 'center', color: colors.muted, marginTop: spacing.md },
+  nombreVenue: { fontSize: fontSize.md, fontWeight: '600', color: c.primary },
+  infoVenue: { fontSize: fontSize.sm, color: c.secondary, marginTop: 2 },
+  vacio: { textAlign: 'center', color: c.muted, marginTop: spacing.md },
 });
