@@ -1,6 +1,6 @@
 # Spec 171 — Lógica de Visitas en el admin de la app: visitas de la web por país y detalle de cada visitante
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — `npx tsc --noEmit` sin salida; `npx expo export --platform web` sin error; greps del criterio 3 sin salida; criterio 4 con `npx tsx` (365→365, 180→180, abc→30 días; Instagram | WhatsApp | Directo | midominio.cl; «Evento: Santiago Samba Club · Quintal Clandesta» | «Inicio»; CL «27 oct, 21:53», MX «27 oct, 18:53»; recorrido desordenado → viejas primero). Criterio 5 sin probar en la sesión (no hay pantalla hasta el 172): queda como V-candidata 171-a.
 > Capa: LÓGICA. `src/lib/visitas.ts` (nuevo), `src/hooks/useAdminVisitas.ts` (nuevo).
 > Depende de: spec 152 (admin en la app), W-261 y W-267 de la web (RPCs `admin_visitas_por_pais` y `admin_visitantes`, en producción).
 > Hermano en la web: `libs/data/visitas.js` (`PERIODOS_VISITAS`, `desdeDePeriodo`, `getVisitasPorPais`, `getVisitantes`, `origenDeVisita`, `etiquetaDeRuta`), `libs/fecha.js` (`formatearMomento`) (W-262, W-266, W-268).
