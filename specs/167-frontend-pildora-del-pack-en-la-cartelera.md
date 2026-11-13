@@ -1,6 +1,6 @@
 # Spec 167 — La cartelera marca con una píldora roja los eventos que tienen un pack a la venta
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — criterios 1, 2 y 7 verificados (`tsc --noEmit` limpio, `expo export --platform web` sin error, solo cambian los dos archivos de `> Capa:`); 3-6 pendientes de prueba en dispositivo/red
 > Capa: FRONTEND. `src/screens/CarteleraScreen.tsx`, `src/components/EventoDestacado.tsx`.
 > Depende de: spec 164 (`getPacksMinimosDeEventos`, `nombreDeEspecial`), spec 173 (token `especial`), spec 175 (mismo archivo `CarteleraScreen.tsx`: este va después).
 > Hermano en la web: `components/TarjetaEvento.js` y `app/(marketing)/cartelera/page.js` (W-255 §5).
