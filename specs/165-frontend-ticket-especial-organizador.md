@@ -1,6 +1,6 @@
 # Spec 165 — El organizador activa Preventa y Ticket especial con dos interruptores y crea packs 2x1 a 5x1
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — criterios 1 y 3 verificados (`tsc` limpio; sin chips «General»/«Puerta»; «Precio puerta/General» en las dos pantallas). 2 (`expo export`) y 4-10 (base y dispositivo) sin verificar
 > Capa: FRONTEND. `src/components/TicketsEspecialesEvento.tsx` (nuevo), `src/screens/CrearEventoScreen.tsx`, `src/screens/EditarEventoScreen.tsx`.
 > Depende de: spec 164 (`src/lib/especiales.ts`, `useEspeciales`), spec 136 (aplicado: formulario y `PreventasEvento`), spec 173 (los archivos nuevos de este spec arman sus estilos con `useEstilos` y leen los colores de JSX con `useTema().colores`, según la receta §6 del 173; los archivos que ya existen siguen con `colors` hasta su spec de migración).
 > Alimenta: spec 166 y spec 167 .
