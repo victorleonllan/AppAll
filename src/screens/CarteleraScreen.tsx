@@ -15,6 +15,7 @@ import TarjetaEventoExterno from '../components/TarjetaEventoExterno';
 import GeneroPicker from '../components/GeneroPicker';
 import { eventoCoincideConGenero } from '../lib/generos';
 import { useEventosExternos } from '../hooks/useEventosExternos';
+import { getPacksMinimosDeEventos, nombreDeEspecial } from '../lib/especiales';
 import { claveDiaLocal, formatearDiaLargo, rangoFecha, FiltroFecha } from '../lib/fechaCartelera';
 import { EventoExterno } from '../types';
 import { CarteleraStackParamList } from '../navigation/CarteleraStack';
@@ -211,6 +212,26 @@ export default function CarteleraScreen() {
 
   const total = destacados.length + externosFiltrados.length;
 
+  // Spec 167 — el pack más chico de cada destacado, en una consulta por lote y no
+  // una por tarjeta (W-255 §5). La dependencia es un string para que el efecto no
+  // corra en cada render por un arreglo nuevo.
+  const [packsPorEvento, setPacksPorEvento] = useState<Map<string, number>>(new Map());
+  const idsDestacados = destacados.map((e) => e.id).join(',');
+  useEffect(() => {
+    if (!idsDestacados) {
+      setPacksPorEvento(new Map());
+      return;
+    }
+    let activo = true;
+    // getPacksMinimosDeEventos nunca lanza: si falla, Map vacío (spec 164).
+    getPacksMinimosDeEventos(idsDestacados.split(',')).then((packs) => {
+      if (activo) setPacksPorEvento(packs);
+    });
+    return () => {
+      activo = false;
+    };
+  }, [idsDestacados]);
+
   const onRefresh = async () => {
     setRefrescando(true);
     await Promise.all([refresh(), refrescar()]);
@@ -317,6 +338,7 @@ export default function CarteleraScreen() {
         <EventoDestacado
           key={e.id}
           evento={e}
+          packEspecial={packsPorEvento.has(e.id) ? nombreDeEspecial(packsPorEvento.get(e.id)!) : null}
           onPress={() => navigation.navigate('DetalleEvento', { eventoId: e.id })}
         />
       ))}

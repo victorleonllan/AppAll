@@ -7,6 +7,8 @@ import { colors, spacing, fontSize, borderRadius } from '../theme';
 interface Props {
   evento: Evento;
   onPress: () => void;
+  /** Spec 167 — nombre del pack de menor multiplicador a la venta («2x1»), o null. */
+  packEspecial?: string | null;
 }
 
 /**
@@ -14,7 +16,7 @@ interface Props {
  * cartelera (W-128: todos los internos van destacados, no solo el más próximo).
  * Superficie oscura del W-016 con los tokens de esta app.
  */
-export default function EventoDestacado({ evento, onPress }: Props) {
+export default function EventoDestacado({ evento, onPress, packEspecial }: Props) {
   const cancelado = evento.status === 'cancelled';
   // Solo vale la pena cotizar preventas cuando el evento se vende en puerta y sigue en pie.
   const { vigente } = usePrecioVigente(
@@ -36,6 +38,12 @@ export default function EventoDestacado({ evento, onPress }: Props) {
           <View style={styles.chipDestacado}>
             <Text style={styles.chipDestacadoTexto}>Destacado</Text>
           </View>
+          {/* Sin píldora en un cancelado: no se ofrece un pack de un evento que no ocurre. */}
+          {packEspecial && !cancelado ? (
+            <View style={styles.chipEspecial}>
+              <Text style={styles.chipEspecialTexto}>{packEspecial}</Text>
+            </View>
+          ) : null}
           {cancelado && (
             <View style={styles.chipCancelado}>
               <Text style={styles.chipCanceladoTexto}>Cancelado</Text>
@@ -79,6 +87,13 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   chipDestacadoTexto: { fontSize: fontSize.xs, fontWeight: '600', color: colors.accent },
+  chipEspecial: {
+    backgroundColor: colors.especial,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  chipEspecialTexto: { fontSize: fontSize.xs, fontWeight: '600', color: colors.especialContenido },
   chipCancelado: {
     backgroundColor: colors.danger,
     borderRadius: borderRadius.sm,
