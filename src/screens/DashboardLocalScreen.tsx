@@ -9,6 +9,7 @@ import { supabase } from '../lib/supabase';
 import { confirmar } from '../lib/confirm';
 import TarjetaEvento from '../components/TarjetaEvento';
 import TarjetaPro from '../components/TarjetaPro';
+import { useMiSuscripcionPro } from '../hooks/useMiSuscripcionPro';
 import BotonAdmin from '../components/BotonAdmin';
 import { venueEmoji, venueLabel } from '../lib/venues';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
@@ -117,6 +118,10 @@ export default function DashboardLocalScreen() {
     // idsEventos (no misEventos) porque el array se recrea en cada render.
   }, [idsEventos]);
 
+  // Spec 169 — la suscripción a Pro para la tarjeta. Antes del return temprano: un
+  // hook no puede ir después; sin local, `null` no consulta.
+  const { suscripcion, recargar: recargarSuscripcion } = useMiSuscripcionPro('venue', miVenue?.id ?? null);
+
   // Sin local asociado: no hay nada que resumir. El único camino es
   // registrarlo — esto es lo que hoy no existe (spec 031, "El local no existe").
   if (!miVenue) {
@@ -195,8 +200,11 @@ export default function DashboardLocalScreen() {
           <View style={styles.tarjetaPro}>
             <TarjetaPro
               tenant={miVenue}
+              tipo="venue"
               etiqueta="tu local"
               onVerContactos={() => navigation.navigate('Contactos', { tipo: 'venue' })}
+              suscripcion={suscripcion}
+              onCambio={recargarSuscripcion}
             />
           </View>
 

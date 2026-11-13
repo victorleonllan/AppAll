@@ -15,6 +15,7 @@ import {
 import { confirmar } from '../lib/confirm';
 import TarjetaEvento from '../components/TarjetaEvento';
 import TarjetaPro from '../components/TarjetaPro';
+import { useMiSuscripcionPro } from '../hooks/useMiSuscripcionPro';
 import BotonAdmin from '../components/BotonAdmin';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
@@ -142,6 +143,13 @@ export default function PerfilMusicoScreen() {
     }
   };
 
+  // Spec 169 — la suscripción a Pro para la tarjeta, antes de los return tempranos.
+  // Un perfil de muestra no tiene fila real: `null` no consulta.
+  const { suscripcion, recargar: recargarSuscripcion } = useMiSuscripcionPro(
+    'musician',
+    !esMock && perfil ? perfil.id : null,
+  );
+
   if (!user || cargando) {
     return (
       <View style={styles.container}>
@@ -262,8 +270,11 @@ export default function PerfilMusicoScreen() {
         <View style={styles.tarjetaPro}>
           <TarjetaPro
             tenant={perfil}
+            tipo="musician"
             etiqueta="tu banda"
             onVerContactos={() => (navigation as any).navigate('Contactos', { tipo: 'musician' })}
+            suscripcion={suscripcion}
+            onCambio={recargarSuscripcion}
           />
         </View>
       )}

@@ -1,24 +1,46 @@
 // Spec 154 — Tarjeta informativa de Sonópolis Pro en los paneles de local y de músico.
 // Hermana de `components/CardSonopolisPro.js` de la web, sin precio, sin botón de compra
 // y sin ningún llamado a pagar por fuera: Pro no se vende en la app.
+// Spec 169 — con suscripción dice cuándo se renueva y deja cancelar; sigue sin precio ni
+// nombre del medio de pago externo (Decisión 2).
 
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { esPro, esProSinVencimiento, diasRestantesPro, fechaHastaPro } from '../lib/pro';
+import {
+  esPro,
+  esProSinVencimiento,
+  diasRestantesPro,
+  fechaHastaPro,
+  fechaLargaPro,
+  fechaFinSiCancela,
+  MiSuscripcionPro,
+} from '../lib/pro';
+import { TipoTenant } from '../lib/adminPro';
+import BotonCancelarSuscripcionPro from './BotonCancelarSuscripcionPro';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 interface Props {
-  tenant: { sonopolisProHasta?: string | null };
+  tenant: { id?: string; sonopolisProHasta?: string | null };
+  tipo?: TipoTenant; // para cancelar; sin él no se dibuja el botón
   etiqueta: string; // «tu local» | «tu banda», igual que `tenantLabel` de la web
   onVerContactos?: () => void; // el 155 lo pasa; sin él no se dibuja el enlace
+  suscripcion?: MiSuscripcionPro | null; // de useMiSuscripcionPro (spec 168)
+  onCambio?: () => void; // la pantalla recarga la suscripción después de cancelar
 }
 
-export default function TarjetaPro({ tenant, etiqueta, onVerContactos }: Props) {
+const ESTADOS_SUSCRIPCION = ['activa', 'pausada', 'cancelada'];
+
+export default function TarjetaPro({ tenant, tipo, etiqueta, onVerContactos, suscripcion, onCambio }: Props) {
   const activo = esPro(tenant);
   const sinVencimiento = esProSinVencimiento(tenant);
   const dias = diasRestantesPro(tenant);
   const fecha = fechaHastaPro(tenant);
-  // Misma regla de la web: vence pronto a 7 días o menos.
-  const porVencer = activo && !sinVencimiento && dias !== null && dias <= 7;
+  // Misma regla que `CardSonopolisPro.js:34`: sin Pro vigente, la suscripción no se muestra.
+  const sus = activo && suscripcion && ESTADOS_SUSCRIPCION.includes(suscripcion.estado) ? suscripcion : null;
+  // Misma regla de la web: vence pronto a 7 días o menos. Con cobro automático no
+  // «vence»: se renueva sola.
+  const porVencer = activo && !sinVencimiento && dias !== null && dias <= 7 && sus?.estado !== 'activa';
+  // Sin fecha en la fila de la suscripción, la del tenant (la misma que dice hoy la tarjeta).
+  const larga = (iso: string | null) => (iso ? fechaLargaPro(iso) : fecha);
 
   return (
     <View style={styles.card}>
@@ -33,13 +55,25 @@ export default function TarjetaPro({ tenant, etiqueta, onVerContactos }: Props) 
 
       {activo ? (
         <>
-          <Text style={styles.texto}>
-            {sinVencimiento
-              ? 'Activo, sin fecha de vencimiento.'
-              : porVencer
-                ? `Activo hasta el ${fecha} — quedan ${dias} ${dias === 1 ? 'día' : 'días'}.`
-                : `Activo hasta el ${fecha}.`}
-          </Text>
+          {sus ? (
+            <TextoSuscripcion sus={sus} larga={larga} />
+          ) : (
+            <Text style={styles.texto}>
+              {sinVencimiento
+                ? 'Activo, sin fecha de vencimiento.'
+                : porVencer
+                  ? `Activo hasta el ${fecha} — quedan ${dias} ${dias === 1 ? 'día' : 'días'}.`
+                  : `Activo hasta el ${fecha}.`}
+            </Text>
+          )}
+          {sus && sus.estado !== 'cancelada' && tipo && tenant.id && (
+            <BotonCancelarSuscripcionPro
+              tipo={tipo}
+              id={tenant.id}
+              finTexto={finTexto(sus, larga)}
+              onCancelada={onCambio}
+            />
+          )}
           {onVerContactos && (
             <TouchableOpacity onPress={onVerContactos} style={styles.enlace}>
               <Text style={styles.enlaceTexto}>Ver tus contactos →</Text>
@@ -58,6 +92,41 @@ export default function TarjetaPro({ tenant, etiqueta, onVerContactos }: Props) 
       )}
     </View>
   );
+}
+
+// Textos de W-265 sin precio ni el nombre del medio de pago (Decisión 2): no se muestra
+// cuánto cuesta ni se nombra el medio de pago externo, y «revisa tu medio de pago»
+// sería mandar a pagar por fuera.
+function TextoSuscripcion({ sus, larga }: { sus: MiSuscripcionPro; larga: (iso: string | null) => string | null }) {
+  if (sus.estado === 'activa') {
+    return (
+      <Text style={styles.texto}>
+        Activo. Se renueva solo el <Text style={styles.negrita}>{larga(sus.proximoCobroAt ?? sus.proHasta)}</Text>.
+      </Text>
+    );
+  }
+  if (sus.estado === 'pausada') {
+    return (
+      <Text style={styles.texto}>
+        No se pudo cobrar la renovación. Pro sigue activo hasta el{' '}
+        <Text style={styles.negrita}>{larga(sus.proHasta)}</Text>.
+      </Text>
+    );
+  }
+  return (
+    <Text style={styles.texto}>
+      Cancelaste tu suscripción. Puedes seguir usando Sonópolis Pro hasta el{' '}
+      <Text style={styles.negrita}>{larga(sus.proHasta)}</Text>. No se te va a cobrar de nuevo.
+    </Text>
+  );
+}
+
+// La fecha que va a quedar al cancelar, para el diálogo (copias de `CardSonopolisPro.js`).
+function finTexto(sus: MiSuscripcionPro, larga: (iso: string | null) => string | null): string {
+  const fin = fechaFinSiCancela(sus);
+  return fin
+    ? `Puedes seguir usando Pro hasta el ${larga(fin)}.`
+    : 'Pro termina hoy, porque el último mes no se pudo cobrar.';
 }
 
 const styles = StyleSheet.create({
@@ -83,6 +152,7 @@ const styles = StyleSheet.create({
   },
   etiquetaVenceTexto: { color: colors.white, fontSize: fontSize.xs, fontWeight: 'bold' },
   texto: { fontSize: fontSize.sm, color: colors.secondary, marginTop: spacing.xs },
+  negrita: { fontWeight: 'bold' },
   enlace: { marginTop: spacing.sm },
   enlaceTexto: { fontSize: fontSize.sm, color: colors.accent, fontWeight: 'bold' },
 });
