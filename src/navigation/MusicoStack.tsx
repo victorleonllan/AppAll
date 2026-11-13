@@ -16,7 +16,9 @@ import RedesScreen from '../screens/RedesScreen';
 import PublicarRedesScreen from '../screens/PublicarRedesScreen';
 import type { TipoTenant } from '../hooks/useTenantCrm';
 import { pantallasAdmin, AdminParamList } from './pantallasAdmin';
-import { colors, fontSize } from '../theme';
+import { fontSize } from '../theme';
+import { useTema } from '../context/TemaContext';
+import BotonTema from '../components/BotonTema';
 
 export type MusicoStackParamList = {
   PerfilMusico: undefined;
@@ -41,12 +43,15 @@ export type MusicoStackParamList = {
 const Stack = createNativeStackNavigator<MusicoStackParamList>();
 
 export default function MusicoStack() {
+  const { colores } = useTema();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: colors.primary },
-        headerTintColor: colors.white,
+        headerStyle: { backgroundColor: colores.block },
+        headerTintColor: colores.white,
         headerTitleStyle: { fontSize: fontSize.lg },
+        // Spec 174 — botón de tema en toda pantalla con header, con o sin sesión.
+        headerRight: () => <BotonTema />,
       }}
     >
       <Stack.Screen

@@ -4,7 +4,9 @@ import VerMusicoScreen from '../screens/VerMusicoScreen';
 import DirectorioMusicosScreen from '../screens/DirectorioMusicosScreen';
 import DetalleLocalScreen from '../screens/DetalleLocalScreen';
 import MapaLocalesScreen from '../screens/MapaLocalesScreen';
-import { colors, fontSize } from '../theme';
+import { fontSize } from '../theme';
+import { useTema } from '../context/TemaContext';
+import BotonTema from '../components/BotonTema';
 
 export type LocalesStackParamList = {
   LocalesList: undefined;
@@ -17,12 +19,15 @@ export type LocalesStackParamList = {
 const Stack = createNativeStackNavigator<LocalesStackParamList>();
 
 export default function LocalesStack() {
+  const { colores } = useTema();
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: colors.primary },
-        headerTintColor: colors.white,
+        headerStyle: { backgroundColor: colores.block },
+        headerTintColor: colores.white,
         headerTitleStyle: { fontSize: fontSize.lg },
+        // Spec 174 — botón de tema en toda pantalla con header, con o sin sesión.
+        headerRight: () => <BotonTema />,
       }}
     >
       <Stack.Screen name="LocalesList" component={LocalesScreen} options={{ headerShown: false }} />

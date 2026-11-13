@@ -6,7 +6,9 @@ import CambiarContrasenaScreen from '../screens/CambiarContrasenaScreen';
 import ElegirRolScreen from '../screens/ElegirRolScreen';
 import { useAuth } from '../context/AuthContext';
 import { pantallasAdmin, AdminParamList } from './pantallasAdmin';
-import { colors, fontSize } from '../theme';
+import { fontSize } from '../theme';
+import { useTema } from '../context/TemaContext';
+import BotonTema from '../components/BotonTema';
 
 export type PerfilStackParamList = {
   Perfil: undefined;
@@ -21,6 +23,7 @@ const Stack = createNativeStackNavigator<PerfilStackParamList>();
 // Spec 114 — la tercera pestaña de toda sesión que no es músico ni local. Antes
 // era PerfilScreen suelta, sin stack, y el fan no tenía a dónde navegar.
 export default function PerfilStack() {
+  const { colores } = useTema();
   const { role } = useAuth();
 
   return (
@@ -28,9 +31,11 @@ export default function PerfilStack() {
       // Misma regla que /quien-eres en la web: aparece cuando user_metadata.role falta.
       initialRouteName={role === null ? 'ElegirRol' : 'Perfil'}
       screenOptions={{
-        headerStyle: { backgroundColor: colors.primary },
-        headerTintColor: colors.white,
+        headerStyle: { backgroundColor: colores.block },
+        headerTintColor: colores.white,
         headerTitleStyle: { fontSize: fontSize.lg },
+        // Spec 174 — botón de tema en toda pantalla con header, con o sin sesión.
+        headerRight: () => <BotonTema />,
       }}
     >
       <Stack.Screen name="Perfil" component={PerfilScreen} options={{ title: 'Perfil' }} />

@@ -1,6 +1,6 @@
 # Spec 174 — Botón de tema en el header y navegación en claro y oscuro
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — criterios 1 y 2 verificados (`tsc` limpio, `expo export --platform web` sin error); 3 deja una sola línea, la clave `colors` del tema de React Navigation (ver addenda); 4-7 y V-candidatas sin verificar en dispositivo
 > Capa: FRONTEND. `src/components/BotonTema.tsx` (nuevo), `src/navigation/index.tsx`,
 > `src/navigation/CarteleraStack.tsx`, `src/navigation/LocalesStack.tsx`,
 > `src/navigation/MiLocalStack.tsx`, `src/navigation/MusicoStack.tsx`,
@@ -110,3 +110,12 @@ Nada más cambia: títulos, pantallas y `headerShown: false` existentes quedan i
   (Decisión 1).
 - El contenido de las pantallas: 176–182.
 - `StatusBar` (`App.tsx:31`): sigue `light`, ver 173.
+
+## Bugs encontrados al aplicar
+
+- **13-nov-2026 — el criterio 3 choca con la Decisión 5.** `rg -n "colors\b" src/navigation
+  src/components/BotonTema.tsx` encuentra `navigation/index.tsx:38`, `colors: {`: es la
+  clave obligatoria del tipo `Theme` de React Navigation que la Decisión 5 manda
+  reemplazar, no el alias deprecado `colors` de `src/theme`. Ningún archivo del spec
+  importa ya `colors` de `../theme`; el criterio debió decir
+  `rg -n "colors\." src/navigation src/components/BotonTema.tsx` (o excluir esa clave).
