@@ -105,7 +105,7 @@
 | 170 | Cobros de Pro en la ficha del tenant del admin en la app: si se recibió, si falló y por qué — paridad con la web, ver `[[2026-11-13 Plan — la app al día con la web (W-252 a W-275)]]` | Pendiente |
 | 171 | Lógica de Visitas en el admin de la app: visitas de la web por país y detalle de cada visitante — paridad con la web, ver `[[2026-11-13 Plan — la app al día con la web (W-252 a W-275)]]` | Pendiente |
 | 172 | Pantalla «Visitas» en el admin de la app: visitantes de la web por país y detalle de cada uno — paridad con la web, ver `[[2026-11-13 Plan — la app al día con la web (W-252 a W-275)]]` | Pendiente |
-| 173 | Tema claro y oscuro: paletas, proveedor, persistencia y hooks — paridad con la web, ver `[[2026-11-13 Plan — la app al día con la web (W-252 a W-275)]]` | Pendiente |
+| 173 | Tema claro y oscuro: paletas, proveedor, persistencia y hooks — paridad con la web, ver `[[2026-11-13 Plan — la app al día con la web (W-252 a W-275)]]` | **Aplicado** (13-nov-2026) — paletas clara/oscura, `TemaProvider`/`useTema`, `useEstilos`; criterios 1-6 verificados, 7-8 en dispositivo pendientes |
 | 174 | Botón de tema en el header y navegación en claro y oscuro — paridad con la web, ver `[[2026-11-13 Plan — la app al día con la web (W-252 a W-275)]]` | Pendiente |
 | 175 | Cartelera: botón «Limpiar filtros (n)» en píldora de acento — paridad con la web, ver `[[2026-11-13 Plan — la app al día con la web (W-252 a W-275)]]` | Aplicado (13-nov-2026) — tsc y export web OK; criterios 3-7 a probar en dispositivo |
 | 176 | Tema oscuro en la cartelera, los locales y los músicos — paridad con la web, ver `[[2026-11-13 Plan — la app al día con la web (W-252 a W-275)]]` | Pendiente |

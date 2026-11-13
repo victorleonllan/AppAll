@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider } from './src/context/AuthContext';
 import { PaisProvider } from './src/context/PaisContext';
+import { TemaProvider } from './src/context/TemaContext';
 import { VenuesProvider } from './src/context/VenuesContext';
 import { EventosProvider } from './src/context/EventosContext';
 import AppNavigator from './src/navigation';
@@ -9,7 +10,17 @@ import { getOAuthErrorFromUrl } from './src/lib/oauthError';
 import OAuthErrorScreen from './src/screens/OAuthErrorScreen';
 import GuardaRol from './src/components/GuardaRol';
 
+// Spec 173 — TemaProvider envuelve todo, incluida la rama de OAuthErrorScreen, que
+// también lee el tema.
 export default function App() {
+  return (
+    <TemaProvider>
+      <Contenido />
+    </TemaProvider>
+  );
+}
+
+function Contenido() {
   // Solo en web: si Supabase volvió del login de Google con ?error=... (state
   // expirado o cancelado — ver AuthContext.signInWithGoogle), no montamos la
   // app normal. Cortamos acá antes para no dejar el error flotando sobre el
