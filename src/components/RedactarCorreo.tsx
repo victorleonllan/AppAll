@@ -15,7 +15,8 @@ import type { SegmentoCorreo } from '../hooks/useCorreoCrm';
 import type { TipoTenant } from '../hooks/useTenantCrm';
 import { confirmar } from '../lib/confirm';
 import { formatearFechaEs, separarFechaHora } from '../lib/fecha';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
 
 interface Props {
   tipo: TipoTenant;
@@ -39,6 +40,7 @@ function fechaYHora(iso: string): { fecha: string; hora: string } {
 }
 
 export default function RedactarCorreo({ tipo, nombreTenant }: Props) {
+  const styles = useEstilos(crearEstilos);
   const { estado, cargando, error, enviando, enviar } = useCorreoCrm(tipo);
   const [lista, setLista] = useState<SegmentoCorreo | null>(null);
   const [asunto, setAsunto] = useState(`Gracias por estar, de parte de ${nombreTenant}`);
@@ -209,72 +211,72 @@ export default function RedactarCorreo({ tipo, nombreTenant }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     padding: spacing.md,
   },
-  titulo: { fontSize: fontSize.md, fontWeight: 'bold', color: colors.primary, marginBottom: spacing.sm },
-  error: { color: colors.danger, fontSize: fontSize.sm, marginTop: spacing.xs },
-  exito: { color: colors.success, fontSize: fontSize.sm, marginTop: spacing.sm },
-  etiqueta: { fontSize: fontSize.sm, fontWeight: 'bold', color: colors.secondary, marginTop: spacing.sm },
+  titulo: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary, marginBottom: spacing.sm },
+  error: { color: c.danger, fontSize: fontSize.sm, marginTop: spacing.xs },
+  exito: { color: c.success, fontSize: fontSize.sm, marginTop: spacing.sm },
+  etiqueta: { fontSize: fontSize.sm, fontWeight: 'bold', color: c.secondary, marginTop: spacing.sm },
   filaChips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
   chip: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.sm + 4,
     paddingVertical: spacing.xs + 2,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
   },
-  chipElegido: { backgroundColor: colors.accent, borderColor: colors.accent },
+  chipElegido: { backgroundColor: c.accent, borderColor: c.accent },
   chipDeshabilitado: { opacity: 0.4 },
-  chipTexto: { fontSize: fontSize.sm, color: colors.secondary },
-  chipTextoElegido: { color: colors.white, fontWeight: 'bold' },
-  pestanas: { flexDirection: 'row', marginTop: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
+  chipTexto: { fontSize: fontSize.sm, color: c.secondary },
+  chipTextoElegido: { color: c.onAccent, fontWeight: 'bold' },
+  pestanas: { flexDirection: 'row', marginTop: spacing.md, borderBottomWidth: 1, borderBottomColor: c.border },
   pestana: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
-  pestanaActiva: { borderBottomWidth: 2, borderBottomColor: colors.accent },
-  pestanaTexto: { fontSize: fontSize.sm, color: colors.muted },
-  pestanaTextoActivo: { color: colors.accent, fontWeight: 'bold' },
+  pestanaActiva: { borderBottomWidth: 2, borderBottomColor: c.accent },
+  pestanaTexto: { fontSize: fontSize.sm, color: c.muted },
+  pestanaTextoActivo: { color: c.accent, fontWeight: 'bold' },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     padding: spacing.sm,
     fontSize: fontSize.sm,
-    color: colors.primary,
-    backgroundColor: colors.cardBackground,
+    color: c.primary,
+    backgroundColor: c.cardBackground,
     marginTop: spacing.xs,
   },
   inputMensaje: { minHeight: 180 },
   filaMensaje: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-  contador: { fontSize: fontSize.xs, color: colors.muted },
-  ayuda: { fontSize: fontSize.xs, color: colors.muted, marginTop: spacing.sm },
-  cabecera: { fontSize: fontSize.sm, color: colors.secondary, marginTop: spacing.xs },
+  contador: { fontSize: fontSize.xs, color: c.muted },
+  ayuda: { fontSize: fontSize.xs, color: c.muted, marginTop: spacing.sm },
+  cabecera: { fontSize: fontSize.sm, color: c.secondary, marginTop: spacing.xs },
   vista: {
-    backgroundColor: colors.white,
+    backgroundColor: c.cardBackground,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     padding: spacing.md,
     marginTop: spacing.sm,
   },
-  vistaNombre: { fontSize: fontSize.xs, color: colors.muted, letterSpacing: 1 },
-  vistaAsunto: { fontSize: fontSize.md, fontWeight: 'bold', color: colors.primary, marginTop: spacing.xs },
-  vistaParrafo: { fontSize: fontSize.sm, color: colors.primary, marginTop: spacing.sm },
-  separador: { height: 1, backgroundColor: colors.border, marginVertical: spacing.md },
-  vistaFirma: { fontSize: fontSize.sm, color: colors.secondary },
-  vistaPie: { fontSize: fontSize.xs, color: colors.muted, marginTop: spacing.sm },
+  vistaNombre: { fontSize: fontSize.xs, color: c.muted, letterSpacing: 1 },
+  vistaAsunto: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary, marginTop: spacing.xs },
+  vistaParrafo: { fontSize: fontSize.sm, color: c.primary, marginTop: spacing.sm },
+  separador: { height: 1, backgroundColor: c.border, marginVertical: spacing.md },
+  vistaFirma: { fontSize: fontSize.sm, color: c.secondary },
+  vistaPie: { fontSize: fontSize.xs, color: c.muted, marginTop: spacing.sm },
   botonEnviar: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     marginTop: spacing.md,
   },
   botonDeshabilitado: { opacity: 0.5 },
-  botonEnviarTexto: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.sm },
+  botonEnviarTexto: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.sm },
 });

@@ -1,6 +1,6 @@
 # Spec 181 — Tema oscuro en los contactos, el correo y las redes del CRM
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — `tsc` limpio en los 6 archivos, `expo export` web OK, `rg colors` vacío; criterios 4-6 y V 181-a a probar en dispositivo
 > Capa: FRONTEND. `src/screens/ContactosScreen.tsx`, `src/components/RedactarCorreo.tsx`,
 > `src/screens/RedesScreen.tsx`, `src/screens/PublicarRedesScreen.tsx`,
 > `src/components/redes/ComunRedes.tsx`, `src/components/redes/MediosRedes.tsx`.

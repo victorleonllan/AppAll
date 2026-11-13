@@ -4,13 +4,17 @@
 import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { useSubirMediosRedes, ItemMedio } from '../../hooks/useSubirMediosRedes';
-import { colors, spacing, borderRadius, fontSize } from '../../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../../theme';
+import { useTema } from '../../context/TemaContext';
+import { useEstilos } from '../../hooks/useEstilos';
 
 type Medios = ReturnType<typeof useSubirMediosRedes>;
 
 const LADO = 64;
 
 function Miniatura({ item, medios }: { item: ItemMedio; medios: Medios }) {
+  const { colores } = useTema();
+  const styles = useEstilos(crearEstilos);
   return (
     <View style={styles.item}>
       <View style={styles.miniatura}>
@@ -18,7 +22,7 @@ function Miniatura({ item, medios }: { item: ItemMedio; medios: Medios }) {
           <Image source={{ uri: item.preview }} style={styles.imagen} />
         ) : (
           <View style={[styles.imagen, styles.video]}>
-            <Ionicons name="videocam" size={24} color={colors.muted} />
+            <Ionicons name="videocam" size={24} color={colores.muted} />
           </View>
         )}
         {item.estado === 'preparando' && (
@@ -53,6 +57,7 @@ function Miniatura({ item, medios }: { item: ItemMedio; medios: Medios }) {
 }
 
 export default function MediosRedes({ medios }: { medios: Medios }) {
+  const styles = useEstilos(crearEstilos);
   return (
     <View>
       <TouchableOpacity style={styles.boton} onPress={medios.agregarDeGaleria}>
@@ -70,19 +75,19 @@ export default function MediosRedes({ medios }: { medios: Medios }) {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   boton: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: borderRadius.sm,
     alignSelf: 'flex-start',
   },
-  textoBoton: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  textoBoton: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm },
   fila: { gap: spacing.sm, paddingTop: spacing.sm },
   item: { width: LADO + 8 },
   miniatura: { width: LADO, height: LADO, marginTop: 8 },
-  imagen: { width: LADO, height: LADO, borderRadius: borderRadius.sm, backgroundColor: colors.border },
+  imagen: { width: LADO, height: LADO, borderRadius: borderRadius.sm, backgroundColor: c.border },
   video: { alignItems: 'center', justifyContent: 'center' },
   capa: {
     position: 'absolute',
@@ -96,7 +101,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 4,
   },
-  textoCapa: { color: colors.white, fontSize: 10, fontWeight: 'bold', textAlign: 'center' },
+  textoCapa: { color: c.white, fontSize: 10, fontWeight: 'bold', textAlign: 'center' },
   barra: {
     width: '90%',
     height: 4,
@@ -105,7 +110,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     overflow: 'hidden',
   },
-  relleno: { height: 4, backgroundColor: colors.white },
+  relleno: { height: 4, backgroundColor: c.white },
   quitar: {
     position: 'absolute',
     top: -8,
@@ -113,11 +118,11 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: colors.primary,
+    backgroundColor: c.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  textoQuitar: { color: colors.white, fontSize: 14, lineHeight: 16, fontWeight: 'bold' },
-  error: { fontSize: fontSize.xs, color: colors.danger, marginTop: spacing.xs },
-  link: { fontSize: fontSize.xs, color: colors.accent, fontWeight: 'bold', marginTop: 2 },
+  textoQuitar: { color: c.onPrimary, fontSize: 14, lineHeight: 16, fontWeight: 'bold' },
+  error: { fontSize: fontSize.xs, color: c.danger, marginTop: spacing.xs },
+  link: { fontSize: fontSize.xs, color: c.accent, fontWeight: 'bold', marginTop: 2 },
 });
