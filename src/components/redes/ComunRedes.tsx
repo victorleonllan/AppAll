@@ -8,7 +8,9 @@ import { useAuth } from '../../context/AuthContext';
 import { BASE_WEB } from '../../lib/apiWeb';
 import { ORDEN_REDES, Red } from '../../lib/redes/catalogo';
 import type { useTenantRedes } from '../../hooks/useTenantRedes';
-import { colors, spacing, fontSize } from '../../theme';
+import { spacing, fontSize, Paleta } from '../../theme';
+import { useTema } from '../../context/TemaContext';
+import { useEstilos } from '../../hooks/useEstilos';
 
 type TenantRedes = ReturnType<typeof useTenantRedes>;
 
@@ -31,7 +33,8 @@ export function IconoRed({
   apagado?: boolean;
   color?: string;
 }) {
-  return <Ionicons name={ICONO[red]} size={size} color={apagado ? colors.muted : color ?? colors.primary} />;
+  const { colores } = useTema();
+  return <Ionicons name={ICONO[red]} size={size} color={apagado ? colores.muted : color ?? colores.primary} />;
 }
 
 /**
@@ -66,6 +69,8 @@ export function hayAvisoRedes({ tenant, disponibles, sinPro }: AvisoRedesProps):
 /** Lo que se muestra cuando la función no está lista; `null` si va la pantalla normal. */
 export function AvisoRedes(props: AvisoRedesProps) {
   const { tenant, disponibles, sinPro, cargando, error } = props;
+  const { colores } = useTema();
+  const styles = useEstilos(crearEstilos);
   // Sin tenant, `panelWeb` y `tenantType` vienen en null: el texto sale del rol.
   const { role } = useAuth();
 
@@ -74,7 +79,7 @@ export function AvisoRedes(props: AvisoRedesProps) {
   if (tenant.estado === 'cargando') {
     return (
       <View style={styles.centro}>
-        <ActivityIndicator color={colors.accent} />
+        <ActivityIndicator color={colores.accent} />
       </View>
     );
   }
@@ -117,7 +122,7 @@ export function AvisoRedes(props: AvisoRedesProps) {
   if (cargando) {
     return (
       <View style={styles.centro}>
-        <ActivityIndicator color={colors.accent} />
+        <ActivityIndicator color={colores.accent} />
       </View>
     );
   }
@@ -137,16 +142,16 @@ export function AvisoRedes(props: AvisoRedesProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   centro: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.lg,
-    backgroundColor: colors.background,
+    backgroundColor: c.background,
   },
-  texto: { fontSize: fontSize.md, color: colors.primary, textAlign: 'center', lineHeight: 22 },
-  nota: { fontSize: fontSize.sm, color: colors.muted, textAlign: 'center', marginTop: spacing.md },
-  error: { fontSize: fontSize.sm, color: colors.danger, textAlign: 'center' },
+  texto: { fontSize: fontSize.md, color: c.primary, textAlign: 'center', lineHeight: 22 },
+  nota: { fontSize: fontSize.sm, color: c.muted, textAlign: 'center', marginTop: spacing.md },
+  error: { fontSize: fontSize.sm, color: c.danger, textAlign: 'center' },
   iconos: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg },
 });

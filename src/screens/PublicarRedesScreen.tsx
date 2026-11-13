@@ -42,7 +42,9 @@ import {
 import { ErrorApiWeb } from '../lib/apiWeb';
 import { PAISES } from '../constants/paises';
 import type { Evento } from '../types';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useTema } from '../context/TemaContext';
+import { useEstilos } from '../hooks/useEstilos';
 
 type PublicarRoute = RouteProp<{ PublicarRedes: { eventoId?: string } | undefined }, 'PublicarRedes'>;
 
@@ -78,6 +80,7 @@ function validacionDelServidor(e: unknown): ValidacionPublicacion | null {
 }
 
 function Contador({ red, texto }: { red: Red; texto: string }) {
+  const styles = useEstilos(crearEstilos);
   const { nombre, maxTexto } = REDES[red];
   const largo = largoParaRed(texto, red);
   const pasado = largo > maxTexto;
@@ -89,6 +92,7 @@ function Contador({ red, texto }: { red: Red; texto: string }) {
 }
 
 function Errores({ lista }: { lista: string[] | undefined }) {
+  const styles = useEstilos(crearEstilos);
   if (!lista || lista.length === 0) return null;
   return (
     <>
@@ -103,6 +107,8 @@ function Errores({ lista }: { lista: string[] | undefined }) {
 
 export default function PublicarRedesScreen() {
   const navigation = useNavigation();
+  const { colores } = useTema();
+  const styles = useEstilos(crearEstilos);
   const route = useRoute<PublicarRoute>();
   const eventoId = route.params?.eventoId ?? null;
 
@@ -268,7 +274,7 @@ export default function PublicarRedesScreen() {
     if (cuentas.cargando) {
       return (
         <View style={styles.centro}>
-          <ActivityIndicator color={colors.accent} />
+          <ActivityIndicator color={colores.accent} />
         </View>
       );
     }
@@ -286,7 +292,7 @@ export default function PublicarRedesScreen() {
   if (creada) {
     return (
       <View style={styles.centro}>
-        <Ionicons name="checkmark-circle" size={48} color={colors.success} />
+        <Ionicons name="checkmark-circle" size={48} color={colores.success} />
         <Text style={styles.textoCentro}>
           {creada.programadaPara && creada.estado === 'programada'
             ? `Programada para el ${formatearProgramada(creada.programadaPara, zona)}`
@@ -329,7 +335,7 @@ export default function PublicarRedesScreen() {
                   <Ionicons
                     name={marcada ? 'checkbox' : 'square-outline'}
                     size={22}
-                    color={marcada ? colors.accent : colors.muted}
+                    color={marcada ? colores.accent : colores.muted}
                   />
                   <IconoRed red={c.red} />
                   <Text style={styles.nombreRed}>{REDES[c.red].nombre}</Text>
@@ -341,7 +347,7 @@ export default function PublicarRedesScreen() {
           })}
           {sinConectar.map((red) => (
             <View key={red} style={styles.filaRed}>
-              <Ionicons name="square-outline" size={22} color={colors.border} />
+              <Ionicons name="square-outline" size={22} color={colores.border} />
               <IconoRed red={red} apagado />
               <Text style={[styles.nombreRed, styles.apagado]}>{REDES[red].nombre}</Text>
               <TouchableOpacity onPress={conectar}>
@@ -360,7 +366,7 @@ export default function PublicarRedesScreen() {
             onChangeText={setTexto}
             multiline
             placeholder="¿Qué quieres contar?"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colores.muted}
             textAlignVertical="top"
           />
           <View style={styles.contadores}>
@@ -447,7 +453,7 @@ export default function PublicarRedesScreen() {
             </View>
             {/* El adaptador manda siempre el contenido de marca: va marcado y fijo. */}
             <View style={styles.filaRed}>
-              <Ionicons name="checkbox" size={22} color={colors.muted} />
+              <Ionicons name="checkbox" size={22} color={colores.muted} />
               <Text style={styles.gris}>Este contenido promociona mi banda o local</Text>
             </View>
           </View>
@@ -489,9 +495,9 @@ export default function PublicarRedesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   flex: { flex: 1 },
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: c.background },
   contenido: { padding: spacing.md, paddingBottom: spacing.xl, gap: spacing.md },
   centro: {
     flex: 1,
@@ -499,45 +505,45 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.lg,
     gap: spacing.md,
-    backgroundColor: colors.background,
+    backgroundColor: c.background,
   },
-  textoCentro: { fontSize: fontSize.md, color: colors.primary, textAlign: 'center' },
-  anunciar: { fontSize: fontSize.md, fontWeight: 'bold', color: colors.accent },
+  textoCentro: { fontSize: fontSize.md, color: c.primary, textAlign: 'center' },
+  anunciar: { fontSize: fontSize.md, fontWeight: 'bold', color: c.accent },
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     gap: spacing.sm,
   },
-  titulo: { fontSize: fontSize.md, fontWeight: 'bold', color: colors.primary },
-  etiqueta: { fontSize: fontSize.sm, fontWeight: 'bold', color: colors.primary },
+  titulo: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary },
+  etiqueta: { fontSize: fontSize.sm, fontWeight: 'bold', color: c.primary },
   filaRed: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 4, flexWrap: 'wrap' },
-  nombreRed: { fontSize: fontSize.md, color: colors.primary },
-  apagado: { color: colors.muted },
-  gris: { fontSize: fontSize.xs, color: colors.muted },
-  link: { fontSize: fontSize.sm, color: colors.accent, fontWeight: 'bold' },
+  nombreRed: { fontSize: fontSize.md, color: c.primary },
+  apagado: { color: c.muted },
+  gris: { fontSize: fontSize.xs, color: c.muted },
+  link: { fontSize: fontSize.sm, color: c.accent, fontWeight: 'bold' },
   input: {
     minHeight: 120,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     padding: spacing.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
-    backgroundColor: colors.white,
+    color: c.primary,
+    backgroundColor: c.cardBackground,
   },
   campo: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     padding: spacing.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
-    backgroundColor: colors.white,
+    color: c.primary,
+    backgroundColor: c.cardBackground,
   },
   contadores: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  contador: { fontSize: fontSize.xs, color: colors.muted },
-  contadorPasado: { color: colors.danger, fontWeight: 'bold' },
+  contador: { fontSize: fontSize.xs, color: c.muted },
+  contadorPasado: { color: c.danger, fontWeight: 'bold' },
   filaSwitch: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: {
@@ -548,28 +554,28 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.white,
+    borderColor: c.border,
+    backgroundColor: c.cardBackground,
   },
-  chipActivo: { backgroundColor: colors.accent, borderColor: colors.accent },
-  textoChip: { fontSize: fontSize.sm, color: colors.primary },
-  textoChipActivo: { color: colors.white, fontWeight: 'bold' },
-  punto: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.danger },
-  error: { fontSize: fontSize.sm, color: colors.danger },
+  chipActivo: { backgroundColor: c.accent, borderColor: c.accent },
+  textoChip: { fontSize: fontSize.sm, color: c.primary },
+  textoChipActivo: { color: c.onAccent, fontWeight: 'bold' },
+  punto: { width: 6, height: 6, borderRadius: 3, backgroundColor: c.danger },
+  error: { fontSize: fontSize.sm, color: c.danger },
   botonChico: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: borderRadius.sm,
   },
-  textoBotonChico: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  textoBotonChico: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm },
   botonPrimario: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     paddingVertical: 14,
     paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.md,
     alignItems: 'center',
   },
   botonApagado: { opacity: 0.5 },
-  textoBotonPrimario: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
+  textoBotonPrimario: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
 });

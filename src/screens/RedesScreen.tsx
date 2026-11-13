@@ -29,7 +29,9 @@ import { mensajeRedes, ConexionRed, DestinoRed, PublicacionRed } from '../lib/re
 import type { MedioRed } from '../lib/redes/reglas';
 import { formatearFechaHoraCorta } from '../lib/redes/horario';
 import { confirmar } from '../lib/confirm';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useTema } from '../context/TemaContext';
+import { useEstilos } from '../hooks/useEstilos';
 
 type RedesNav = NativeStackNavigationProp<{
   Redes: undefined;
@@ -51,12 +53,14 @@ function textoFecha(p: PublicacionRed, zona: string): string {
 
 /** El bucket se limpia a los 30 días: un medio borrado muestra el recuadro gris. */
 function Miniatura({ medio }: { medio: MedioRed | undefined }) {
+  const { colores } = useTema();
+  const styles = useEstilos(crearEstilos);
   const [roto, setRoto] = useState(false);
   if (!medio?.url || roto) return <View style={styles.miniatura} />;
   if (medio.tipo === 'video') {
     return (
       <View style={[styles.miniatura, styles.centrado]}>
-        <Ionicons name="videocam" size={24} color={colors.muted} />
+        <Ionicons name="videocam" size={24} color={colores.muted} />
       </View>
     );
   }
@@ -64,19 +68,20 @@ function Miniatura({ medio }: { medio: MedioRed | undefined }) {
 }
 
 function Avatar({ uri }: { uri: string | null }) {
+  const styles = useEstilos(crearEstilos);
   const [roto, setRoto] = useState(false);
   if (!uri || roto) return <View style={styles.avatar} />;
   return <Image source={{ uri }} style={styles.avatar} onError={() => setRoto(true)} />;
 }
 
-const COLOR_DESTINO: Record<DestinoRed['estado'], string> = {
-  pendiente: colors.primary,
-  publicando: colors.warning,
-  esperando: colors.warning,
-  publicada: colors.success,
-  fallida: colors.danger,
-  cancelada: colors.muted,
-};
+const colorDestino = (c: Paleta): Record<DestinoRed['estado'], string> => ({
+  pendiente: c.primary,
+  publicando: c.warning,
+  esperando: c.warning,
+  publicada: c.success,
+  fallida: c.danger,
+  cancelada: c.muted,
+});
 
 function Pastilla({
   destino: d,
@@ -87,7 +92,9 @@ function Pastilla({
   ocupado: boolean;
   onReintentar: () => void;
 }) {
-  const color = COLOR_DESTINO[d.estado];
+  const { colores } = useTema();
+  const styles = useEstilos(crearEstilos);
+  const color = colorDestino(colores)[d.estado];
   const sufijo =
     d.estado === 'pendiente'
       ? ' · Programada'
@@ -126,6 +133,8 @@ function Pastilla({
 
 export default function RedesScreen() {
   const navigation = useNavigation<RedesNav>();
+  const { colores } = useTema();
+  const styles = useEstilos(crearEstilos);
   const tenant = useTenantRedes();
   const enFoco = useIsFocused();
   const habilitado = tenant.estado === 'listo' && tenant.esPro;
@@ -339,7 +348,7 @@ export default function RedesScreen() {
       <View style={styles.card}>
         <Text style={styles.titulo}>Publicaciones</Text>
         {errorAccion && <Text style={styles.error}>{errorAccion}</Text>}
-        {lista === null && !historial.error && <ActivityIndicator color={colors.accent} />}
+        {lista === null && !historial.error && <ActivityIndicator color={colores.accent} />}
         {historial.error && <Text style={styles.error}>{historial.error}</Text>}
         {lista && lista.length === 0 && (
           <Text style={styles.gris}>Todavía no publicas nada desde Sonópolis.</Text>
@@ -375,64 +384,64 @@ export default function RedesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   contenido: { padding: spacing.md, paddingBottom: spacing.xl },
   centrado: { alignItems: 'center', justifyContent: 'center' },
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginTop: spacing.md,
     gap: spacing.sm,
   },
-  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
+  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
   botonPrimario: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     paddingVertical: 14,
     borderRadius: borderRadius.md,
     alignItems: 'center',
   },
   botonApagado: { opacity: 0.5 },
-  textoBotonPrimario: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
+  textoBotonPrimario: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
   red: {
     flexDirection: 'row',
     gap: spacing.sm,
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: c.border,
   },
   cuerpoRed: { flex: 1, gap: spacing.xs },
-  nombreRed: { fontSize: fontSize.md, fontWeight: 'bold', color: colors.primary },
+  nombreRed: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary },
   filaCuenta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  avatar: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.border },
-  cuenta: { fontSize: fontSize.sm, color: colors.primary },
-  conectada: { fontSize: fontSize.sm, color: colors.success, fontWeight: 'bold' },
-  advertencia: { fontSize: fontSize.sm, color: colors.warning },
+  avatar: { width: 28, height: 28, borderRadius: 14, backgroundColor: c.border },
+  cuenta: { fontSize: fontSize.sm, color: c.primary },
+  conectada: { fontSize: fontSize.sm, color: c.success, fontWeight: 'bold' },
+  advertencia: { fontSize: fontSize.sm, color: c.warning },
   filaBotones: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   botonChico: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: borderRadius.sm,
     alignSelf: 'flex-start',
   },
-  textoBotonChico: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
-  gris: { fontSize: fontSize.xs, color: colors.muted },
-  grisCentro: { fontSize: fontSize.xs, color: colors.muted, textAlign: 'center', marginTop: spacing.xs },
-  error: { fontSize: fontSize.sm, color: colors.danger },
-  errorChico: { fontSize: fontSize.xs, color: colors.danger, marginTop: 2 },
-  apagado: { color: colors.muted },
+  textoBotonChico: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  gris: { fontSize: fontSize.xs, color: c.muted },
+  grisCentro: { fontSize: fontSize.xs, color: c.muted, textAlign: 'center', marginTop: spacing.xs },
+  error: { fontSize: fontSize.sm, color: c.danger },
+  errorChico: { fontSize: fontSize.xs, color: c.danger, marginTop: 2 },
+  apagado: { color: c.muted },
   tarjeta: {
     flexDirection: 'row',
     gap: spacing.md,
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: c.border,
   },
-  miniatura: { width: 64, height: 64, borderRadius: borderRadius.sm, backgroundColor: colors.border },
+  miniatura: { width: 64, height: 64, borderRadius: borderRadius.sm, backgroundColor: c.border },
   cuerpoTarjeta: { flex: 1, gap: spacing.xs },
-  textoPublicacion: { fontSize: fontSize.sm, color: colors.primary },
+  textoPublicacion: { fontSize: fontSize.sm, color: c.primary },
   destinos: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   destino: { maxWidth: '100%' },
   pastilla: {
@@ -446,6 +455,6 @@ const styles = StyleSheet.create({
   },
   textoPastilla: { fontSize: fontSize.xs, fontWeight: 'bold' },
   tachado: { textDecorationLine: 'line-through' },
-  linkPastilla: { fontSize: fontSize.xs, color: colors.accent, fontWeight: 'bold', marginLeft: 4 },
-  linkCancelar: { fontSize: fontSize.sm, color: colors.accent, fontWeight: 'bold' },
+  linkPastilla: { fontSize: fontSize.xs, color: c.accent, fontWeight: 'bold', marginLeft: 4 },
+  linkCancelar: { fontSize: fontSize.sm, color: c.accent, fontWeight: 'bold' },
 });

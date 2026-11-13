@@ -36,7 +36,9 @@ import { useMiSuscripcionPro } from '../hooks/useMiSuscripcionPro';
 import { esPro } from '../lib/pro';
 import { formatearMonto } from '../lib/precio';
 import { formatearFechaEs, separarFechaHora } from '../lib/fecha';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useTema } from '../context/TemaContext';
+import { useEstilos } from '../hooks/useEstilos';
 
 type ContactosRoute = RouteProp<{ Contactos: { tipo: TipoTenant } }, 'Contactos'>;
 
@@ -54,6 +56,7 @@ const ORIGEN_LABEL: Record<OrigenContacto, string> = {
 };
 
 function AvisoSinWhatsapp() {
+  const styles = useEstilos(crearEstilos);
   return (
     <View style={styles.aviso}>
       <Text style={styles.avisoTexto}>
@@ -66,6 +69,7 @@ function AvisoSinWhatsapp() {
 }
 
 function TarjetaContacto({ c }: { c: ContactoCrm }) {
+  const styles = useEstilos(crearEstilos);
   const fechaISO = separarFechaHora(c.primerContacto).fechaISO;
   return (
     <View style={styles.contacto}>
@@ -94,6 +98,8 @@ function TarjetaContacto({ c }: { c: ContactoCrm }) {
 
 export default function ContactosScreen() {
   const route = useRoute<ContactosRoute>();
+  const { colores } = useTema();
+  const styles = useEstilos(crearEstilos);
   const { tipo } = route.params;
   const { tenant, cargando: cargandoTenant, error: errorTenant } = useTenantPropio(tipo);
   const { contactos, cargando, refrescar } = useContactosCrm(tenant);
@@ -108,7 +114,7 @@ export default function ContactosScreen() {
   if (cargandoTenant || (cargando && contactos === null)) {
     return (
       <View style={styles.centro}>
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={colores.accent} />
       </View>
     );
   }
@@ -202,7 +208,7 @@ export default function ContactosScreen() {
         value={busqueda}
         onChangeText={setBusqueda}
         placeholder="Buscar por email o teléfono"
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={colores.muted}
         autoCapitalize="none"
         autoCorrect={false}
       />
@@ -253,7 +259,7 @@ export default function ContactosScreen() {
         )}
         ListHeaderComponent={encabezado}
         ListEmptyComponent={vacio}
-        refreshControl={<RefreshControl refreshing={cargando} onRefresh={refrescar} tintColor={colors.accent} />}
+        refreshControl={<RefreshControl refreshing={cargando} onRefresh={refrescar} tintColor={colores.accent} />}
         keyboardShouldPersistTaps="handled"
         stickySectionHeadersEnabled={false}
         contentContainerStyle={styles.lista}
@@ -262,11 +268,11 @@ export default function ContactosScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  contenedor: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  contenedor: { flex: 1, backgroundColor: c.background },
   centro: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: c.background,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.lg,
@@ -274,79 +280,79 @@ const styles = StyleSheet.create({
   lista: { padding: spacing.md, paddingBottom: spacing.xl },
   sinPro: { padding: spacing.md },
   tarjetaPro: { marginTop: spacing.md },
-  mensaje: { fontSize: fontSize.md, color: colors.primary, textAlign: 'center' },
-  error: { fontSize: fontSize.md, color: colors.danger, textAlign: 'center' },
+  mensaje: { fontSize: fontSize.md, color: c.primary, textAlign: 'center' },
+  error: { fontSize: fontSize.md, color: c.danger, textAlign: 'center' },
   negrita: { fontWeight: 'bold' },
   resumenFila: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   resumenCard: {
     flex: 1,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     padding: spacing.sm,
     alignItems: 'center',
   },
-  resumenNumero: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
-  resumenLabel: { fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
+  resumenNumero: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
+  resumenLabel: { fontSize: fontSize.xs, color: c.muted, marginTop: 2 },
   aviso: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginTop: spacing.md,
   },
-  avisoTexto: { fontSize: fontSize.sm, color: colors.secondary },
+  avisoTexto: { fontSize: fontSize.sm, color: c.secondary },
   buscador: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     padding: spacing.sm,
     fontSize: fontSize.sm,
-    color: colors.primary,
-    backgroundColor: colors.cardBackground,
+    color: c.primary,
+    backgroundColor: c.cardBackground,
     marginTop: spacing.md,
   },
   filaChips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
   chip: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.sm + 4,
     paddingVertical: spacing.xs + 2,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
   },
-  chipElegido: { backgroundColor: colors.accent, borderColor: colors.accent },
-  chipTexto: { fontSize: fontSize.sm, color: colors.secondary },
-  chipTextoElegido: { color: colors.white, fontWeight: 'bold' },
+  chipElegido: { backgroundColor: c.accent, borderColor: c.accent },
+  chipTexto: { fontSize: fontSize.sm, color: c.secondary },
+  chipTextoElegido: { color: c.onAccent, fontWeight: 'bold' },
   seccion: {
     fontSize: fontSize.xs,
     fontWeight: 'bold',
-    color: colors.accent,
+    color: c.accent,
     marginTop: spacing.md,
     marginBottom: spacing.xs,
     letterSpacing: 0.5,
   },
   contacto: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     padding: spacing.md,
     marginBottom: spacing.sm,
     gap: spacing.xs,
   },
-  contactoEmail: { fontSize: 14, fontWeight: '600', color: colors.primary },
-  sinDatos: { fontSize: fontSize.sm, fontStyle: 'italic', color: colors.secondary },
-  contactoLinea: { fontSize: fontSize.sm, color: colors.secondary },
+  contactoEmail: { fontSize: 14, fontWeight: '600', color: c.primary },
+  sinDatos: { fontSize: fontSize.sm, fontStyle: 'italic', color: c.secondary },
+  contactoLinea: { fontSize: fontSize.sm, color: c.secondary },
   insignias: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   insignia: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     borderRadius: borderRadius.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
   },
-  insigniaComprador: { backgroundColor: colors.success },
-  insigniaTexto: { fontSize: fontSize.xs, color: colors.secondary },
-  insigniaTextoComprador: { color: colors.white, fontWeight: 'bold' },
-  mensajeVacio: { fontSize: fontSize.sm, color: colors.muted, marginTop: spacing.md, textAlign: 'center' },
+  insigniaComprador: { backgroundColor: c.success },
+  insigniaTexto: { fontSize: fontSize.xs, color: c.secondary },
+  insigniaTextoComprador: { color: c.white, fontWeight: 'bold' },
+  mensajeVacio: { fontSize: fontSize.sm, color: c.muted, marginTop: spacing.md, textAlign: 'center' },
 });
