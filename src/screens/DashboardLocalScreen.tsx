@@ -12,7 +12,9 @@ import TarjetaPro from '../components/TarjetaPro';
 import { useMiSuscripcionPro } from '../hooks/useMiSuscripcionPro';
 import BotonAdmin from '../components/BotonAdmin';
 import { venueEmoji, venueLabel } from '../lib/venues';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 import { MiLocalStackParamList } from '../navigation/MiLocalStack';
 import { Venue } from '../types';
 
@@ -39,6 +41,8 @@ function completitud(v: Venue): { llenos: number; total: number } {
 }
 
 export default function DashboardLocalScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const navigation = useNavigation<NavigationProp>();
   const { user, signOut } = useAuth();
   const { allVenues } = useVenues();
@@ -247,7 +251,7 @@ export default function DashboardLocalScreen() {
         <View>
           <Text style={styles.tituloSeccion}>Músicos disponibles</Text>
           {cargandoMusicos ? (
-            <ActivityIndicator color={colors.accent} style={{ marginTop: spacing.md }} />
+            <ActivityIndicator color={colores.accent} style={{ marginTop: spacing.md }} />
           ) : musicos.length === 0 ? (
             <Text style={styles.vacio}>Todavía no hay músicos con perfil.</Text>
           ) : (
@@ -291,11 +295,11 @@ export default function DashboardLocalScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   vacioContainer: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: c.background,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
@@ -303,19 +307,19 @@ const styles = StyleSheet.create({
   vacioTitulo: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     marginBottom: spacing.sm,
     textAlign: 'center',
   },
   vacioTexto: {
     fontSize: fontSize.md,
-    color: colors.secondary,
+    color: c.secondary,
     textAlign: 'center',
     marginBottom: spacing.lg,
   },
   tarjetaLocal: {
     flexDirection: 'row',
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     marginHorizontal: spacing.md,
     marginTop: spacing.lg,
     padding: spacing.md,
@@ -328,30 +332,30 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   imagenLocalVacia: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   nombreLocal: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
   },
   infoLocal: {
     fontSize: fontSize.sm,
-    color: colors.secondary,
+    color: c.secondary,
     marginTop: 2,
   },
   completitud: {
     fontSize: fontSize.xs,
-    color: colors.success,
+    color: c.success,
     marginTop: 4,
     fontWeight: '600',
   },
   tituloSeccion: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     marginLeft: spacing.md,
     marginTop: spacing.lg,
     marginBottom: spacing.sm,
@@ -364,13 +368,13 @@ const styles = StyleSheet.create({
   tarjetaPro: { marginHorizontal: spacing.md, marginTop: spacing.md },
   resumenCard: {
     flex: 1,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.md,
     padding: spacing.sm,
     alignItems: 'center',
   },
-  resumenNumero: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.accent },
-  resumenLabel: { fontSize: fontSize.xs, color: colors.muted, marginTop: 4, textAlign: 'center' },
+  resumenNumero: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.accent },
+  resumenLabel: { fontSize: fontSize.xs, color: c.muted, marginTop: 4, textAlign: 'center' },
   accionesRow: {
     flexDirection: 'row',
     gap: spacing.sm,
@@ -378,24 +382,24 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   botonNuevo: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     marginHorizontal: spacing.md,
     marginTop: spacing.md,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
   },
-  textoBotonNuevo: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
+  textoBotonNuevo: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
   botonSecundario: {
     flex: 1,
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     padding: 12,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
   },
-  textoBotonSecundario: { color: colors.secondary, fontWeight: 'bold', fontSize: fontSize.sm },
+  textoBotonSecundario: { color: c.secondary, fontWeight: 'bold', fontSize: fontSize.sm },
   botonEscaner: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     marginHorizontal: spacing.md,
     marginTop: spacing.sm,
     padding: 12,
@@ -404,31 +408,31 @@ const styles = StyleSheet.create({
   },
   vacio: {
     fontSize: fontSize.sm,
-    color: colors.muted,
+    color: c.muted,
     marginLeft: spacing.md,
     fontStyle: 'italic',
   },
   tarjetaMusico: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     marginHorizontal: spacing.md,
     marginVertical: 4,
     padding: 14,
     borderRadius: borderRadius.md,
     borderLeftWidth: 4,
-    borderLeftColor: colors.accent,
+    borderLeftColor: c.accent,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  nombreMusico: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary },
-  generoMusico: { fontSize: fontSize.sm, color: colors.secondary, marginTop: 2 },
+  nombreMusico: { fontSize: fontSize.md, fontWeight: '600', color: c.primary },
+  generoMusico: { fontSize: fontSize.sm, color: c.secondary, marginTop: 2 },
   botonPerfil: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: borderRadius.sm,
     marginLeft: 12,
   },
-  textoBotonPerfil: { color: colors.secondary, fontWeight: 'bold', fontSize: fontSize.sm },
+  textoBotonPerfil: { color: c.secondary, fontWeight: 'bold', fontSize: fontSize.sm },
   botonSalir: { alignItems: 'center', marginTop: spacing.lg, marginBottom: spacing.md },
-  textoBotonSalir: { color: colors.danger, fontWeight: '600', fontSize: fontSize.sm },
+  textoBotonSalir: { color: c.danger, fontWeight: '600', fontSize: fontSize.sm },
 });

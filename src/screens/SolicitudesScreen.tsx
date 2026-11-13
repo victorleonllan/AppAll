@@ -13,7 +13,9 @@ import ModalSolicitud from '../components/ModalSolicitud';
 import { MENSAJES_SOLICITUD } from '../constants/solicitudes';
 import { TIPO_PROYECTO_LABEL } from '../lib/profiles';
 import { venueEmoji, venueLabel } from '../lib/venues';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 import { PerfilMusico, Venue } from '../types';
 
 // Montada en MusicoStack y MiLocalStack: cada una navega solo a la ruta de su stack.
@@ -45,6 +47,8 @@ type Destino =
  * W-060). Reemplaza la pantalla provisoria del spec 114.
  */
 export default function SolicitudesScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const navigation = useNavigation<NavigationProp>();
   const { user, role } = useAuth();
   // No se compara contra el literal del rol local: el spec 048 lo cambia.
@@ -244,13 +248,13 @@ export default function SolicitudesScreen() {
       value={busqueda}
       onChangeText={setBusqueda}
       placeholder="Buscar por nombre"
-      placeholderTextColor={colors.muted}
+      placeholderTextColor={colores.muted}
       autoCapitalize="none"
     />
   );
 
   const contenido = () => {
-    if (cargando) return <ActivityIndicator color={colors.accent} style={{ marginTop: 40 }} />;
+    if (cargando) return <ActivityIndicator color={colores.accent} style={{ marginTop: 40 }} />;
     if (fallo) {
       return (
         <View style={styles.vacio}>
@@ -384,6 +388,7 @@ export default function SolicitudesScreen() {
 }
 
 function BotonPrimario({ label, onPress, deshabilitado }: { label: string; onPress?: () => void; deshabilitado?: boolean }) {
+  const styles = useEstilos(crearEstilos);
   return (
     <TouchableOpacity
       style={[styles.boton, styles.botonPrimario, deshabilitado && styles.botonDeshabilitado]}
@@ -396,65 +401,67 @@ function BotonPrimario({ label, onPress, deshabilitado }: { label: string; onPre
 }
 
 function BotonSecundario({ label, onPress, peligro }: { label: string; onPress: () => void; peligro?: boolean }) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   return (
     <TouchableOpacity style={[styles.boton, styles.botonSecundario]} onPress={onPress}>
-      <Text style={[styles.textoBoton, { color: peligro ? colors.danger : colors.secondary }]}>{label}</Text>
+      <Text style={[styles.textoBoton, { color: peligro ? colores.danger : colores.secondary }]}>{label}</Text>
     </TouchableOpacity>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   pestanas: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    backgroundColor: colors.cardBackground,
+    borderBottomColor: c.border,
+    backgroundColor: c.cardBackground,
   },
   pestana: { flex: 1, paddingVertical: spacing.md, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  pestanaActiva: { borderBottomColor: colors.accent },
-  textoPestana: { fontSize: fontSize.md, color: colors.muted, fontWeight: '600' },
-  textoPestanaActiva: { color: colors.accent },
+  pestanaActiva: { borderBottomColor: c.accent },
+  textoPestana: { fontSize: fontSize.md, color: c.muted, fontWeight: '600' },
+  textoPestanaActiva: { color: c.accent },
   lista: { padding: spacing.md, gap: spacing.sm },
   buscador: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     padding: spacing.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
-    backgroundColor: colors.cardBackground,
+    color: c.primary,
+    backgroundColor: c.cardBackground,
     marginBottom: spacing.sm,
   },
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
   },
-  nombre: { fontSize: fontSize.md, fontWeight: 'bold', color: colors.primary },
-  detalle: { fontSize: fontSize.sm, color: colors.secondary, marginTop: spacing.xs },
-  nota: { fontSize: fontSize.sm, color: colors.secondary, marginTop: spacing.xs, fontStyle: 'italic' },
+  nombre: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary },
+  detalle: { fontSize: fontSize.sm, color: c.secondary, marginTop: spacing.xs },
+  nota: { fontSize: fontSize.sm, color: c.secondary, marginTop: spacing.xs, fontStyle: 'italic' },
   acciones: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
-  estado: { fontSize: fontSize.sm, color: colors.muted, fontWeight: '600' },
+  estado: { fontSize: fontSize.sm, color: c.muted, fontWeight: '600' },
   seccion: { marginBottom: spacing.md },
-  tituloSeccion: { fontSize: fontSize.md, fontWeight: 'bold', color: colors.primary, marginBottom: spacing.sm },
+  tituloSeccion: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary, marginBottom: spacing.sm },
   aviso: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.md,
     gap: spacing.sm,
   },
-  textoAviso: { fontSize: fontSize.sm, color: colors.secondary },
-  enlace: { fontSize: fontSize.sm, color: colors.accent, textDecorationLine: 'underline', fontWeight: '600' },
+  textoAviso: { fontSize: fontSize.sm, color: c.secondary },
+  enlace: { fontSize: fontSize.sm, color: c.accent, textDecorationLine: 'underline', fontWeight: '600' },
   vacio: { alignItems: 'center', marginTop: 40, gap: spacing.md, padding: spacing.md },
-  textoVacio: { fontSize: fontSize.md, color: colors.muted, textAlign: 'center', marginTop: spacing.lg },
+  textoVacio: { fontSize: fontSize.md, color: c.muted, textAlign: 'center', marginTop: spacing.lg },
   boton: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: borderRadius.sm, alignItems: 'center' },
-  botonPrimario: { backgroundColor: colors.accent },
-  botonSecundario: { borderWidth: 1, borderColor: colors.border },
-  botonDeshabilitado: { backgroundColor: colors.border },
+  botonPrimario: { backgroundColor: c.accent },
+  botonSecundario: { borderWidth: 1, borderColor: c.border },
+  botonDeshabilitado: { backgroundColor: c.border },
   textoBoton: { fontSize: fontSize.sm, fontWeight: '600' },
-  textoPrimario: { color: colors.white },
-  textoDeshabilitado: { color: colors.secondary },
+  textoPrimario: { color: c.onAccent },
+  textoDeshabilitado: { color: c.secondary },
 });

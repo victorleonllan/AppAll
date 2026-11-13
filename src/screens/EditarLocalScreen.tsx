@@ -8,7 +8,9 @@ import { VenueType } from '../types';
 import { venueEmoji, venueLabel } from '../lib/venues';
 import { useAuth } from '../context/AuthContext';
 import { useVenues } from '../context/VenuesContext';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 import GeneroPicker from '../components/GeneroPicker';
 import PaisPicker from '../components/PaisPicker';
 import CampoImagen from '../components/CampoImagen';
@@ -19,6 +21,8 @@ import { PAIS_POR_DEFECTO, etiquetaPais } from '../constants/paises';
 const TIPOS: VenueType[] = ['cafe', 'bar', 'sala', 'centro_cultural'];
 
 export default function EditarLocalScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const navigation = useNavigation();
   const { user } = useAuth();
   const { allVenues, createVenue, updateVenue, refresh } = useVenues();
@@ -167,7 +171,7 @@ export default function EditarLocalScreen() {
         </View>
 
         <Text style={styles.label}>Nombre *</Text>
-        <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Ej: Café La Palma" placeholderTextColor={colors.muted} />
+        <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Ej: Café La Palma" placeholderTextColor={colores.muted} />
 
         <Text style={styles.label}>País *</Text>
         {/* Spec 095 — dónde está el local, no desde dónde se carga: decide en
@@ -219,16 +223,16 @@ export default function EditarLocalScreen() {
               Esta primera dirección queda activa sola. De la segunda en adelante, activar es un paso aparte.
             </Text>
             <Text style={styles.label}>Dirección</Text>
-            <TextInput style={styles.input} value={address} onChangeText={setAddress} placeholder="Ej: Av. Italia 890" placeholderTextColor={colors.muted} />
+            <TextInput style={styles.input} value={address} onChangeText={setAddress} placeholder="Ej: Av. Italia 890" placeholderTextColor={colores.muted} />
 
             <View style={styles.filaDoble}>
               <View style={styles.mitad}>
                 <Text style={styles.label}>Ciudad</Text>
-                <TextInput style={styles.input} value={ciudad} onChangeText={setCiudad} placeholder="Santiago" placeholderTextColor={colors.muted} />
+                <TextInput style={styles.input} value={ciudad} onChangeText={setCiudad} placeholder="Santiago" placeholderTextColor={colores.muted} />
               </View>
               <View style={styles.mitad}>
                 <Text style={styles.label}>Comuna</Text>
-                <TextInput style={styles.input} value={comuna} onChangeText={setComuna} placeholder="Ñuñoa" placeholderTextColor={colors.muted} />
+                <TextInput style={styles.input} value={comuna} onChangeText={setComuna} placeholder="Ñuñoa" placeholderTextColor={colores.muted} />
               </View>
             </View>
           </>
@@ -243,7 +247,7 @@ export default function EditarLocalScreen() {
           value={aforo}
           onChangeText={(t) => setAforo(t.replace(/\D/g, ''))}
           placeholder="Ej: 40"
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colores.muted}
           keyboardType="number-pad"
         />
 
@@ -275,7 +279,7 @@ export default function EditarLocalScreen() {
         />
 
         <Text style={styles.label}>Horarios</Text>
-        <TextInput style={styles.input} value={horarios} onChangeText={setHorarios} placeholder="Ej: Jue-Sáb 21:00-01:00" placeholderTextColor={colors.muted} />
+        <TextInput style={styles.input} value={horarios} onChangeText={setHorarios} placeholder="Ej: Jue-Sáb 21:00-01:00" placeholderTextColor={colores.muted} />
 
         <Text style={styles.label}>Equipamiento</Text>
         <View style={styles.tiposRow}>
@@ -291,16 +295,16 @@ export default function EditarLocalScreen() {
         </View>
 
         <Text style={styles.label}>Teléfono</Text>
-        <TextInput style={styles.input} value={telefono} onChangeText={setTelefono} placeholder="+56 9 ..." placeholderTextColor={colors.muted} keyboardType="phone-pad" />
+        <TextInput style={styles.input} value={telefono} onChangeText={setTelefono} placeholder="+56 9 ..." placeholderTextColor={colores.muted} keyboardType="phone-pad" />
 
         <Text style={styles.label}>Email de contacto</Text>
-        <TextInput style={styles.input} value={emailContacto} onChangeText={setEmailContacto} placeholder="contacto@local.cl" placeholderTextColor={colors.muted} autoCapitalize="none" keyboardType="email-address" />
+        <TextInput style={styles.input} value={emailContacto} onChangeText={setEmailContacto} placeholder="contacto@local.cl" placeholderTextColor={colores.muted} autoCapitalize="none" keyboardType="email-address" />
 
         <Text style={styles.label}>Instagram</Text>
-        <TextInput style={styles.input} value={instagram} onChangeText={setInstagram} placeholder="@millocal" placeholderTextColor={colors.muted} autoCapitalize="none" />
+        <TextInput style={styles.input} value={instagram} onChangeText={setInstagram} placeholder="@millocal" placeholderTextColor={colores.muted} autoCapitalize="none" />
 
         <Text style={styles.label}>Sitio web</Text>
-        <TextInput style={styles.input} value={sitioWeb} onChangeText={setSitioWeb} placeholder="https://..." placeholderTextColor={colors.muted} autoCapitalize="none" />
+        <TextInput style={styles.input} value={sitioWeb} onChangeText={setSitioWeb} placeholder="https://..." placeholderTextColor={colores.muted} autoCapitalize="none" />
 
         <TouchableOpacity
           style={[styles.boton, guardando && styles.botonDesactivado]}
@@ -308,7 +312,7 @@ export default function EditarLocalScreen() {
           disabled={guardando}
         >
           {guardando ? (
-            <ActivityIndicator color={colors.white} />
+            <ActivityIndicator color={colores.onAccent} />
           ) : (
             <Text style={styles.textoBoton}>Guardar cambios</Text>
           )}
@@ -318,11 +322,11 @@ export default function EditarLocalScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   content: { padding: spacing.md, paddingBottom: 60 },
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
@@ -330,54 +334,54 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     marginBottom: spacing.md,
   },
   tituloSeccion: {
     fontSize: fontSize.md,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     marginBottom: spacing.sm,
   },
-  ayuda: { fontSize: fontSize.xs, color: colors.muted, marginBottom: spacing.xs },
+  ayuda: { fontSize: fontSize.xs, color: c.muted, marginBottom: spacing.xs },
   label: {
     fontSize: fontSize.sm,
     fontWeight: '600',
-    color: colors.primary,
+    color: c.primary,
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
   input: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     padding: 12,
     borderRadius: borderRadius.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
   inputMultiline: { minHeight: 80 },
-  inputTexto: { fontSize: fontSize.md, color: colors.primary },
-  inputPlaceholder: { fontSize: fontSize.md, color: colors.muted },
+  inputTexto: { fontSize: fontSize.md, color: c.primary },
+  inputPlaceholder: { fontSize: fontSize.md, color: c.muted },
   filaDoble: { flexDirection: 'row', gap: spacing.sm },
   mitad: { flex: 1 },
   tiposRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   tipoChip: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: borderRadius.lg,
   },
-  tipoChipActivo: { backgroundColor: colors.accent },
-  tipoChipTexto: { fontSize: fontSize.sm, color: colors.secondary, fontWeight: '600' },
-  tipoChipTextoActivo: { color: colors.white },
+  tipoChipActivo: { backgroundColor: c.accent },
+  tipoChipTexto: { fontSize: fontSize.sm, color: c.secondary, fontWeight: '600' },
+  tipoChipTextoActivo: { color: c.onAccent },
   boton: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     marginTop: spacing.lg,
   },
   botonDesactivado: { opacity: 0.6 },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
 });

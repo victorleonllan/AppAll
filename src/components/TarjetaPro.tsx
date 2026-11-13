@@ -16,7 +16,9 @@ import {
 } from '../lib/pro';
 import { TipoTenant } from '../lib/adminPro';
 import BotonCancelarSuscripcionPro from './BotonCancelarSuscripcionPro';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 interface Props {
   tenant: { id?: string; sonopolisProHasta?: string | null };
@@ -30,6 +32,8 @@ interface Props {
 const ESTADOS_SUSCRIPCION = ['activa', 'pausada', 'cancelada'];
 
 export default function TarjetaPro({ tenant, tipo, etiqueta, onVerContactos, suscripcion, onCambio }: Props) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const activo = esPro(tenant);
   const sinVencimiento = esProSinVencimiento(tenant);
   const dias = diasRestantesPro(tenant);
@@ -87,7 +91,7 @@ export default function TarjetaPro({ tenant, tipo, etiqueta, onVerContactos, sus
             Con Sonópolis Pro ves en un solo lugar a tu público: quienes compran entradas para {etiqueta}, quienes
             te siguen y quienes dejan su WhatsApp.
           </Text>
-          <Text style={[styles.texto, { color: colors.muted }]}>Tu cuenta no tiene Sonópolis Pro activo.</Text>
+          <Text style={[styles.texto, { color: colores.muted }]}>Tu cuenta no tiene Sonópolis Pro activo.</Text>
         </>
       )}
     </View>
@@ -98,6 +102,7 @@ export default function TarjetaPro({ tenant, tipo, etiqueta, onVerContactos, sus
 // cuánto cuesta ni se nombra el medio de pago externo, y «revisa tu medio de pago»
 // sería mandar a pagar por fuera.
 function TextoSuscripcion({ sus, larga }: { sus: MiSuscripcionPro; larga: (iso: string | null) => string | null }) {
+  const styles = useEstilos(crearEstilos);
   if (sus.estado === 'activa') {
     return (
       <Text style={styles.texto}>
@@ -129,12 +134,12 @@ function finTexto(sus: MiSuscripcionPro, larga: (iso: string | null) => string |
     : 'Pro termina hoy, porque el último mes no se pudo cobrar.';
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     padding: spacing.md,
   },
   filaTitulo: {
@@ -143,16 +148,16 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.sm,
   },
-  titulo: { fontSize: fontSize.md, fontWeight: 'bold', color: colors.primary },
+  titulo: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary },
   etiquetaVence: {
-    backgroundColor: colors.warning,
+    backgroundColor: c.warning,
     borderRadius: borderRadius.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
   },
-  etiquetaVenceTexto: { color: colors.white, fontSize: fontSize.xs, fontWeight: 'bold' },
-  texto: { fontSize: fontSize.sm, color: colors.secondary, marginTop: spacing.xs },
+  etiquetaVenceTexto: { color: c.white, fontSize: fontSize.xs, fontWeight: 'bold' },
+  texto: { fontSize: fontSize.sm, color: c.secondary, marginTop: spacing.xs },
   negrita: { fontWeight: 'bold' },
   enlace: { marginTop: spacing.sm },
-  enlaceTexto: { fontSize: fontSize.sm, color: colors.accent, fontWeight: 'bold' },
+  enlaceTexto: { fontSize: fontSize.sm, color: c.accent, fontWeight: 'bold' },
 });

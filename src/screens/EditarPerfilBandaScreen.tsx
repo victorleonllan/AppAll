@@ -11,9 +11,13 @@ import { mapProfileFromDB, mapProfileToDB, TIPO_PROYECTO_LABEL, TIPOS_PROYECTO }
 import GeneroPicker from '../components/GeneroPicker';
 import CampoImagen from '../components/CampoImagen';
 import { etiquetaPais, nombrePais } from '../constants/paises';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 export default function EditarPerfilBandaScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const navigation = useNavigation();
   const { user } = useAuth();
   const [cargando, setCargando] = useState(true);
@@ -168,7 +172,7 @@ export default function EditarPerfilBandaScreen() {
   if (!user || cargando) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={colores.accent} />
       </View>
     );
   }
@@ -301,7 +305,7 @@ export default function EditarPerfilBandaScreen() {
           numberOfLines={3}
           textAlignVertical="top"
           placeholder="Qué necesitan de sonido y backline"
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colores.muted}
         />
       </View>
 
@@ -346,7 +350,7 @@ export default function EditarPerfilBandaScreen() {
         disabled={guardando}
       >
         {guardando ? (
-          <ActivityIndicator color={colors.white} />
+          <ActivityIndicator color={colores.onAccent} />
         ) : (
           <Text style={styles.textoBoton}>Guardar cambios</Text>
         )}
@@ -355,18 +359,18 @@ export default function EditarPerfilBandaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   content: { padding: spacing.md, paddingBottom: 100 },
   aviso: {
     fontSize: fontSize.md,
-    color: colors.muted,
+    color: c.muted,
     textAlign: 'center',
     marginBottom: spacing.lg,
     paddingHorizontal: spacing.lg,
   },
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
@@ -374,29 +378,29 @@ const styles = StyleSheet.create({
   tituloSeccion: {
     fontSize: fontSize.md,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     marginBottom: spacing.sm,
   },
   label: {
     fontSize: fontSize.sm,
     fontWeight: '600',
-    color: colors.primary,
+    color: c.primary,
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
   input: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     padding: 12,
     borderRadius: borderRadius.sm,
     fontSize: fontSize.md,
-    color: colors.secondary,
+    color: c.secondary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
   // Spec 056 — el campo de géneros es un TouchableOpacity, no un TextInput: el
   // texto interno necesita su propio estilo (fontSize/color no le llegan al Text hijo).
-  inputTexto: { fontSize: fontSize.md, color: colors.secondary },
-  inputPlaceholder: { fontSize: fontSize.md, color: colors.muted },
+  inputTexto: { fontSize: fontSize.md, color: c.secondary },
+  inputPlaceholder: { fontSize: fontSize.md, color: c.muted },
   inputMultiline: { minHeight: 90 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   chip: {
@@ -404,19 +408,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.cardBackground,
+    borderColor: c.border,
+    backgroundColor: c.cardBackground,
   },
-  chipActivo: { backgroundColor: colors.accent, borderColor: colors.accent },
-  chipTexto: { fontSize: fontSize.sm, color: colors.secondary },
-  chipTextoActivo: { color: colors.white, fontWeight: '600' },
+  chipActivo: { backgroundColor: c.accent, borderColor: c.accent },
+  chipTexto: { fontSize: fontSize.sm, color: c.secondary },
+  chipTextoActivo: { color: c.onAccent, fontWeight: '600' },
   boton: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     marginTop: spacing.sm,
   },
   botonDesactivado: { opacity: 0.6 },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
 });
