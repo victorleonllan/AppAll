@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, ScrollView, Alert, ActivityIndicator,
+  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch,
 } from 'react-native';
 import { ParamListBase, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,10 +10,12 @@ import { useEventos } from '../context/EventosContext';
 import { useEventoPermisos } from '../hooks/useEventoPermisos';
 import { armarFechaHora, fechaHoraValidas, separarFechaHora } from '../lib/fecha';
 import { montoDesdePrecio } from '../lib/precio';
+import { listarEspeciales } from '../lib/especiales';
 import { DatosPago, datosPagoCompletos, getPayout, guardarDatosPago, hayAlgunDatoPago } from '../lib/datosPago';
 import GeneroPicker from '../components/GeneroPicker';
 import PaisPicker from '../components/PaisPicker';
 import PreventasEvento from '../components/PreventasEvento';
+import TicketsEspecialesEvento from '../components/TicketsEspecialesEvento';
 import DatosPagoEvento, { DATOS_PAGO_VACIOS } from '../components/DatosPagoEvento';
 import CampoImagen from '../components/CampoImagen';
 import { CampoFecha, CampoHora } from '../components/CampoFecha';
@@ -65,7 +67,16 @@ export default function EditarEventoScreen() {
   const [pickerGeneroVisible, setPickerGeneroVisible] = useState(false);
   const [descripcion, setDescripcion] = useState(evento?.descripcion ?? '');
   const [precio, setPrecio] = useState(evento?.precio ?? '');
-  const [tipoPrecio, setTipoPrecio] = useState<TipoPrecio>(evento?.tipoPrecio ?? 'general');
+  // Spec 165 — Preventa encendida es lo que antes era el chip «Puerta» (W-256):
+  // `tipoPrecio` se deriva y `updateEvento` recibe lo mismo que antes.
+  const [preventaOn, setPreventaOn] = useState(evento?.tipoPrecio === 'puerta');
+  const tipoPrecio: TipoPrecio = preventaOn ? 'puerta' : 'general';
+  // El interruptor del pack arranca encendido si el evento tiene algún pack y queda
+  // bloqueado mientras alguno esté activo: apagarlo no debe cerrar packs que ya se
+  // venden, cerrar es una acción explícita por pack (W-256 §3).
+  const [especialOn, setEspecialOn] = useState(false);
+  const [especialesCargados, setEspecialesCargados] = useState(false);
+  const [hayEspecialesActivos, setHayEspecialesActivos] = useState(false);
   const [flyer, setFlyer] = useState(evento?.imagen ?? '');
   const [datosPago, setDatosPago] = useState<DatosPago>(DATOS_PAGO_VACIOS);
   const [guardando, setGuardando] = useState(false);
@@ -93,6 +104,23 @@ export default function EditarEventoScreen() {
       });
     return () => { cancelado = true; };
   }, [eventoId, esOwner]);
+
+  const eventoIdCargado = evento?.id;
+  useEffect(() => {
+    if (!eventoIdCargado) return;
+    let cancelado = false;
+    listarEspeciales(eventoIdCargado)
+      .then((lista) => {
+        if (cancelado) return;
+        setEspecialOn(lista.length > 0);
+        setHayEspecialesActivos(lista.some((e) => e.activa));
+      })
+      .catch((err) => console.error(`[evento ${eventoIdCargado}] no se pudieron leer los packs:`, err))
+      .finally(() => {
+        if (!cancelado) setEspecialesCargados(true);
+      });
+    return () => { cancelado = true; };
+  }, [eventoIdCargado]);
 
   if (!evento) {
     return (
@@ -225,7 +253,7 @@ export default function EditarEventoScreen() {
         />
         <Text style={styles.ayuda}>{MAX_DESCRIPCION - descripcion.length} caracteres disponibles</Text>
 
-        <Text style={styles.label}>Precio *</Text>
+        <Text style={styles.label}>Precio puerta/General *</Text>
         <TextInput
           style={styles.input}
           value={precio}
@@ -233,29 +261,51 @@ export default function EditarEventoScreen() {
           placeholder="Ej: $5.000"
           placeholderTextColor={colors.muted}
         />
-        <View style={[styles.chips, styles.chipsPrecio]}>
-          {([['general', 'General'], ['puerta', 'Puerta']] as [TipoPrecio, string][]).map(([t, etiqueta]) => {
-            const activo = tipoPrecio === t;
-            return (
-              <TouchableOpacity
-                key={t}
-                style={[styles.chip, activo && styles.chipActivo]}
-                onPress={() => setTipoPrecio(t)}
-              >
-                <Text style={[styles.chipTexto, activo && styles.chipTextoActivo]}>{etiqueta}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
         {sinMonto && (
           <Text style={styles.aviso}>Sin un número en el precio, el evento no se puede comprar</Text>
         )}
 
-        {tipoPrecio === 'puerta' && (
-          <>
-            <Text style={styles.label}>Preventas</Text>
-            <PreventasEvento modo="enVivo" eventoId={evento.id} />
-          </>
+        {/* Spec 165 — los dos a la vista; Preventa sale de `tipo_precio` y el pack de
+            si el evento ya tiene alguno (W-256). */}
+        <View style={styles.interruptor}>
+          <Switch
+            value={preventaOn}
+            onValueChange={setPreventaOn}
+            trackColor={{ true: colors.accent, false: colors.border }}
+          />
+          <View style={styles.interruptorTextos}>
+            <Text style={styles.interruptorTitulo}>Preventa</Text>
+            <Text style={styles.interruptorAyuda}>
+              Entradas más baratas antes del día, por tramos. El precio de arriba pasa a ser el de puerta.
+            </Text>
+          </View>
+        </View>
+        {preventaOn && <PreventasEvento modo="enVivo" eventoId={evento.id} />}
+
+        <View style={styles.interruptor}>
+          <Switch
+            value={especialOn}
+            onValueChange={setEspecialOn}
+            disabled={!especialesCargados || hayEspecialesActivos}
+            trackColor={{ true: colors.especial, false: colors.border }}
+          />
+          <View style={styles.interruptorTextos}>
+            <Text style={[styles.interruptorTitulo, styles.interruptorTituloEspecial]}>🎟 Ticket especial</Text>
+            <Text style={styles.interruptorAyuda}>
+              Packs 2x1 a 5x1 con unidades limitadas, en rojo junto a la entrada normal.
+            </Text>
+            {hayEspecialesActivos && (
+              <Text style={styles.interruptorBloqueado}>Cierra los packs para apagarlo</Text>
+            )}
+          </View>
+        </View>
+        {especialOn && (
+          <TicketsEspecialesEvento
+            modo="enVivo"
+            eventoId={evento.id}
+            moneda={evento.moneda}
+            onCambio={(l) => setHayEspecialesActivos(l.some((e) => e.activa))}
+          />
         )}
 
         <Text style={styles.label}>Flyer</Text>
@@ -346,18 +396,12 @@ const styles = StyleSheet.create({
   },
   enlace: { fontSize: fontSize.sm, color: colors.accent, fontWeight: '600', marginTop: spacing.sm },
   error: { fontSize: fontSize.sm, color: colors.danger, marginTop: spacing.md },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  chipsPrecio: { marginTop: spacing.xs },
-  chip: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    borderRadius: borderRadius.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  chipActivo: { backgroundColor: colors.accent, borderColor: colors.accent },
-  chipTexto: { fontSize: fontSize.sm, color: colors.primary },
-  chipTextoActivo: { color: colors.white, fontWeight: '600' },
+  interruptor: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
+  interruptorTextos: { flex: 1 },
+  interruptorTitulo: { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary },
+  interruptorTituloEspecial: { color: colors.especial },
+  interruptorAyuda: { fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
+  interruptorBloqueado: { fontSize: fontSize.xs, color: colors.especial, marginTop: 2 },
   boton: {
     backgroundColor: colors.accent,
     padding: 14,

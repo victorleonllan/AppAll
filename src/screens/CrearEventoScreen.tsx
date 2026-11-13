@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, ScrollView, Alert, ActivityIndicator,
+  StyleSheet, ScrollView, Alert, ActivityIndicator, Switch,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { BorradorPreventa, TipoPrecio, Venue, VenueType } from '../types';
+import { BorradorEspecial, crearEspecialesDeBorrador } from '../lib/especiales';
 import { VENUE_LABEL, venueEmoji, venueLabel } from '../lib/venues';
 import { ArtistaBreve } from '../lib/artistas';
 import { armarFechaHora, fechaHoraValidas } from '../lib/fecha';
@@ -19,6 +20,7 @@ import GeneroPicker from '../components/GeneroPicker';
 import PaisPicker from '../components/PaisPicker';
 import ArtistaSelector from '../components/ArtistaSelector';
 import PreventasEvento from '../components/PreventasEvento';
+import TicketsEspecialesEvento from '../components/TicketsEspecialesEvento';
 import DatosPagoEvento, { DATOS_PAGO_VACIOS } from '../components/DatosPagoEvento';
 import CampoImagen from '../components/CampoImagen';
 import { CampoFecha, CampoHora } from '../components/CampoFecha';
@@ -71,8 +73,13 @@ export default function CrearEventoScreen() {
   const [pickerGeneroVisible, setPickerGeneroVisible] = useState(false);
   const [descripcion, setDescripcion] = useState('');
   const [precio, setPrecio] = useState('');
-  const [tipoPrecio, setTipoPrecio] = useState<TipoPrecio>('general');
+  // Spec 165 — dos interruptores apagados por defecto (W-256). Preventa encendida
+  // es lo que antes era el chip «Puerta»: `tipoPrecio` se deriva y la base no cambia.
+  const [preventaOn, setPreventaOn] = useState(false);
+  const [especialOn, setEspecialOn] = useState(false);
+  const tipoPrecio: TipoPrecio = preventaOn ? 'puerta' : 'general';
   const [preventas, setPreventas] = useState<BorradorPreventa[]>([]);
+  const [especiales, setEspeciales] = useState<BorradorEspecial[]>([]);
   const [flyer, setFlyer] = useState('');
   const [datosPago, setDatosPago] = useState<DatosPago>(DATOS_PAGO_VACIOS);
 
@@ -204,11 +211,20 @@ export default function CrearEventoScreen() {
       } catch (err: any) {
         fallos.push(`El evento se publicó, pero no se guardaron los datos bancarios: ${err?.message ?? 'error desconocido'}. Complétalo desde Editar.`);
       }
-      if (tipoPrecio === 'puerta' && preventas.length > 0) {
+      if (preventaOn && preventas.length > 0) {
         try {
           await crearPreventasDeBorrador(creado.id, preventas);
         } catch (err: any) {
           fallos.push(`El evento se publicó, pero no se guardaron las preventas: ${err?.message ?? 'error desconocido'}. Complétalo desde Editar.`);
+        }
+      }
+      // Spec 165 — con el interruptor apagado no se guardan los packs, aunque se
+      // hayan confirmado antes de apagarlo (W-256 §4).
+      if (especialOn && especiales.length > 0) {
+        try {
+          await crearEspecialesDeBorrador(creado.id, especiales);
+        } catch (err: any) {
+          fallos.push(`El evento se publicó, pero no se guardaron los packs del ticket especial: ${err?.message ?? 'error desconocido'}. Complétalo desde Editar.`);
         }
       }
       if (fallos.length > 0) setError(fallos.join('\n'));
@@ -413,7 +429,7 @@ export default function CrearEventoScreen() {
         />
         <Text style={styles.ayuda}>{MAX_DESCRIPCION - descripcion.length} caracteres disponibles</Text>
 
-        <Text style={styles.label}>Precio *</Text>
+        <Text style={styles.label}>Precio puerta/General *</Text>
         <TextInput
           style={styles.input}
           value={precio}
@@ -421,29 +437,43 @@ export default function CrearEventoScreen() {
           placeholder="Ej: $5.000"
           placeholderTextColor={colors.muted}
         />
-        <View style={[styles.chips, styles.chipsPrecio]}>
-          {([['general', 'General'], ['puerta', 'Puerta']] as [TipoPrecio, string][]).map(([t, etiqueta]) => {
-            const activo = tipoPrecio === t;
-            return (
-              <TouchableOpacity
-                key={t}
-                style={[styles.chip, activo && styles.chipActivo]}
-                onPress={() => setTipoPrecio(t)}
-              >
-                <Text style={[styles.chipTexto, activo && styles.chipTextoActivo]}>{etiqueta}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
         {sinMonto && (
           <Text style={styles.aviso}>Sin un número en el precio, el evento no se puede comprar</Text>
         )}
 
-        {tipoPrecio === 'puerta' && (
-          <>
-            <Text style={styles.label}>Preventas</Text>
-            <PreventasEvento modo="borrador" value={preventas} onChange={setPreventas} />
-          </>
+        {/* Spec 165 — los dos a la vista y apagados hasta encenderlos a mano (W-256). */}
+        <View style={styles.interruptor}>
+          <Switch
+            value={preventaOn}
+            onValueChange={setPreventaOn}
+            trackColor={{ true: colors.accent, false: colors.border }}
+          />
+          <View style={styles.interruptorTextos}>
+            <Text style={styles.interruptorTitulo}>Preventa</Text>
+            <Text style={styles.interruptorAyuda}>
+              Entradas más baratas antes del día, por tramos. El precio de arriba pasa a ser el de puerta.
+            </Text>
+          </View>
+        </View>
+        {preventaOn && (
+          <PreventasEvento modo="borrador" value={preventas} onChange={setPreventas} />
+        )}
+
+        <View style={styles.interruptor}>
+          <Switch
+            value={especialOn}
+            onValueChange={setEspecialOn}
+            trackColor={{ true: colors.especial, false: colors.border }}
+          />
+          <View style={styles.interruptorTextos}>
+            <Text style={[styles.interruptorTitulo, styles.interruptorTituloEspecial]}>🎟 Ticket especial</Text>
+            <Text style={styles.interruptorAyuda}>
+              Packs 2x1 a 5x1 con unidades limitadas, en rojo junto a la entrada normal.
+            </Text>
+          </View>
+        </View>
+        {especialOn && (
+          <TicketsEspecialesEvento modo="borrador" value={especiales} onChange={setEspeciales} />
         )}
 
         <Text style={styles.label}>Flyer</Text>
@@ -530,7 +560,11 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  chipsPrecio: { marginTop: spacing.xs },
+  interruptor: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
+  interruptorTextos: { flex: 1 },
+  interruptorTitulo: { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary },
+  interruptorTituloEspecial: { color: colors.especial },
+  interruptorAyuda: { fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
   chip: {
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
