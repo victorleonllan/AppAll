@@ -8,7 +8,9 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEsAdmin } from '../hooks/useEsAdmin';
 import type { AdminParamList } from '../navigation/pantallasAdmin';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 type NavProp = NativeStackNavigationProp<AdminParamList, 'Admin'>;
 
@@ -26,6 +28,8 @@ const DESTINOS: { ruta: 'AdminPagos' | 'AdminEventos' | 'AdminCrm' | 'AdminVisit
 ];
 
 export default function AdminScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const navigation = useNavigation<NavProp>();
   const { esAdmin, cargando } = useEsAdmin();
 
@@ -37,7 +41,7 @@ export default function AdminScreen() {
   if (cargando) {
     return (
       <View style={styles.centrado}>
-        <ActivityIndicator color={colors.accent} />
+        <ActivityIndicator color={colores.accent} />
       </View>
     );
   }
@@ -55,11 +59,11 @@ export default function AdminScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   contenido: { padding: spacing.md, gap: spacing.sm },
-  centrado: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
-  tarjeta: { backgroundColor: colors.cardBackground, padding: spacing.md, borderRadius: borderRadius.md, borderWidth: 1, borderColor: colors.border },
-  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
-  bajada: { fontSize: fontSize.sm, color: colors.secondary, marginTop: spacing.xs },
+  centrado: { flex: 1, backgroundColor: c.background, justifyContent: 'center', alignItems: 'center' },
+  tarjeta: { backgroundColor: c.cardBackground, padding: spacing.md, borderRadius: borderRadius.md, borderWidth: 1, borderColor: c.border },
+  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
+  bajada: { fontSize: fontSize.sm, color: c.secondary, marginTop: spacing.xs },
 });

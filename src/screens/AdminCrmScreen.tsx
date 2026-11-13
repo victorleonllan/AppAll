@@ -9,13 +9,16 @@ import { useAdminCrm, type TenantCrm } from '../hooks/useAdminCrm';
 import BotonesPro, { EtiquetaPro } from '../components/BotonesPro';
 import { etiquetaPais } from '../constants/paises';
 import type { AdminParamList } from '../navigation/pantallasAdmin';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 type NavProp = NativeStackNavigationProp<AdminParamList, 'AdminCrm'>;
 
 const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
 
 function Fila({ t, onVer, onCambio }: { t: TenantCrm; onVer: () => void; onCambio: () => void }) {
+  const styles = useEstilos(crearEstilos);
   return (
     <View style={styles.fila}>
       <View style={styles.encabezado}>
@@ -46,6 +49,8 @@ function Fila({ t, onVer, onCambio }: { t: TenantCrm; onVer: () => void; onCambi
 }
 
 export default function AdminCrmScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const navigation = useNavigation<NavProp>();
   const { cargando, error, bandas, locales, totalContactos, recargar } = useAdminCrm();
 
@@ -85,54 +90,54 @@ export default function AdminCrmScreen() {
           onCambio={recargar}
         />
       )}
-      refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={colors.accent} />}
+      refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={colores.accent} />}
     />
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   contenido: { padding: spacing.md, paddingBottom: spacing.xl },
   cabecera: { marginBottom: spacing.sm, gap: spacing.sm },
-  bajada: { fontSize: fontSize.sm, color: colors.secondary },
-  error: { fontSize: fontSize.sm, color: colors.danger },
+  bajada: { fontSize: fontSize.sm, color: c.secondary },
+  error: { fontSize: fontSize.sm, color: c.danger },
   tituloSeccion: {
     fontSize: fontSize.xs,
     fontWeight: 'bold',
     letterSpacing: 0.6,
-    color: colors.accent,
+    color: c.accent,
     marginTop: spacing.lg,
     marginBottom: spacing.sm,
   },
   fila: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     padding: spacing.md,
     marginBottom: spacing.sm,
     gap: spacing.xs,
   },
   encabezado: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  nombre: { flexShrink: 1, fontSize: fontSize.md, fontWeight: '600', color: colors.primary },
-  detalle: { fontSize: fontSize.xs, color: colors.secondary },
+  nombre: { flexShrink: 1, fontSize: fontSize.md, fontWeight: '600', color: c.primary },
+  detalle: { fontSize: fontSize.xs, color: c.secondary },
   acciones: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: spacing.xs, marginTop: spacing.xs },
   botonVer: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
   },
-  botonVerTexto: { fontSize: fontSize.xs, fontWeight: '600', color: colors.primary },
+  botonVerTexto: { fontSize: fontSize.xs, fontWeight: '600', color: c.primary },
   vacio: {
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.md,
     padding: spacing.lg,
     alignItems: 'center',
   },
-  vacioTexto: { fontSize: fontSize.sm, color: colors.secondary },
+  vacioTexto: { fontSize: fontSize.sm, color: c.secondary },
 });
