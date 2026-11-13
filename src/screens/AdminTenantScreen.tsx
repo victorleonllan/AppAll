@@ -2,6 +2,7 @@
 // Port de `admin/crm/[tipo]/[id]/page.js` y `CodigoSuscripcionPro.js` de la web
 // (W-193, W-216, W-218, W-220). La lógica vive en `useTenantAdmin` (spec 153). Correo
 // y WhatsApp van en modo vista: desde el admin no se envía nada.
+// Spec 170 — Cobros de Pro (W-271).
 
 import { useEffect, useState, type ReactNode } from 'react';
 import {
@@ -20,6 +21,8 @@ import { useTenantAdmin, type ContactoCrm, type SuscripcionPro } from '../hooks/
 import type { EventoDeTenant } from '../hooks/useAdminCrm';
 import { SEGMENTOS_BROADCAST } from '../hooks/useAvisoWhatsApp';
 import BotonesPro, { EtiquetaPro, fechaCorta } from '../components/BotonesPro';
+import CobrosPro from '../components/CobrosPro';
+import { useCobrosPro } from '../hooks/useCobrosPro';
 import { generarCodigoPro, type TipoTenant } from '../lib/adminPro';
 import { etiquetaPais } from '../constants/paises';
 import { formatearMonto } from '../lib/precio';
@@ -217,6 +220,7 @@ export default function AdminTenantScreen() {
   const navigation = useNavigation<NavProp>();
   const { tipo, id } = route.params;
   const t = useTenantAdmin(tipo, id);
+  const cobros = useCobrosPro(tipo, id);
 
   if (t.cargando && !t.tenant && !t.error) {
     return (
@@ -278,6 +282,19 @@ export default function AdminTenantScreen() {
         errorSuscripcion={t.errorSuscripcion}
         recargar={t.recargar}
       />
+
+      <Seccion titulo="Cobros de Pro">
+        {cobros.error ? (
+          <Vacio>No se pudieron leer los cobros: {cobros.error}</Vacio>
+        ) : cobros.cargando && cobros.suscripciones.length === 0 ? (
+          <ActivityIndicator color={colors.accent} />
+        ) : cobros.suscripciones.length === 0 ? (
+          <Vacio>Sin intentos de suscripción.</Vacio>
+        ) : (
+          <CobrosPro suscripciones={cobros.suscripciones} />
+        )}
+        <Text style={styles.textoChico}>Leído en vivo de Mercado Pago al abrir esta página.</Text>
+      </Seccion>
 
       <Seccion titulo={`Eventos activos · ${t.eventosActivos.length}`}>
         {t.eventosActivos.length === 0 ? (
@@ -356,7 +373,16 @@ export default function AdminTenantScreen() {
       ListHeaderComponent={encabezado}
       ListEmptyComponent={<Vacio>Todavía no tiene contactos.</Vacio>}
       keyboardShouldPersistTaps="handled"
-      refreshControl={<RefreshControl refreshing={t.cargando} onRefresh={t.recargar} tintColor={colors.accent} />}
+      refreshControl={
+        <RefreshControl
+          refreshing={t.cargando}
+          onRefresh={() => {
+            t.recargar();
+            cobros.recargar();
+          }}
+          tintColor={colors.accent}
+        />
+      }
     />
   );
 }
