@@ -9,18 +9,16 @@ import BotonCerrarEvento from '../components/BotonCerrarEvento';
 import { formatearMonto } from '../lib/precio';
 import { formatearDiaLargo } from '../lib/fechaCartelera';
 import { TIPOS_CUENTA } from '../lib/datosPago';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
-
-// Fondo y borde del aviso «Ya pasó»: el amarillo claro de la web, sin token propio en
-// el tema (que comparten otros specs).
-const AMARILLO_FONDO = '#FFF8E1';
-const AMARILLO_BORDE = '#FFE082';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 function textoFecha(comienzaAt: string | null, fecha: string): string {
   return comienzaAt ? formatearDiaLargo(comienzaAt) : fecha;
 }
 
 function Seccion({ titulo, children }: { titulo: string; children: ReactNode }) {
+  const styles = useEstilos(crearEstilos);
   return (
     <View style={styles.seccion}>
       <Text style={styles.tituloSeccion}>{titulo}</Text>
@@ -37,6 +35,7 @@ function Seccion({ titulo, children }: { titulo: string; children: ReactNode }) 
  * módulo nativo y obliga a un build nuevo.
  */
 function Dato({ label, valor }: { label: string; valor: string }) {
+  const styles = useEstilos(crearEstilos);
   return (
     <View style={styles.dato}>
       <Text style={styles.etiquetaDato}>{label}</Text>
@@ -62,6 +61,8 @@ function FilaPago({
   nota?: string;
   onCerrado: () => void;
 }) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const tipo = TIPOS_CUENTA.find((t) => t.valor === fila.tipoCuenta)?.etiqueta ?? fila.tipoCuenta;
 
   return (
@@ -84,7 +85,7 @@ function FilaPago({
 
       {/* W-175: en un cancelado la nota de reclamo no aplica. */}
       {(fila.cancelado || nota) && (
-        <Text style={[styles.nota, { color: fila.cancelado ? colors.danger : colors.warning }]}>
+        <Text style={[styles.nota, { color: fila.cancelado ? colores.danger : colores.warning }]}>
           {fila.cancelado ? 'Cancelado — la plata es de los compradores' : nota}
         </Text>
       )}
@@ -116,6 +117,8 @@ function FilaPago({
 }
 
 export default function AdminPagosScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const { cargando, error, porPagar, sinReclamar, acumulando, sinDatos, totalPorPagar, totalAcumulando, recargar } =
     useAdminPagos();
 
@@ -166,7 +169,7 @@ export default function AdminPagosScreen() {
                   {e.venueName} · {textoFecha(e.comienzaAt, e.fecha)}
                 </Text>
               </View>
-              <Text style={[styles.estadoSinDatos, { color: e.yaPaso ? colors.warning : colors.muted }]}>
+              <Text style={[styles.estadoSinDatos, { color: e.yaPaso ? colores.warning : colores.muted }]}>
                 {e.yaPaso ? 'Ya pasó — hay que pedirle la cuenta' : 'Próximo'}
               </Text>
             </View>
@@ -177,65 +180,65 @@ export default function AdminPagosScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   contenido: { padding: spacing.md, paddingBottom: spacing.xl },
-  error: { color: colors.danger, fontSize: fontSize.sm, marginBottom: spacing.md },
+  error: { color: c.danger, fontSize: fontSize.sm, marginBottom: spacing.md },
   seccion: { marginBottom: spacing.xl },
   tituloSeccion: {
     fontSize: fontSize.xs,
     fontWeight: 'bold',
     textTransform: 'uppercase',
     letterSpacing: 0.7,
-    color: colors.muted,
+    color: c.muted,
     marginBottom: spacing.sm,
   },
   lista: { gap: spacing.sm },
   vacio: {
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.md,
     paddingVertical: spacing.xl,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
   },
-  vacioTitulo: { fontWeight: '600', color: colors.primary, fontSize: fontSize.md },
-  vacioTexto: { marginTop: spacing.xs, fontSize: fontSize.sm, color: colors.secondary, textAlign: 'center' },
-  tarjeta: { backgroundColor: colors.cardBackground, borderRadius: borderRadius.md, padding: spacing.md },
+  vacioTitulo: { fontWeight: '600', color: c.primary, fontSize: fontSize.md },
+  vacioTexto: { marginTop: spacing.xs, fontSize: fontSize.sm, color: c.secondary, textAlign: 'center' },
+  tarjeta: { backgroundColor: c.cardBackground, borderRadius: borderRadius.md, padding: spacing.md },
   filaArriba: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
   flex: { flex: 1, minWidth: 0 },
-  artista: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary },
-  artistaChico: { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary },
-  detalle: { fontSize: fontSize.sm, color: colors.secondary, marginTop: 2 },
+  artista: { fontSize: fontSize.md, fontWeight: '600', color: c.primary },
+  artistaChico: { fontSize: fontSize.sm, fontWeight: '600', color: c.primary },
+  detalle: { fontSize: fontSize.sm, color: c.secondary, marginTop: 2 },
   montoCaja: { alignItems: 'flex-end' },
-  monto: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
-  montoBajada: { fontSize: fontSize.xs, color: colors.muted, marginTop: spacing.xs },
+  monto: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
+  montoBajada: { fontSize: fontSize.xs, color: c.muted, marginTop: spacing.xs },
   nota: { marginTop: spacing.sm, fontSize: fontSize.sm, fontWeight: '600' },
   datos: {
     marginTop: spacing.md,
     paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: c.border,
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
   dato: { minWidth: 120, paddingVertical: spacing.xs, paddingHorizontal: spacing.xs },
-  etiquetaDato: { fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, color: colors.muted },
-  valorDato: { fontSize: fontSize.sm, color: colors.primary, fontFamily: 'monospace' },
+  etiquetaDato: { fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, color: c.muted },
+  valorDato: { fontSize: fontSize.sm, color: c.primary, fontFamily: 'monospace' },
   accion: { marginTop: spacing.md },
   filaSinDatos: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.md,
     paddingVertical: spacing.sm + 4,
     paddingHorizontal: spacing.md,
   },
-  filaSinDatosPasada: { backgroundColor: AMARILLO_FONDO, borderColor: AMARILLO_BORDE },
+  filaSinDatosPasada: { backgroundColor: c.highlightBg, borderColor: c.highlightBorder },
   estadoSinDatos: { fontSize: fontSize.sm, fontWeight: '600', flexShrink: 1, textAlign: 'right' },
 });

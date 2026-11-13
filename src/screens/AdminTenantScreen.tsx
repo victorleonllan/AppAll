@@ -30,33 +30,32 @@ import { formatearFechaEs, separarFechaHora } from '../lib/fecha';
 import { formatearDiaLargo } from '../lib/fechaCartelera';
 import { confirmar } from '../lib/confirm';
 import type { AdminParamList } from '../navigation/pantallasAdmin';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 type TenantRoute = RouteProp<AdminParamList, 'AdminTenant'>;
 type NavProp = NativeStackNavigationProp<AdminParamList, 'AdminTenant'>;
-
-// Fondo amarillo claro de la nota de admin: sin token propio en el tema.
-const AMARILLO_FONDO = '#FFF8E1';
-const AMARILLO_BORDE = '#F5D77A';
 
 const ORIGEN_LABEL: Record<string, string> = { comprador: 'Comprador', seguidor: 'Seguidor', whatsapp: 'WhatsApp' };
 
 // `CodigoSuscripcionPro.js:19-30`. «Abrió el pago» no es un estado de la base: es
 // `esperando` con el link ya pedido.
-const ESTADOS: Record<string, { texto: string; color: string }> = {
-  esperando: { texto: 'Esperando', color: colors.muted },
-  abrio: { texto: 'Abrió el pago', color: colors.accent },
-  activa: { texto: 'Activa', color: colors.success },
-  pausada: { texto: 'Pausada', color: colors.muted },
-  cancelada: { texto: 'Cancelada', color: colors.muted },
-  anulado: { texto: 'Anulado', color: colors.danger },
-};
+const estados = (c: Paleta): Record<string, { texto: string; color: string }> => ({
+  esperando: { texto: 'Esperando', color: c.muted },
+  abrio: { texto: 'Abrió el pago', color: c.accent },
+  activa: { texto: 'Activa', color: c.success },
+  pausada: { texto: 'Pausada', color: c.muted },
+  cancelada: { texto: 'Cancelada', color: c.muted },
+  anulado: { texto: 'Anulado', color: c.danger },
+});
 const estadoDe = (s: SuscripcionPro) => (s.estado === 'esperando' && s.linkPedidoAt ? 'abrio' : s.estado);
 
 const fechaEs = (iso: string) => formatearFechaEs(separarFechaHora(iso).fechaISO);
 const fechaConAnio = (iso: string) => `${fechaCorta(iso)} ${new Date(iso).getFullYear()}`;
 
 function Seccion({ titulo, children }: { titulo: string; children: ReactNode }) {
+  const styles = useEstilos(crearEstilos);
   return (
     <View style={styles.seccion}>
       <Text style={styles.tituloSeccion}>{titulo.toUpperCase()}</Text>
@@ -66,6 +65,7 @@ function Seccion({ titulo, children }: { titulo: string; children: ReactNode }) 
 }
 
 function Vacio({ children }: { children: ReactNode }) {
+  const styles = useEstilos(crearEstilos);
   return (
     <View style={styles.vacio}>
       <Text style={styles.vacioTexto}>{children}</Text>
@@ -88,6 +88,8 @@ interface PropsSuscripcion {
 function CodigoSuscripcionPro({
   tipo, id, nombre, cuenta, suscripciones, moneda, precioSugerido, errorSuscripcion, recargar,
 }: PropsSuscripcion) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const [monto, setMonto] = useState(precioSugerido != null ? String(precioSugerido) : '');
   const [tocado, setTocado] = useState(false);
   const [ocupado, setOcupado] = useState(false);
@@ -175,7 +177,7 @@ function CodigoSuscripcionPro({
         <View style={styles.anteriores}>
           <Text style={styles.subtitulo}>Códigos anteriores</Text>
           {suscripciones.map((s) => {
-            const estado = ESTADOS[estadoDe(s)] ?? { texto: s.estado, color: colors.muted };
+            const estado = estados(colores)[estadoDe(s)] ?? { texto: s.estado, color: colores.muted };
             return (
               <View key={s.codigo} style={styles.filaCodigo}>
                 <Text style={styles.codigoChico}>{s.codigo}</Text>
@@ -197,6 +199,7 @@ function CodigoSuscripcionPro({
 }
 
 function TarjetaContacto({ c, moneda }: { c: ContactoCrm; moneda: string | null }) {
+  const styles = useEstilos(crearEstilos);
   return (
     <View style={styles.contacto}>
       <Text style={c.email ? styles.contactoEmail : styles.textoSecundario}>{c.email ?? 'Sin correo'}</Text>
@@ -216,6 +219,8 @@ function TarjetaContacto({ c, moneda }: { c: ContactoCrm; moneda: string | null 
 }
 
 export default function AdminTenantScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const route = useRoute<TenantRoute>();
   const navigation = useNavigation<NavProp>();
   const { tipo, id } = route.params;
@@ -225,7 +230,7 @@ export default function AdminTenantScreen() {
   if (t.cargando && !t.tenant && !t.error) {
     return (
       <View style={styles.centrado}>
-        <ActivityIndicator color={colors.accent} />
+        <ActivityIndicator color={colores.accent} />
       </View>
     );
   }
@@ -287,7 +292,7 @@ export default function AdminTenantScreen() {
         {cobros.error ? (
           <Vacio>No se pudieron leer los cobros: {cobros.error}</Vacio>
         ) : cobros.cargando && cobros.suscripciones.length === 0 ? (
-          <ActivityIndicator color={colors.accent} />
+          <ActivityIndicator color={colores.accent} />
         ) : cobros.suscripciones.length === 0 ? (
           <Vacio>Sin intentos de suscripción.</Vacio>
         ) : (
@@ -329,7 +334,7 @@ export default function AdminTenantScreen() {
               </Text>
             </>
           ) : (
-            <ActivityIndicator color={colors.accent} />
+            <ActivityIndicator color={colores.accent} />
           )}
         </View>
       </Seccion>
@@ -380,131 +385,131 @@ export default function AdminTenantScreen() {
             t.recargar();
             cobros.recargar();
           }}
-          tintColor={colors.accent}
+          tintColor={colores.accent}
         />
       }
     />
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   contenido: { padding: spacing.md, paddingBottom: spacing.xl },
   centrado: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: c.background,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
   },
   cabecera: { gap: spacing.sm },
   filaNombre: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
-  nombre: { fontSize: fontSize.xl, fontWeight: 'bold', color: colors.primary },
-  texto: { fontSize: fontSize.sm, color: colors.primary },
-  textoChico: { fontSize: fontSize.sm, color: colors.primary },
-  textoSecundario: { fontSize: fontSize.xs, color: colors.secondary },
-  negrita: { fontWeight: 'bold', color: colors.primary },
-  error: { fontSize: fontSize.sm, color: colors.danger },
+  nombre: { fontSize: fontSize.xl, fontWeight: 'bold', color: c.primary },
+  texto: { fontSize: fontSize.sm, color: c.primary },
+  textoChico: { fontSize: fontSize.sm, color: c.primary },
+  textoSecundario: { fontSize: fontSize.xs, color: c.secondary },
+  negrita: { fontWeight: 'bold', color: c.primary },
+  error: { fontSize: fontSize.sm, color: c.danger },
   notaAdmin: {
-    backgroundColor: AMARILLO_FONDO,
+    backgroundColor: c.highlightBg,
     borderWidth: 1,
-    borderColor: AMARILLO_BORDE,
+    borderColor: c.highlightBorder,
     borderRadius: borderRadius.sm,
     padding: spacing.sm,
   },
   seccion: { marginTop: spacing.lg, gap: spacing.sm },
-  tituloSeccion: { fontSize: fontSize.xs, fontWeight: 'bold', letterSpacing: 0.6, color: colors.accent },
-  subtitulo: { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary },
+  tituloSeccion: { fontSize: fontSize.xs, fontWeight: 'bold', letterSpacing: 0.6, color: c.accent },
+  subtitulo: { fontSize: fontSize.sm, fontWeight: '600', color: c.primary },
   tarjeta: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     padding: spacing.md,
     gap: spacing.xs,
   },
   vacio: {
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.md,
     padding: spacing.lg,
     alignItems: 'center',
   },
-  vacioTexto: { fontSize: fontSize.sm, color: colors.secondary, textAlign: 'center' },
-  etiquetaCampo: { fontSize: fontSize.sm, color: colors.secondary, marginTop: spacing.xs },
+  vacioTexto: { fontSize: fontSize.sm, color: c.secondary, textAlign: 'center' },
+  etiquetaCampo: { fontSize: fontSize.sm, color: c.secondary, marginTop: spacing.xs },
   filaMonto: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   inputMonto: {
     width: 140,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     fontSize: fontSize.md,
-    color: colors.primary,
-    backgroundColor: colors.white,
+    color: c.primary,
+    backgroundColor: c.cardBackground,
   },
-  moneda: { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary },
+  moneda: { fontSize: fontSize.sm, fontWeight: '600', color: c.primary },
   botonPrimario: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     borderRadius: borderRadius.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     marginTop: spacing.xs,
   },
-  botonPrimarioTexto: { fontSize: fontSize.sm, fontWeight: '600', color: colors.white },
+  botonPrimarioTexto: { fontSize: fontSize.sm, fontWeight: '600', color: c.onAccent },
   deshabilitado: { opacity: 0.5 },
   generado: {
-    backgroundColor: AMARILLO_FONDO,
+    backgroundColor: c.highlightBg,
     borderWidth: 1,
-    borderColor: AMARILLO_BORDE,
+    borderColor: c.highlightBorder,
     borderRadius: borderRadius.sm,
     padding: spacing.sm,
     gap: spacing.xs,
     marginTop: spacing.xs,
   },
-  codigo: { fontFamily: 'monospace', fontSize: fontSize.xl, fontWeight: '600', letterSpacing: 3, color: colors.primary },
-  url: { fontSize: fontSize.sm, color: colors.primary },
+  codigo: { fontFamily: 'monospace', fontSize: fontSize.xl, fontWeight: '600', letterSpacing: 3, color: c.primary },
+  url: { fontSize: fontSize.sm, color: c.primary },
   anteriores: { gap: spacing.xs },
   filaCodigo: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     columnGap: spacing.sm,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.sm,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     padding: spacing.sm,
   },
-  codigoChico: { fontFamily: 'monospace', fontWeight: '600', fontSize: fontSize.sm, color: colors.primary },
+  codigoChico: { fontFamily: 'monospace', fontWeight: '600', fontSize: fontSize.sm, color: c.primary },
   estado: { fontSize: fontSize.xs, fontWeight: '600', marginLeft: 'auto' },
   filaSegmento: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   resumenFila: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg, marginBottom: spacing.sm },
   resumenCard: {
     flex: 1,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     padding: spacing.sm,
     alignItems: 'center',
   },
-  resumenNumero: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
-  resumenLabel: { fontSize: fontSize.xs, color: colors.secondary },
+  resumenNumero: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
+  resumenLabel: { fontSize: fontSize.xs, color: c.secondary },
   contacto: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     padding: spacing.md,
     marginBottom: spacing.sm,
     gap: spacing.xs,
   },
-  contactoEmail: { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary },
+  contactoEmail: { fontSize: fontSize.sm, fontWeight: '600', color: c.primary },
   insignias: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  insignia: { backgroundColor: colors.accentLight, borderRadius: borderRadius.sm, paddingHorizontal: spacing.sm, paddingVertical: 2 },
-  insigniaTexto: { fontSize: fontSize.xs, color: colors.secondary },
+  insignia: { backgroundColor: c.accentLight, borderRadius: borderRadius.sm, paddingHorizontal: spacing.sm, paddingVertical: 2 },
+  insigniaTexto: { fontSize: fontSize.xs, color: c.secondary },
 });

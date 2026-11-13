@@ -1,6 +1,6 @@
 # Spec 182 — Tema oscuro en las pantallas de admin
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — `tsc --noEmit` sin errores en los 6 archivos y `expo export` web OK; criterios 3 y 4 (`rg` sin `colors` ni hex) verificados; 5-7 y 182-a a probar en dispositivo
 > Capa: FRONTEND. `src/screens/AdminScreen.tsx`, `src/screens/AdminCrmScreen.tsx`,
 > `src/screens/AdminEventosScreen.tsx`, `src/screens/AdminLocalesScreen.tsx`,
 > `src/screens/AdminPagosScreen.tsx`, `src/screens/AdminTenantScreen.tsx`.

@@ -11,22 +11,19 @@ import { venueLabel } from '../lib/venues';
 import { etiquetaPais } from '../constants/paises';
 import { confirmar } from '../lib/confirm';
 import type { VenueType } from '../types';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 const ROLES: Record<string, string> = { musician: 'músico', local: 'local', fan: 'fan' };
 
-// Amarillo de «No está a nombre del local»: sin token propio en el tema.
-const AMARILLO_FONDO = '#FFF8E1';
-const AMARILLO_BORDE = '#F5D77A';
-const AMARILLO_TEXTO = '#8D6E00';
-
 type Aviso = { tono: 'ok' | 'warn' | 'error'; texto: string };
 
-const COLOR_AVISO: Record<Aviso['tono'], string> = {
-  ok: colors.success,
-  warn: colors.warning,
-  error: colors.danger,
-};
+const colorAviso = (c: Paleta): Record<Aviso['tono'], string> => ({
+  ok: c.success,
+  warn: c.warning,
+  error: c.danger,
+});
 
 const lugarDe = (l: LocalAdmin) => [l.direccion, l.comuna].filter(Boolean).join(', ');
 
@@ -39,6 +36,8 @@ function FormInvitacion({
   ocupado: boolean;
   onEnviar: (correo: string) => void;
 }) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const [email, setEmail] = useState('');
   const correo = email.trim().toLowerCase();
   const lugar = lugarDe(local);
@@ -52,7 +51,7 @@ function FormInvitacion({
         value={email}
         onChangeText={setEmail}
         placeholder="contacto@local.cl"
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={colores.muted}
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
@@ -84,6 +83,8 @@ function TarjetaLocal({
   invitar: (venueId: string, email: string) => Promise<{ token: string; emailError: string | null }>;
   cancelar: (token: string) => Promise<void>;
 }) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const [abierto, setAbierto] = useState(false);
   const [aviso, setAviso] = useState<Aviso | null>(null);
   const [ocupado, setOcupado] = useState(false);
@@ -192,7 +193,7 @@ function TarjetaLocal({
         )}
       </View>
 
-      {aviso && <Text style={[styles.aviso, { color: COLOR_AVISO[aviso.tono] }]}>{aviso.texto}</Text>}
+      {aviso && <Text style={[styles.aviso, { color: colorAviso(colores)[aviso.tono] }]}>{aviso.texto}</Text>}
 
       {abierto && <FormInvitacion local={local} ocupado={ocupado} onEnviar={enviar} />}
     </View>
@@ -200,6 +201,8 @@ function TarjetaLocal({
 }
 
 export default function AdminLocalesScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const { cargando, error, locales, recargar, invitar, cancelar } = useAdminLocales();
   const [q, setQ] = useState('');
   const visibles = filtrarLocales(locales, q);
@@ -217,7 +220,7 @@ export default function AdminLocalesScreen() {
         value={q}
         onChangeText={setQ}
         placeholder="Nombre, dirección o comuna"
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={colores.muted}
         autoCorrect={false}
       />
       <Text style={styles.textoSecundario}>
@@ -243,82 +246,82 @@ export default function AdminLocalesScreen() {
         ) : null
       }
       keyboardShouldPersistTaps="handled"
-      refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={colors.accent} />}
+      refreshControl={<RefreshControl refreshing={cargando} onRefresh={recargar} tintColor={colores.accent} />}
     />
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   contenido: { padding: spacing.md, paddingBottom: spacing.xl },
   cabecera: { gap: spacing.sm, marginBottom: spacing.sm },
-  bajada: { fontSize: fontSize.sm, color: colors.secondary },
-  texto: { fontSize: fontSize.sm, color: colors.primary },
-  textoSecundario: { fontSize: fontSize.xs, color: colors.secondary },
-  negrita: { fontWeight: 'bold', color: colors.primary },
-  error: { fontSize: fontSize.sm, color: colors.danger },
+  bajada: { fontSize: fontSize.sm, color: c.secondary },
+  texto: { fontSize: fontSize.sm, color: c.primary },
+  textoSecundario: { fontSize: fontSize.xs, color: c.secondary },
+  negrita: { fontWeight: 'bold', color: c.primary },
+  error: { fontSize: fontSize.sm, color: c.danger },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
-    backgroundColor: colors.white,
+    color: c.primary,
+    backgroundColor: c.cardBackground,
   },
   tarjeta: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     padding: spacing.md,
     marginBottom: spacing.sm,
     gap: spacing.xs,
   },
   filaNombre: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
-  nombre: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary },
+  nombre: { fontSize: fontSize.md, fontWeight: '600', color: c.primary },
   insigniaAmarilla: {
-    backgroundColor: AMARILLO_FONDO,
+    backgroundColor: c.highlightBg,
     borderWidth: 1,
-    borderColor: AMARILLO_BORDE,
+    borderColor: c.highlightBorder,
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
   },
-  insigniaAmarillaTexto: { fontSize: fontSize.xs, fontWeight: '600', color: AMARILLO_TEXTO },
+  insigniaAmarillaTexto: { fontSize: fontSize.xs, fontWeight: '600', color: c.highlightText },
   acciones: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.xs },
   boton: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
   },
   botonFantasma: { borderColor: 'transparent', backgroundColor: 'transparent' },
-  botonOscuro: { backgroundColor: colors.primary, borderColor: colors.primary },
-  botonTexto: { fontSize: fontSize.xs, fontWeight: '600', color: colors.primary },
-  botonOscuroTexto: { color: colors.white },
+  botonOscuro: { backgroundColor: c.primary, borderColor: c.primary },
+  botonTexto: { fontSize: fontSize.xs, fontWeight: '600', color: c.primary },
+  botonOscuroTexto: { color: c.onPrimary },
   deshabilitado: { opacity: 0.5 },
   aviso: { fontSize: fontSize.sm, marginTop: spacing.xs },
-  form: { gap: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.sm, marginTop: spacing.xs },
-  etiquetaCampo: { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary },
+  form: { gap: spacing.sm, borderTopWidth: 1, borderTopColor: c.border, paddingTop: spacing.sm, marginTop: spacing.xs },
+  etiquetaCampo: { fontSize: fontSize.sm, fontWeight: '600', color: c.primary },
   botonPrimario: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.primary,
+    backgroundColor: c.primary,
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
-  botonPrimarioTexto: { fontSize: fontSize.sm, fontWeight: '600', color: colors.white },
+  botonPrimarioTexto: { fontSize: fontSize.sm, fontWeight: '600', color: c.onPrimary },
   vacio: {
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.md,
     padding: spacing.lg,
     alignItems: 'center',
   },
-  vacioTexto: { fontSize: fontSize.sm, color: colors.secondary, textAlign: 'center' },
+  vacioTexto: { fontSize: fontSize.sm, color: c.secondary, textAlign: 'center' },
 });
