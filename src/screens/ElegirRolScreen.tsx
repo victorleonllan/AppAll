@@ -4,7 +4,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import FormElegirRol from '../components/FormElegirRol';
 import { PerfilStackParamList } from '../navigation/PerfilStack';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
 
 type NavProp = NativeStackNavigationProp<PerfilStackParamList, 'ElegirRol'>;
 
@@ -13,6 +14,7 @@ const NOMBRE_ROL = { fan: 'fan', musician: 'músico', local: 'local' } as const;
 // Spec 128 — la ruta para llegar a mano. En la práctica GuardaRol ya tapa la app
 // mientras no hay rol; esta pantalla solo evita que la ruta se rompa.
 export default function ElegirRolScreen() {
+  const styles = useEstilos(crearEstilos);
   const navigation = useNavigation<NavProp>();
   const { session, role } = useAuth();
 
@@ -48,10 +50,10 @@ export default function ElegirRolScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  centrado: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
-  texto: { fontSize: fontSize.md, color: colors.secondary, textAlign: 'center', marginBottom: spacing.lg },
-  boton: { backgroundColor: colors.accent, paddingVertical: 14, paddingHorizontal: spacing.lg, borderRadius: borderRadius.sm },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
+  centrado: { flex: 1, backgroundColor: c.background, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  texto: { fontSize: fontSize.md, color: c.secondary, textAlign: 'center', marginBottom: spacing.lg },
+  boton: { backgroundColor: c.accent, paddingVertical: 14, paddingHorizontal: spacing.lg, borderRadius: borderRadius.sm },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
 });

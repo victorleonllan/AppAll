@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
 
 interface Props {
   titulo: string;
@@ -16,6 +17,7 @@ const SONOPOLIS_URL = 'https://sonopolis.org';
 // web en vez de a un "Próximamente": el botón de entrada ya es visible y entre
 // este spec y el FRONTEND de cada pantalla puede pasar un tiempo real.
 export default function PantallaEnCamino({ titulo, rutaWeb, accionSecundaria }: Props) {
+  const styles = useEstilos(crearEstilos);
   return (
     <View style={styles.container}>
       <Text style={styles.titulo}>{titulo}</Text>
@@ -34,10 +36,10 @@ export default function PantallaEnCamino({ titulo, rutaWeb, accionSecundaria }: 
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: c.background,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.lg,
@@ -45,23 +47,23 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: fontSize.xl,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   mensaje: {
     fontSize: fontSize.md,
-    color: colors.secondary,
+    color: c.secondary,
     textAlign: 'center',
     marginBottom: spacing.lg,
   },
   boton: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     paddingVertical: 14,
     paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.sm,
   },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
   botonSecundario: { marginTop: spacing.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.lg },
-  textoBotonSecundario: { color: colors.secondary, fontWeight: '600', fontSize: fontSize.md },
+  textoBotonSecundario: { color: c.secondary, fontWeight: '600', fontSize: fontSize.md },
 });

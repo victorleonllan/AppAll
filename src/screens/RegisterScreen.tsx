@@ -4,7 +4,9 @@ import {
   StyleSheet, Alert,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
-import { colors, spacing, borderRadius, fontSize } from "../theme";
+import { spacing, borderRadius, fontSize, Paleta } from "../theme";
+import { useEstilos } from "../hooks/useEstilos";
+import { useTema } from "../context/TemaContext";
 
 type RoleOption = "musician" | "local";
 
@@ -19,6 +21,8 @@ export default function RegisterScreen({
   onSwitchToLogin,
   onBack,
 }: Props) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nombre, setNombre] = useState("");
@@ -50,14 +54,14 @@ export default function RegisterScreen({
       <TextInput
         style={styles.input}
         placeholder="Nombre / Nombre del proyecto"
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={colores.muted}
         value={nombre}
         onChangeText={setNombre}
       />
       <TextInput
         style={styles.input}
         placeholder="Correo electrónico"
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={colores.muted}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -66,7 +70,7 @@ export default function RegisterScreen({
       <TextInput
         style={styles.input}
         placeholder="Contraseña (mín. 6 caracteres)"
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={colores.muted}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -107,39 +111,39 @@ export default function RegisterScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: c.background,
     alignItems: "center",
     justifyContent: "center",
     padding: spacing.lg,
   },
   botonVolver: { alignSelf: "flex-start", marginBottom: spacing.sm },
-  textoVolver: { fontSize: fontSize.md, color: colors.accent, fontWeight: "600" },
+  textoVolver: { fontSize: fontSize.md, color: c.accent, fontWeight: "600" },
   icono: { fontSize: fontSize.xxl },
   titulo: {
     fontSize: fontSize.xl,
     fontWeight: "bold",
-    color: colors.primary,
+    color: c.primary,
     marginTop: spacing.sm,
     marginBottom: spacing.lg,
   },
   input: {
     width: "100%",
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     padding: 14,
     borderRadius: borderRadius.sm,
     marginBottom: spacing.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
   label: {
     fontSize: fontSize.md,
     fontWeight: "600",
-    color: colors.primary,
+    color: c.primary,
     alignSelf: "flex-start",
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
@@ -149,23 +153,23 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     borderRadius: borderRadius.sm,
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     alignItems: "center",
   },
-  botonRolActivo: { backgroundColor: colors.accent },
-  textoRol: { fontSize: fontSize.sm, color: colors.secondary },
-  textoRolActivo: { color: colors.white, fontWeight: "bold" },
+  botonRolActivo: { backgroundColor: c.accent },
+  textoRol: { fontSize: fontSize.sm, color: c.secondary },
+  textoRolActivo: { color: c.onAccent, fontWeight: "bold" },
   boton: {
     width: "100%",
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: "center",
     marginTop: spacing.sm,
   },
-  textoBoton: { color: colors.white, fontWeight: "bold", fontSize: fontSize.md },
+  textoBoton: { color: c.onAccent, fontWeight: "bold", fontSize: fontSize.md },
   link: {
-    color: colors.accent,
+    color: c.accent,
     marginTop: spacing.md,
     fontSize: fontSize.sm,
   },

@@ -4,12 +4,14 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { confirmar } from '../lib/confirm';
 import BotonAdmin from '../components/BotonAdmin';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
 import { PerfilStackParamList } from '../navigation/PerfilStack';
 
 type NavProp = NativeStackNavigationProp<PerfilStackParamList, 'Perfil'>;
 
 export default function PerfilScreen() {
+  const styles = useEstilos(crearEstilos);
   const { signOut } = useAuth();
   const navigation = useNavigation<NavProp>();
 
@@ -63,21 +65,21 @@ export default function PerfilScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, alignItems: 'center', paddingTop: 60 },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background, alignItems: 'center', paddingTop: 60 },
   icono: { fontSize: fontSize.xxl },
-  titulo: { fontSize: fontSize.xl, fontWeight: 'bold', color: colors.primary, marginTop: spacing.sm },
-  sub: { fontSize: fontSize.md, color: colors.secondary, marginTop: spacing.sm },
-  tarjetaRol: { backgroundColor: colors.cardBackground, padding: 20, borderRadius: borderRadius.lg, marginTop: 30, width: '85%' },
-  label: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary, marginBottom: 12 },
-  botonRol: { paddingVertical: 12, paddingHorizontal: spacing.md, borderRadius: borderRadius.sm, marginBottom: spacing.sm, backgroundColor: colors.accentLight },
-  botonActivo: { backgroundColor: colors.accent },
-  textoRol: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
-  textoRolInactivo: { color: colors.secondary, fontSize: fontSize.md },
-  aviso: { fontSize: fontSize.xs, color: colors.muted, marginTop: 20, textAlign: 'center', paddingHorizontal: 30 },
+  titulo: { fontSize: fontSize.xl, fontWeight: 'bold', color: c.primary, marginTop: spacing.sm },
+  sub: { fontSize: fontSize.md, color: c.secondary, marginTop: spacing.sm },
+  tarjetaRol: { backgroundColor: c.cardBackground, padding: 20, borderRadius: borderRadius.lg, marginTop: 30, width: '85%' },
+  label: { fontSize: fontSize.md, fontWeight: '600', color: c.primary, marginBottom: 12 },
+  botonRol: { paddingVertical: 12, paddingHorizontal: spacing.md, borderRadius: borderRadius.sm, marginBottom: spacing.sm, backgroundColor: c.accentLight },
+  botonActivo: { backgroundColor: c.accent },
+  textoRol: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
+  textoRolInactivo: { color: c.secondary, fontSize: fontSize.md },
+  aviso: { fontSize: fontSize.xs, color: c.muted, marginTop: 20, textAlign: 'center', paddingHorizontal: 30 },
   acciones: { width: '85%', marginTop: spacing.lg, gap: spacing.sm },
-  botonAccion: { backgroundColor: colors.accentLight, padding: 14, borderRadius: borderRadius.sm, alignItems: 'center' },
-  textoAccion: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  botonAccion: { backgroundColor: c.accentLight, padding: 14, borderRadius: borderRadius.sm, alignItems: 'center' },
+  textoAccion: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm },
   botonSalir: { marginTop: spacing.xl },
-  textoBotonSalir: { color: colors.danger, fontWeight: '600', fontSize: fontSize.md },
+  textoBotonSalir: { color: c.danger, fontWeight: '600', fontSize: fontSize.md },
 });

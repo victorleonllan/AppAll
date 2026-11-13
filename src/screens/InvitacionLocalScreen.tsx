@@ -14,7 +14,9 @@ import { venueLabel } from '../lib/venues';
 import { VenueType } from '../types';
 import { CarteleraStackParamList } from '../navigation/CarteleraStack';
 import { RootTabParamList } from '../navigation/linking';
-import { colors, spacing, fontSize, borderRadius } from '../theme';
+import { spacing, fontSize, borderRadius, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 type InvitacionLocalRoute = RouteProp<CarteleraStackParamList, 'InvitacionLocal'>;
 type Vista = 'tarjeta' | 'login' | 'register';
@@ -27,6 +29,8 @@ type Reclamo =
 // Spec 141 — hermana de /invitacion/[token] en la web (W-230–232). Quién puede
 // reclamar lo decide la base; esta pantalla solo elige qué mostrar según la sesión.
 export default function InvitacionLocalScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const { token } = useRoute<InvitacionLocalRoute>().params;
   const navigation = useNavigation();
   const { session, user } = useAuth();
@@ -109,7 +113,7 @@ export default function InvitacionLocalScreen() {
   if (cargando) {
     return (
       <View style={styles.centro}>
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={colores.accent} />
       </View>
     );
   }
@@ -173,7 +177,7 @@ export default function InvitacionLocalScreen() {
       <Text style={styles.error}>{reclamo.mensaje}</Text>
     ) : (
       <View style={styles.fila}>
-        <ActivityIndicator color={colors.accent} />
+        <ActivityIndicator color={colores.accent} />
         <Text style={styles.mensajeFila}>Activando tu local…</Text>
       </View>
     );
@@ -185,7 +189,7 @@ export default function InvitacionLocalScreen() {
         </Text>
         <TouchableOpacity style={styles.boton} onPress={cerrarYContinuar} disabled={cerrando}>
           {cerrando
-            ? <ActivityIndicator color={colors.white} />
+            ? <ActivityIndicator color={colores.onAccent} />
             : <Text style={styles.botonTexto}>Cerrar sesión y continuar</Text>}
         </TouchableOpacity>
         {errorCarga && <Text style={styles.error}>{errorCarga}</Text>}
@@ -230,42 +234,42 @@ export default function InvitacionLocalScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   contenido: { padding: spacing.lg },
   centro: {
     flex: 1, justifyContent: 'center', alignItems: 'center',
-    padding: spacing.lg, backgroundColor: colors.background,
+    padding: spacing.lg, backgroundColor: c.background,
   },
-  antetitulo: { fontSize: fontSize.xs, fontWeight: '700', color: colors.muted, letterSpacing: 1 },
+  antetitulo: { fontSize: fontSize.xs, fontWeight: '700', color: c.muted, letterSpacing: 1 },
   titulo: {
-    fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary,
+    fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary,
     marginTop: spacing.xs, marginBottom: spacing.md,
   },
   tarjeta: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.cardBackground,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg, padding: spacing.md, marginBottom: spacing.lg,
-    borderWidth: 1, borderColor: colors.border,
+    borderWidth: 1, borderColor: c.border,
   },
   imagen: { width: 64, height: 64, borderRadius: borderRadius.sm, marginRight: spacing.md },
-  nombre: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary },
-  tipo: { fontSize: fontSize.sm, color: colors.secondary, marginTop: 2 },
-  ubicacion: { fontSize: fontSize.sm, color: colors.muted, marginTop: 2 },
-  mensaje: { fontSize: fontSize.md, color: colors.primary, textAlign: 'center', lineHeight: 22 },
-  exito: { fontSize: fontSize.md, color: colors.success, textAlign: 'center', fontWeight: '600' },
-  error: { fontSize: fontSize.md, color: colors.danger, textAlign: 'center', marginTop: spacing.sm },
+  nombre: { fontSize: fontSize.md, fontWeight: '600', color: c.primary },
+  tipo: { fontSize: fontSize.sm, color: c.secondary, marginTop: 2 },
+  ubicacion: { fontSize: fontSize.sm, color: c.muted, marginTop: 2 },
+  mensaje: { fontSize: fontSize.md, color: c.primary, textAlign: 'center', lineHeight: 22 },
+  exito: { fontSize: fontSize.md, color: c.success, textAlign: 'center', fontWeight: '600' },
+  error: { fontSize: fontSize.md, color: c.danger, textAlign: 'center', marginTop: spacing.sm },
   fila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  mensajeFila: { fontSize: fontSize.md, color: colors.primary, marginLeft: spacing.sm },
+  mensajeFila: { fontSize: fontSize.md, color: c.primary, marginLeft: spacing.sm },
   boton: {
-    backgroundColor: colors.accent, borderRadius: borderRadius.md,
+    backgroundColor: c.accent, borderRadius: borderRadius.md,
     paddingVertical: spacing.sm + 4, alignItems: 'center', marginTop: spacing.md,
   },
-  botonSecundario: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.accent },
-  botonTexto: { color: colors.white, fontSize: fontSize.md, fontWeight: '600' },
-  botonTextoSecundario: { color: colors.accent },
-  ayuda: { fontSize: fontSize.sm, color: colors.muted, marginTop: spacing.md, lineHeight: 18 },
+  botonSecundario: { backgroundColor: 'transparent', borderWidth: 1, borderColor: c.accent },
+  botonTexto: { color: c.onAccent, fontSize: fontSize.md, fontWeight: '600' },
+  botonTextoSecundario: { color: c.accent },
+  ayuda: { fontSize: fontSize.sm, color: c.muted, marginTop: spacing.md, lineHeight: 18 },
   pie: {
-    fontSize: fontSize.xs, color: colors.muted, textAlign: 'center',
+    fontSize: fontSize.xs, color: c.muted, textAlign: 'center',
     marginTop: spacing.xl, fontStyle: 'italic',
   },
 });

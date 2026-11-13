@@ -4,12 +4,14 @@ import {
 } from "react-native";
 import RegisterScreen from "./RegisterScreen";
 import LoginScreen from "./LoginScreen";
-import { colors, spacing, borderRadius, fontSize } from "../theme";
+import { spacing, borderRadius, fontSize, Paleta } from "../theme";
+import { useEstilos } from "../hooks/useEstilos";
 
 type RoleOption = "musician" | "local";
 type AuthView = "landing" | "register" | "login";
 
 export default function AuthScreen() {
+  const styles = useEstilos(crearEstilos);
   const [view, setView] = useState<AuthView>("landing");
   const [selectedRole, setSelectedRole] = useState<RoleOption>("musician");
 
@@ -95,19 +97,19 @@ export default function AuthScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   content: { padding: spacing.lg, paddingTop: 60, alignItems: "center" },
   icon: { fontSize: fontSize.xxl, marginBottom: spacing.sm },
   title: {
     fontSize: fontSize.xl,
     fontWeight: "bold",
-    color: colors.primary,
+    color: c.primary,
     textAlign: "center",
   },
   subtitle: {
     fontSize: fontSize.md,
-    color: colors.secondary,
+    color: c.secondary,
     textAlign: "center",
     marginTop: spacing.xs,
     marginBottom: spacing.xl,
@@ -115,18 +117,18 @@ const styles = StyleSheet.create({
   },
   card: {
     width: "100%",
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     marginBottom: spacing.sm,
     flexDirection: "row",
     alignItems: "center",
     borderLeftWidth: 4,
-    borderLeftColor: colors.muted,
+    borderLeftColor: c.muted,
     opacity: 0.85,
   },
   cardAction: {
-    borderLeftColor: colors.accent,
+    borderLeftColor: c.accent,
     opacity: 1,
   },
   cardIcon: { fontSize: 32, marginRight: spacing.md },
@@ -134,24 +136,24 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: fontSize.md,
     fontWeight: "600",
-    color: colors.secondary,
+    color: c.secondary,
   },
-  cardTitleAction: { color: colors.primary },
+  cardTitleAction: { color: c.primary },
   cardDesc: {
     fontSize: fontSize.sm,
-    color: colors.muted,
+    color: c.muted,
     marginTop: 2,
     lineHeight: 18,
   },
   footer: {
     fontSize: fontSize.xs,
-    color: colors.muted,
+    color: c.muted,
     textAlign: "center",
     marginTop: spacing.lg,
     fontStyle: "italic",
   },
   loginLink: {
-    color: colors.accent,
+    color: c.accent,
     fontSize: fontSize.sm,
     fontWeight: "600",
     textAlign: "center",
