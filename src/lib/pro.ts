@@ -39,3 +39,34 @@ export function fechaHastaPro(tenant: ConPro): string | null {
   const { fechaISO } = separarFechaHora(tenant!.sonopolisProHasta);
   return `${formatearFechaEs(fechaISO)} de ${fechaISO.slice(0, 4)}`;
 }
+
+// Spec 168 — la suscripción del dueño (RPC `pro_mi_suscripcion`, spec 161). El tipo vive
+// acá y no en `proSuscripcion.ts` para que las fechas se prueben con `tsx` sin red.
+
+export type EstadoSuscripcionPro = 'activa' | 'pausada' | 'cancelada';
+export interface MiSuscripcionPro {
+  estado: EstadoSuscripcionPro; monto: number; moneda: string;
+  ultimoPagoAt: string | null; proximoCobroAt: string | null;
+  proHasta: string | null; canceladaAt: string | null;
+}
+
+/** Los 3 días que `pro_cerrar_suscripcion` quita al cancelar (spec 161). */
+export const GRACIA_MS = 3 * 86_400_000;
+
+/** «26 de noviembre de 2026» en UTC, como `fechaLargaPro` de la web (W-265): así dice
+ * el mismo día que la web. `toISOString` ya es UTC; sin `Intl`, igual que `fechaHastaPro`. */
+export function fechaLargaPro(iso: string): string {
+  const fechaISO = new Date(iso).toISOString().slice(0, 10);
+  return `${formatearFechaEs(fechaISO)} de ${fechaISO.slice(0, 4)}`;
+}
+
+/** La fecha (ISO) hasta la que queda Pro si el dueño cancela ahora; null si Pro termina
+ * hoy. Port de `finSiCancela` (sonopolisWeb/components/CardSonopolisPro.js) sin el
+ * texto, que es del spec 169. Activa: el fin del mes pagado. Pausada: sin la gracia. */
+export function fechaFinSiCancela(s: MiSuscripcionPro, ahora: Date = new Date()): string | null {
+  if (s.estado === 'activa' && s.proximoCobroAt) return s.proximoCobroAt;
+  if (!s.proHasta) return null;
+  const fin = new Date(new Date(s.proHasta).getTime() - GRACIA_MS);
+  if (fin <= ahora) return null;
+  return fin.toISOString();
+}

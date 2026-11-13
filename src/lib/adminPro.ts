@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { URL_WEB } from '../constants/web';
+import type { SuscripcionConCobros } from './cobrosPro';
 
 /**
  * Spec 153 — Sonópolis Pro desde el admin de la app. Port de
@@ -51,13 +52,24 @@ export async function generarCodigoPro(
   return { codigo, url: data?.url || `${URL_WEB}/pro/${codigo}` };
 }
 
+/** Spec 168 — admin. Suscripciones del tenant con cada cobro tal como lo ve Mercado Pago
+ * (Edge Function `cobros-pro`, spec 163). 403 → lanza «solo admin». Los campos llegan
+ * crudos; se traducen con `./cobrosPro`. */
+export async function getCobrosPro(tipo: TipoTenant, id: string): Promise<SuscripcionConCobros[]> {
+  const { data, error } = await supabase.functions.invoke('cobros-pro', {
+    body: { tenant_type: tipo, tenant_id: id },
+  });
+  if (error) throw await errorLegible(error);
+  return data?.suscripciones ?? [];
+}
+
 /**
  * Port de `errorLegible` (sonopolisWeb/libs/data/proSuscripcion.js:49-66).
  * `functions.invoke` envuelve cualquier no-2xx en «Edge Function returned a non-2xx
  * status code»; el mensaje útil (Postgres o Mercado Pago) viene en el cuerpo de la
  * respuesta, que queda en `error.context`.
  */
-async function errorLegible(error: any): Promise<Error> {
+export async function errorLegible(error: any): Promise<Error> {
   const respuesta = error?.context;
   if (!respuesta || typeof respuesta.text !== 'function') return error;
   let texto: string;
