@@ -1,6 +1,6 @@
 # Spec 168 — Lógica de Pro en la app: el dueño lee y cancela su suscripción, el admin lee los cobros
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — `npx tsc --noEmit` limpio; `expo export --platform web` sin error; greps de los criterios 3, 4 y 7 sin salida; script `tsx` contra `cobrosPro.ts` pasa los casos del criterio 5 (30-oct «Devuelto», `danger`, «Devuelto el 30 oct, 13:34, 8 min después del cobro», «Tarjeta de débito (debvisa)», «30 oct, 13:26»; rechazado/fondos insuficientes; aprobado con y sin registro; código desconocido; resumen «Mercado Pago cobró y lo devolvió…»); script `tsx` contra `pro.ts` con `TZ=America/Santiago` y `TZ=UTC` pasa el criterio 6. V-candidatas 168-a y 168-b sin ver (se ven con las pantallas 169/170).
 > Capa: LÓGICA. `src/lib/proSuscripcion.ts` (nuevo), `src/hooks/useMiSuscripcionPro.ts` (nuevo), `src/lib/cobrosPro.ts` (nuevo), `src/hooks/useCobrosPro.ts` (nuevo), `src/lib/adminPro.ts`, `src/lib/pro.ts`.
 > Depende de: spec 161 (`pro_mi_suscripcion`), spec 162 (`cancelar-suscripcion-pro`), spec 163 (`cobros-pro`), spec 153 (`adminPro.ts`, `errorLegible`), spec 148 (`src/lib/pro.ts`).
 > Hermano en la web: `libs/data/proSuscripcion.js` (`getMiSuscripcionPro`, `cancelarMiSuscripcionPro`, `getCobrosPro`), `libs/cobrosPro.js`, `libs/pro.js` (`fechaLargaPro`), `components/CardSonopolisPro.js` (`finSiCancela`) (W-264, W-265, W-270).
