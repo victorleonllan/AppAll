@@ -10,6 +10,7 @@ import AdminEventosScreen from '../screens/AdminEventosScreen';
 import AdminCrmScreen from '../screens/AdminCrmScreen';
 import AdminTenantScreen from '../screens/AdminTenantScreen';
 import AdminLocalesScreen from '../screens/AdminLocalesScreen';
+import AdminVisitasScreen from '../screens/AdminVisitasScreen';
 import type { TipoTenant } from '../lib/adminPro';
 
 export type AdminParamList = {
@@ -20,6 +21,8 @@ export type AdminParamList = {
   AdminCrm: undefined;
   AdminTenant: { tipo: TipoTenant; id: string; nombre: string };
   AdminLocales: undefined;
+  // Spec 172 — visitantes de la web por cartelera de país.
+  AdminVisitas: undefined;
 };
 
 /**
@@ -39,6 +42,7 @@ export function pantallasAdmin(Stack: { Group: any; Screen: any }) {
       <Stack.Screen name="AdminPagos" component={AdminPagosScreen} options={{ title: 'Pagos' }} />
       <Stack.Screen name="AdminEventos" component={AdminEventosScreen} options={{ title: 'Eventos' }} />
       <Stack.Screen name="AdminCrm" component={AdminCrmScreen} options={{ title: 'CRM' }} />
+      <Stack.Screen name="AdminVisitas" component={AdminVisitasScreen} options={{ title: 'Visitas' }} />
       <Stack.Screen
         name="AdminTenant"
         component={AdminTenantScreen}

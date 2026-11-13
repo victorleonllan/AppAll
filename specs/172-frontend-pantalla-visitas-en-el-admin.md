@@ -1,6 +1,6 @@
 # Spec 172 — Pantalla «Visitas» en el admin de la app: visitantes de la web por país y detalle de cada uno
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — `tsc --noEmit` sin errores, `expo export --platform web` OK y `grep registrar_visita src` vacío; criterios 3-6 y V-candidata 172-a (comparar con la web en un teléfono) pendientes de prueba manual
 > Capa: FRONTEND. `src/screens/AdminVisitasScreen.tsx` (nuevo), `src/navigation/pantallasAdmin.tsx`, `src/screens/AdminScreen.tsx`.
 > Depende de: spec 171 (`useAdminVisitas`, `src/lib/visitas.ts`), spec 158, spec 159, spec 173 (los archivos nuevos de este spec arman sus estilos con `useEstilos` y leen los colores de JSX con `useTema().colores`, según la receta §6 del 173; los archivos que ya existen siguen con `colors` hasta su spec de migración).
 > Hermano en la web: `app/(private)/admin/visitas/page.js`, `app/(private)/admin/AdminNav.js` (W-263, W-266, W-269).
