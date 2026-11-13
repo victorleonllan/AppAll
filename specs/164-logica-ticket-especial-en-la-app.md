@@ -1,6 +1,6 @@
 # Spec 164 — La app lee, escribe y compra el ticket especial (packs 2x1 a 5x1) con destinatarios
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — tsc limpio, export web OK, `especiales_vigentes_de` responde 200 `[]` con la anon key, `primerDestinatarioInvalido` da 2 y -1 (criterio 6), `destinatarios` solo viaja con `especialId`; sin cambios en `src/types/index.ts`.
 > Capa: LÓGICA. `src/lib/especiales.ts` (nuevo), `src/hooks/useEspeciales.ts` (nuevo), `src/hooks/useEspecialesVigentes.ts` (nuevo), `src/lib/pagoCompra.ts`.
 > Depende de: spec 151 (aplicado: `crearPagoCompra`), W-252 y W-258 aplicados y pusheados (tabla `event_tickets_especiales`, `tickets.especial_id`, `tickets.destinatarios_extra`), W-253 y W-259 aplicados (`especiales_vigentes_de` en la base; `create-preference` y `create-payment-flow` desplegadas con `especialId` y `destinatarios`).
 > Alimenta: spec 165 (el organizador crea packs), spec 166 (el fan compra un pack), spec 167 (píldora en la cartelera).

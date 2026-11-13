@@ -1,6 +1,6 @@
 // Spec 151 — crea el cobro con la Edge Function de la pasarela elegida y normaliza la
 // respuesta. Port de `crearPagoCompra` y `mensajeDeError` de sonopolisWeb/libs/purchase.js
-// (W-189). Sin llamadores hasta el spec 160: DetalleEventoScreen sigue con pedirPreferencia.
+// (W-189).
 
 import { Platform } from 'react-native';
 import { supabase } from './supabase';
@@ -30,10 +30,19 @@ export async function crearPagoCompra(args: {
   eventoId: string;
   userId: string;
   pasarela: Pasarela;
-  cantidad?: number; // 1 por defecto
+  cantidad?: number; // 1 por defecto; con `especialId` son packs (contrato de W-253)
+  especialId?: string | null;
+  destinatarios?: string[];
 }): Promise<PagoCreado> {
-  const { eventoId, userId, pasarela, cantidad = 1 } = args;
+  const { eventoId, userId, pasarela, cantidad = 1, especialId, destinatarios } = args;
   const funcion = FUNCION_DE_PASARELA[pasarela];
+
+  // Spec 164 — W-253 / W-259. Regla del contrato con la función, no de la pantalla:
+  // la Edge Function responde 409 a destinatarios sin pack, así que solo viajan con
+  // `especialId` y solo los no vacíos; sin ninguno, el cuerpo no lleva el campo.
+  const correos = especialId
+    ? (destinatarios ?? []).map((d) => d.trim()).filter((d) => d !== '')
+    : [];
 
   // Las dos funciones identifican al comprador con supabase.auth.getUser(). Con la anon
   // key eso devuelve null y cortan en 401: hay que mandar el access_token de la sesión.
@@ -56,6 +65,8 @@ export async function crearPagoCompra(args: {
         // Regla de plataforma, no de la pantalla: en nativo la vuelta tiene que reabrir la
         // app (specs 117 y 147); en el build web, volver a la web.
         ...(Platform.OS !== 'web' ? { origen: 'app' } : {}),
+        ...(especialId ? { especialId } : {}),
+        ...(especialId && correos.length > 0 ? { destinatarios: correos } : {}),
       }),
     }
   );
@@ -107,6 +118,16 @@ export function mensajeErrorPago(err: unknown): string {
       return 'Ese medio de pago no está disponible para este evento';
     case 'flow_create_failed':
       return 'Flow no pudo iniciar el pago. Intenta de nuevo o paga con otro medio';
+    // Spec 164 — en la app no hay página que recargar: el spec 166 vuelve a pedir la
+    // lista de packs con estos tres códigos. `destinatarios_no_guardados` cae al default.
+    case 'especial_agotado':
+      return 'Se agotaron los packs. Elige otra opción.';
+    case 'especial_cerrado':
+      return 'Este pack ya no está a la venta.';
+    case 'especial_invalido':
+      return 'Este pack ya no existe. Elige otra opción.';
+    case 'destinatarios_invalidos':
+      return 'Revisa los correos de las otras entradas.';
     default:
       return 'No se pudo procesar la compra';
   }
