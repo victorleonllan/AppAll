@@ -7,7 +7,9 @@ import { Evento } from '../types';
 import { useEventos } from '../context/EventosContext';
 import { EventoPermisos } from '../hooks/useEventoPermisos';
 import { confirmar } from '../lib/confirm';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 interface Props {
   evento: Evento;
@@ -31,6 +33,8 @@ type Accion = 'visible' | 'cancelar' | 'borrar';
  * no hace nada en el build web (`src/lib/confirm.ts`).
  */
 export default function AccionesEvento({ evento, permisos, onBorrado }: Props) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const navigation = useNavigation();
   const { updateEvento, cancelEvento, deleteEvento } = useEventos();
   const [motivo, setMotivo] = useState('');
@@ -121,7 +125,7 @@ export default function AccionesEvento({ evento, permisos, onBorrado }: Props) {
               value={visible}
               onValueChange={handleVisible}
               disabled={ocupado}
-              trackColor={{ true: colors.accent, false: colors.border }}
+              trackColor={{ true: colores.accent, false: colores.border }}
             />
           </View>
           <Text style={styles.ayuda}>
@@ -145,7 +149,7 @@ export default function AccionesEvento({ evento, permisos, onBorrado }: Props) {
             value={motivo}
             onChangeText={setMotivo}
             placeholder="Motivo de la cancelación (opcional)"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colores.muted}
             editable={!ocupado}
           />
           <TouchableOpacity
@@ -154,7 +158,7 @@ export default function AccionesEvento({ evento, permisos, onBorrado }: Props) {
             disabled={ocupado}
           >
             {corriendo === 'cancelar' ? (
-              <ActivityIndicator color={colors.danger} />
+              <ActivityIndicator color={colores.danger} />
             ) : (
               <Text style={styles.textoCancelar}>Cancelar evento</Text>
             )}
@@ -169,7 +173,7 @@ export default function AccionesEvento({ evento, permisos, onBorrado }: Props) {
           disabled={ocupado}
         >
           {corriendo === 'borrar' ? (
-            <ActivityIndicator color={colors.white} />
+            <ActivityIndicator color={colores.white} />
           ) : (
             <Text style={styles.textoBorrar}>Borrar evento</Text>
           )}
@@ -181,9 +185,9 @@ export default function AccionesEvento({ evento, permisos, onBorrado }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginTop: spacing.md,
@@ -191,41 +195,41 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     marginBottom: spacing.sm,
   },
   seccion: { marginTop: spacing.sm },
   fila: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  label: { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary },
-  ayuda: { fontSize: fontSize.xs, color: colors.muted, marginTop: spacing.xs },
-  confirmacion: { fontSize: fontSize.xs, color: colors.success, marginTop: spacing.xs },
-  cancelado: { fontSize: fontSize.sm, fontWeight: '600', color: colors.danger },
+  label: { fontSize: fontSize.sm, fontWeight: '600', color: c.primary },
+  ayuda: { fontSize: fontSize.xs, color: c.muted, marginTop: spacing.xs },
+  confirmacion: { fontSize: fontSize.xs, color: c.success, marginTop: spacing.xs },
+  cancelado: { fontSize: fontSize.sm, fontWeight: '600', color: c.danger },
   input: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     padding: 12,
     borderRadius: borderRadius.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
   botonCancelar: {
     borderWidth: 1,
-    borderColor: colors.danger,
+    borderColor: c.danger,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     marginTop: spacing.sm,
   },
-  textoCancelar: { color: colors.danger, fontWeight: 'bold', fontSize: fontSize.md },
+  textoCancelar: { color: c.danger, fontWeight: 'bold', fontSize: fontSize.md },
   botonBorrar: {
-    backgroundColor: colors.danger,
+    backgroundColor: c.danger,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     marginTop: spacing.lg,
   },
-  textoBorrar: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
+  textoBorrar: { color: c.white, fontWeight: 'bold', fontSize: fontSize.md },
   botonDesactivado: { opacity: 0.6 },
-  error: { fontSize: fontSize.sm, color: colors.danger, marginTop: spacing.md },
+  error: { fontSize: fontSize.sm, color: c.danger, marginTop: spacing.md },
 });

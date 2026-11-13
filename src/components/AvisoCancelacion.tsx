@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
 
 interface Props {
   motivo: string | null;
@@ -15,6 +16,7 @@ interface Props {
  * igual es inequívoco — lo que importa es que el show no va.
  */
 export default function AvisoCancelacion({ motivo, onVerOtros }: Props) {
+  const styles = useEstilos(crearEstilos);
   return (
     <View style={styles.tarjeta} accessibilityRole="alert">
       {/* Título en primary, no rojo: el rojo ya está en el borde — repetirlo
@@ -31,16 +33,16 @@ export default function AvisoCancelacion({ motivo, onVerOtros }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   tarjeta: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     borderTopWidth: 3,
-    borderTopColor: colors.danger,
+    borderTopColor: c.danger,
     padding: spacing.md,
     marginBottom: spacing.sm,
   },
-  titulo: { fontSize: fontSize.md, fontWeight: 'bold', color: colors.primary },
-  texto: { fontSize: fontSize.sm, color: colors.secondary, marginTop: spacing.xs },
-  enlace: { fontSize: fontSize.sm, fontWeight: '600', color: colors.accent, marginTop: spacing.sm },
+  titulo: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary },
+  texto: { fontSize: fontSize.sm, color: c.secondary, marginTop: spacing.xs },
+  enlace: { fontSize: fontSize.sm, fontWeight: '600', color: c.accent, marginTop: spacing.sm },
 });

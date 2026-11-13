@@ -1,19 +1,24 @@
+import { useMemo } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { EntradaPropia } from '../hooks/useMisEntradas';
 import { TicketItemStatus } from '../types';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta, paletaClara } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 /**
  * Spec 126 — colores al revés que en EntradasEventoScreen, a propósito (W-091):
  * para quien controla la puerta `used` es lo bueno; para el dueño de la entrada,
  * "Sin usar" es lo que todavía sirve. No unificar los dos mapeos.
+ *
+ * Spec 177 — función y no objeto fijo: un objeto de módulo no seguiría el tema.
  */
-const ESTADO: Record<TicketItemStatus, { texto: string; color: string }> = {
-  valid: { texto: 'Sin usar', color: colors.success },
-  used: { texto: 'Ya entró', color: colors.muted },
-  void: { texto: 'Anulada', color: colors.danger },
-};
+const estadosTalon = (c: Paleta): Record<TicketItemStatus, { texto: string; color: string }> => ({
+  valid: { texto: 'Sin usar', color: c.success },
+  used: { texto: 'Ya entró', color: c.muted },
+  void: { texto: 'Anulada', color: c.danger },
+});
 
 const MONO = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
 
@@ -25,6 +30,9 @@ function horaDe(iso: string): string | null {
 }
 
 export default function TalonEntrada({ entrada }: { entrada: EntradaPropia }) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
+  const ESTADO = useMemo(() => estadosTalon(colores), [colores]);
   const { evento, status } = entrada;
   const estado = ESTADO[status] ?? ESTADO.valid;
   const anulada = status === 'void';
@@ -64,12 +72,15 @@ export default function TalonEntrada({ entrada }: { entrada: EntradaPropia }) {
 
       <View style={styles.cuerpo}>
         <View accessible accessibilityLabel={`QR entrada ${folio}`}>
+          {/* Spec 177 — el QR no sigue el tema: necesita módulos oscuros sobre fondo
+              claro para que el escáner (spec 041) lo lea. Con `colores.primary` en oscuro
+              (casi blanco) quedaría blanco sobre blanco. */}
           <QRCode
             value={entrada.qrToken}
             size={200}
             quietZone={16}
-            backgroundColor={colors.white}
-            color={anulada ? colors.muted : colors.primary}
+            backgroundColor={colores.white}
+            color={anulada ? paletaClara.muted : paletaClara.primary}
           />
         </View>
         {/* Respaldo cuando la cámara no lee: se dicta o se tipea (spec 040). */}
@@ -88,15 +99,15 @@ export default function TalonEntrada({ entrada }: { entrada: EntradaPropia }) {
 
 const MUESCA = 22;
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   talon: {
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
   },
   anulada: { opacity: 0.6 },
   cabecera: {
-    backgroundColor: colors.primary,
+    backgroundColor: c.block,
     padding: spacing.md,
   },
   filaSuperior: {
@@ -105,33 +116,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
-  marca: { color: colors.white, fontSize: fontSize.sm, fontWeight: 'bold' },
+  marca: { color: c.white, fontSize: fontSize.sm, fontWeight: 'bold' },
   pildora: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: borderRadius.sm,
   },
-  textoPildora: { color: colors.primary, fontSize: fontSize.xs, fontWeight: 'bold' },
-  artista: { color: colors.white, fontSize: fontSize.lg, fontWeight: 'bold' },
-  genero: { color: colors.white, fontSize: fontSize.sm, opacity: 0.75, marginTop: 2 },
-  detalle: { color: colors.white, fontSize: fontSize.sm, opacity: 0.7, marginTop: spacing.xs },
+  textoPildora: { color: c.primary, fontSize: fontSize.xs, fontWeight: 'bold' },
+  artista: { color: c.white, fontSize: fontSize.lg, fontWeight: 'bold' },
+  genero: { color: c.white, fontSize: fontSize.sm, opacity: 0.75, marginTop: 2 },
+  detalle: { color: c.white, fontSize: fontSize.sm, opacity: 0.7, marginTop: spacing.xs },
   franjaCancelado: {
-    backgroundColor: colors.danger,
+    backgroundColor: c.danger,
     paddingVertical: spacing.xs,
     alignItems: 'center',
   },
-  textoCancelado: { color: colors.white, fontSize: fontSize.sm, fontWeight: 'bold' },
+  textoCancelado: { color: c.white, fontSize: fontSize.sm, fontWeight: 'bold' },
   perforacion: {
     height: MUESCA,
     justifyContent: 'center',
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
   },
   linea: {
     marginHorizontal: spacing.md,
     borderTopWidth: 2,
     borderStyle: 'dashed',
-    borderColor: colors.border,
+    borderColor: c.border,
   },
   muesca: {
     position: 'absolute',
@@ -139,18 +150,18 @@ const styles = StyleSheet.create({
     width: MUESCA,
     height: MUESCA,
     borderRadius: MUESCA / 2,
-    backgroundColor: colors.background,
+    backgroundColor: c.background,
   },
   muescaIzq: { left: -MUESCA / 2 },
   muescaDer: { right: -MUESCA / 2 },
   cuerpo: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     alignItems: 'center',
     padding: spacing.md,
   },
   token: {
     fontSize: fontSize.xs,
-    color: colors.secondary,
+    color: c.secondary,
     fontFamily: MONO,
     marginTop: spacing.sm,
     textAlign: 'center',
@@ -162,8 +173,8 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     marginTop: spacing.md,
   },
-  folio: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
+  folio: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
   estado: { alignItems: 'flex-end' },
   textoEstado: { fontSize: fontSize.md, fontWeight: 'bold' },
-  horaIngreso: { fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
+  horaIngreso: { fontSize: fontSize.xs, color: c.muted, marginTop: 2 },
 });
