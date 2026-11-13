@@ -17,9 +17,13 @@ import TarjetaEvento from '../components/TarjetaEvento';
 import TarjetaPro from '../components/TarjetaPro';
 import { useMiSuscripcionPro } from '../hooks/useMiSuscripcionPro';
 import BotonAdmin from '../components/BotonAdmin';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 export default function PerfilMusicoScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const navigation = useNavigation();
   const { user, signOut } = useAuth();
   const { eventos, misColaboraciones } = useEventos();
@@ -153,7 +157,7 @@ export default function PerfilMusicoScreen() {
   if (!user || cargando) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={colores.accent} />
       </View>
     );
   }
@@ -169,7 +173,7 @@ export default function PerfilMusicoScreen() {
           disabled={creando}
         >
           {creando ? (
-            <ActivityIndicator color={colors.white} />
+            <ActivityIndicator color={colores.onAccent} />
           ) : (
             <Text style={styles.textoBoton}>Crear mi perfil</Text>
           )}
@@ -233,7 +237,7 @@ export default function PerfilMusicoScreen() {
           style={[
             styles.card,
             styles.filaDisponible,
-            { backgroundColor: perfil.available ? colors.accentLight : colors.cardBackground },
+            { backgroundColor: perfil.available ? colores.accentLight : colores.cardBackground },
           ]}
         >
           <View style={{ flex: 1, marginRight: spacing.md }}>
@@ -247,8 +251,8 @@ export default function PerfilMusicoScreen() {
           <Switch
             value={perfil.available ?? false}
             onValueChange={handleDisponibilidad}
-            trackColor={{ false: colors.border, true: colors.accent }}
-            thumbColor={colors.white}
+            trackColor={{ false: colores.border, true: colores.accent }}
+            thumbColor={colores.white}
           />
         </View>
       )}
@@ -365,11 +369,11 @@ export default function PerfilMusicoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   content: { padding: spacing.md, paddingBottom: 100 },
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
@@ -378,43 +382,43 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     marginBottom: spacing.md,
   },
   avisoMock: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     borderRadius: borderRadius.md,
     padding: spacing.sm,
     marginBottom: spacing.md,
   },
-  avisoMockTexto: { fontSize: fontSize.sm, color: colors.accent, fontWeight: '600' },
+  avisoMockTexto: { fontSize: fontSize.sm, color: c.accent, fontWeight: '600' },
   filaBanda: { flexDirection: 'row', alignItems: 'center' },
   foto: { width: 56, height: 56, borderRadius: borderRadius.md, marginRight: spacing.md },
-  fotoPlaceholder: { backgroundColor: colors.accentLight, alignItems: 'center', justifyContent: 'center' },
+  fotoPlaceholder: { backgroundColor: c.accentLight, alignItems: 'center', justifyContent: 'center' },
   fotoPlaceholderTexto: { fontSize: fontSize.lg },
-  nombreBanda: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
-  subtituloBanda: { fontSize: fontSize.sm, color: colors.secondary, marginTop: 2 },
+  nombreBanda: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
+  subtituloBanda: { fontSize: fontSize.sm, color: c.secondary, marginTop: 2 },
   completitud: { marginTop: spacing.md },
   filaDisponible: { flexDirection: 'row', alignItems: 'center' },
-  disponibleTitulo: { fontSize: fontSize.md, fontWeight: 'bold', color: colors.primary },
-  disponibleSubtitulo: { fontSize: fontSize.sm, color: colors.secondary, marginTop: 2 },
+  disponibleTitulo: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary },
+  disponibleSubtitulo: { fontSize: fontSize.sm, color: c.secondary, marginTop: 2 },
   completitudBarraFondo: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.border,
+    backgroundColor: c.border,
     overflow: 'hidden',
   },
-  completitudBarra: { height: '100%', backgroundColor: colors.accent },
-  completitudTexto: { fontSize: fontSize.xs, color: colors.muted, marginTop: spacing.xs },
+  completitudBarra: { height: '100%', backgroundColor: c.accent },
+  completitudTexto: { fontSize: fontSize.xs, color: c.muted, marginTop: spacing.xs },
   resumenFila: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: spacing.xs,
   },
-  resumenLabel: { fontSize: fontSize.md, color: colors.secondary },
-  resumenValor: { fontSize: fontSize.md, fontWeight: 'bold', color: colors.primary },
+  resumenLabel: { fontSize: fontSize.md, color: c.secondary },
+  resumenValor: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary },
   botonPrimario: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
@@ -422,21 +426,21 @@ const styles = StyleSheet.create({
   filaAccionesSecundarias: { flexDirection: 'row', marginTop: spacing.sm },
   botonSecundario: {
     flex: 1,
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
   },
-  textoBotonSecundario: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  textoBotonSecundario: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm },
   botonEscaner: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     marginTop: spacing.sm,
   },
   boton: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
@@ -444,20 +448,20 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
   },
   botonDesactivado: { opacity: 0.6 },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
   vacio: {
     fontSize: fontSize.sm,
-    color: colors.muted,
+    color: c.muted,
     fontStyle: 'italic',
     marginBottom: spacing.sm,
   },
   aviso: {
     fontSize: fontSize.md,
-    color: colors.muted,
+    color: c.muted,
     textAlign: 'center',
     marginTop: 40,
     paddingHorizontal: spacing.lg,
   },
   botonSalir: { alignItems: 'center', marginTop: spacing.sm, marginBottom: spacing.lg },
-  textoBotonSalir: { color: colors.danger, fontWeight: '600', fontSize: fontSize.sm },
+  textoBotonSalir: { color: c.danger, fontWeight: '600', fontSize: fontSize.sm },
 });

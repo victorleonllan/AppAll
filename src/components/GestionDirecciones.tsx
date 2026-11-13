@@ -4,7 +4,9 @@ import {
 } from 'react-native';
 import { useDireccionesVenue, DireccionVenue } from '../hooks/useDireccionesVenue';
 import { confirmar } from '../lib/confirm';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 interface GestionDireccionesProps {
   venueId: string;
@@ -18,6 +20,8 @@ interface GestionDireccionesProps {
  * para que la pantalla refresque VenuesContext.
  */
 export default function GestionDirecciones({ venueId, onCambio }: GestionDireccionesProps) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const { direcciones, cargando, error, refrescar, crear, activar, eliminar, puedeAgregar } =
     useDireccionesVenue(venueId);
   const [ocupado, setOcupado] = useState(false);
@@ -75,7 +79,7 @@ export default function GestionDirecciones({ venueId, onCambio }: GestionDirecci
   };
 
   if (cargando) {
-    return <ActivityIndicator color={colors.accent} style={styles.cargando} />;
+    return <ActivityIndicator color={colores.accent} style={styles.cargando} />;
   }
 
   if (error) {
@@ -132,15 +136,15 @@ export default function GestionDirecciones({ venueId, onCambio }: GestionDirecci
             </Text>
           ) : null}
           <Text style={styles.label}>Dirección</Text>
-          <TextInput style={styles.input} value={address} onChangeText={setAddress} placeholder="Ej: Av. Italia 890" placeholderTextColor={colors.muted} />
+          <TextInput style={styles.input} value={address} onChangeText={setAddress} placeholder="Ej: Av. Italia 890" placeholderTextColor={colores.muted} />
           <View style={styles.filaDoble}>
             <View style={styles.mitad}>
               <Text style={styles.label}>Comuna</Text>
-              <TextInput style={styles.input} value={comuna} onChangeText={setComuna} placeholder="Ñuñoa" placeholderTextColor={colors.muted} />
+              <TextInput style={styles.input} value={comuna} onChangeText={setComuna} placeholder="Ñuñoa" placeholderTextColor={colores.muted} />
             </View>
             <View style={styles.mitad}>
               <Text style={styles.label}>Ciudad</Text>
-              <TextInput style={styles.input} value={ciudad} onChangeText={setCiudad} placeholder="Santiago" placeholderTextColor={colors.muted} />
+              <TextInput style={styles.input} value={ciudad} onChangeText={setCiudad} placeholder="Santiago" placeholderTextColor={colores.muted} />
             </View>
           </View>
           <View style={styles.acciones}>
@@ -150,7 +154,7 @@ export default function GestionDirecciones({ venueId, onCambio }: GestionDirecci
               disabled={ocupado}
             >
               {ocupado ? (
-                <ActivityIndicator color={colors.white} />
+                <ActivityIndicator color={colores.onAccent} />
               ) : (
                 <Text style={styles.textoBotonPrimario}>Guardar</Text>
               )}
@@ -188,67 +192,67 @@ function textoDireccion(d: DireccionVenue): string {
   return [d.address, d.comuna, d.ciudad].filter(Boolean).join(', ');
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   cargando: { marginVertical: spacing.md },
-  aviso: { fontSize: fontSize.xs, color: colors.muted, marginBottom: spacing.sm },
-  error: { fontSize: fontSize.sm, color: colors.danger, marginBottom: spacing.sm },
-  ayuda: { fontSize: fontSize.xs, color: colors.muted, marginTop: spacing.xs, marginBottom: spacing.sm },
+  aviso: { fontSize: fontSize.xs, color: c.muted, marginBottom: spacing.sm },
+  error: { fontSize: fontSize.sm, color: c.danger, marginBottom: spacing.sm },
+  ayuda: { fontSize: fontSize.xs, color: c.muted, marginTop: spacing.xs, marginBottom: spacing.sm },
   direccion: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     padding: spacing.sm,
     marginBottom: spacing.sm,
   },
-  direccionActiva: { backgroundColor: colors.accentLight, borderColor: colors.accent },
+  direccionActiva: { backgroundColor: c.accentLight, borderColor: c.accent },
   direccionFila: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  direccionTexto: { flex: 1, fontSize: fontSize.md, color: colors.primary },
-  etiquetaActiva: { fontSize: fontSize.xs, fontWeight: 'bold', color: colors.accent },
+  direccionTexto: { flex: 1, fontSize: fontSize.md, color: c.primary },
+  etiquetaActiva: { fontSize: fontSize.xs, fontWeight: 'bold', color: c.accent },
   acciones: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   formulario: { marginTop: spacing.xs },
   label: {
     fontSize: fontSize.sm,
     fontWeight: '600',
-    color: colors.primary,
+    color: c.primary,
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
   input: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     padding: 12,
     borderRadius: borderRadius.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
   filaDoble: { flexDirection: 'row', gap: spacing.sm },
   mitad: { flex: 1 },
   botonPrimario: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
   },
-  textoBotonPrimario: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.sm },
+  textoBotonPrimario: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.sm },
   botonSecundario: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     alignSelf: 'flex-start',
   },
-  textoBotonSecundario: { color: colors.secondary, fontWeight: '600', fontSize: fontSize.sm },
+  textoBotonSecundario: { color: c.secondary, fontWeight: '600', fontSize: fontSize.sm },
   botonBorrar: {
     borderWidth: 1,
-    borderColor: colors.danger,
+    borderColor: c.danger,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
   },
-  textoBotonBorrar: { color: colors.danger, fontWeight: '600', fontSize: fontSize.sm },
+  textoBotonBorrar: { color: c.danger, fontWeight: '600', fontSize: fontSize.sm },
   botonDesactivado: { opacity: 0.6 },
 });

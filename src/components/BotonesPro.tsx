@@ -7,7 +7,9 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { darPro, darProSinVencimiento, PLAZOS_PRO, PRO_PRECIO_USD, type TipoTenant } from '../lib/adminPro';
 import { esPro, esProSinVencimiento } from '../lib/pro';
 import { confirmar } from '../lib/confirm';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 // Abreviaturas de `Intl` es-CL («31 oct», «5 sept»).
 const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sept', 'oct', 'nov', 'dic'];
@@ -23,6 +25,7 @@ export function fechaCorta(iso: string): string {
 /** «Pro hasta 31 oct», «Pro sin vencimiento» (W-243) o «Sin Pro». Un Pro vencido
  * cuenta como sin Pro: el gate es la fecha. */
 export function EtiquetaPro({ proHasta }: { proHasta: string | null }) {
+  const styles = useEstilos(crearEstilos);
   const conPro = { sonopolisProHasta: proHasta };
   if (!esPro(conPro)) {
     return (
@@ -53,6 +56,8 @@ const meses = (n: number) => `${n} ${n === 1 ? 'mes' : 'meses'}`;
 
 /** Con Pro sin vencimiento no se ofrece sumar meses: solo «Quitar Pro» (W-243). */
 export default function BotonesPro({ tipo, id, nombre, proHasta, compacto = false, onCambio }: Props) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const [ocupado, setOcupado] = useState(false);
   const [resultado, setResultado] = useState<{ ok: boolean; texto: string } | null>(null);
   const conPro = esPro({ sonopolisProHasta: proHasta });
@@ -134,7 +139,7 @@ export default function BotonesPro({ tipo, id, nombre, proHasta, compacto = fals
         )}
       </View>
       {resultado && (
-        <Text style={[styles.resultado, { color: resultado.ok ? colors.success : colors.danger }]}>
+        <Text style={[styles.resultado, { color: resultado.ok ? colores.success : colores.danger }]}>
           {resultado.texto}
         </Text>
       )}
@@ -142,29 +147,29 @@ export default function BotonesPro({ tipo, id, nombre, proHasta, compacto = fals
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   insignia: { alignSelf: 'flex-start', borderRadius: borderRadius.sm, paddingHorizontal: spacing.sm, paddingVertical: 2 },
-  insigniaVerde: { backgroundColor: '#E8F5E9' },
-  insigniaGris: { backgroundColor: colors.accentLight },
+  insigniaVerde: { backgroundColor: c.successBg },
+  insigniaGris: { backgroundColor: c.accentLight },
   insigniaTexto: { fontSize: fontSize.xs, fontWeight: '600' },
-  insigniaTextoVerde: { color: colors.success },
-  insigniaTextoGris: { color: colors.muted },
+  insigniaTextoVerde: { color: c.success },
+  insigniaTextoGris: { color: c.muted },
   fila: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, alignItems: 'center' },
   boton: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
   },
   botonCompacto: { paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
-  botonAcento: { backgroundColor: colors.accent, borderColor: colors.accent },
+  botonAcento: { backgroundColor: c.accent, borderColor: c.accent },
   botonFantasma: { borderColor: 'transparent', backgroundColor: 'transparent' },
   deshabilitado: { opacity: 0.5 },
-  botonTexto: { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary },
+  botonTexto: { fontSize: fontSize.sm, fontWeight: '600', color: c.primary },
   botonTextoCompacto: { fontSize: fontSize.xs },
-  botonTextoAcento: { color: colors.white },
-  textoPeligro: { color: colors.danger },
+  botonTextoAcento: { color: c.onAccent },
+  textoPeligro: { color: c.danger },
   resultado: { fontSize: fontSize.sm, marginTop: spacing.xs },
 });

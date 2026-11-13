@@ -5,7 +5,9 @@ import {
 } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 import type { TicketStatus } from '../types';
 
 type Ticket = {
@@ -28,6 +30,8 @@ type EventoConTickets = {
 };
 
 export default function VentasMusicoScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -92,7 +96,7 @@ export default function VentasMusicoScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={colores.accent} />
       </View>
     );
   }
@@ -180,49 +184,49 @@ export default function VentasMusicoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   content: { padding: spacing.md, paddingBottom: 100 },
   resumenRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
   resumenCard: {
     flex: 1,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     alignItems: 'center',
   },
-  resumenNumero: { fontSize: fontSize.xl, fontWeight: 'bold', color: colors.accent },
-  resumenLabel: { fontSize: fontSize.xs, color: colors.muted, marginTop: 4, textAlign: 'center' },
+  resumenNumero: { fontSize: fontSize.xl, fontWeight: 'bold', color: c.accent },
+  resumenLabel: { fontSize: fontSize.xs, color: c.muted, marginTop: 4, textAlign: 'center' },
   seccionTitulo: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     marginBottom: spacing.md,
   },
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     marginBottom: spacing.sm,
   },
   eventoHeader: { flexDirection: 'row', alignItems: 'center' },
-  eventoTitulo: { fontSize: fontSize.md, fontWeight: 'bold', color: colors.primary },
-  eventoFecha: { fontSize: fontSize.sm, color: colors.muted, marginTop: 2 },
+  eventoTitulo: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary },
+  eventoFecha: { fontSize: fontSize.sm, color: c.muted, marginTop: 2 },
   badge: { alignItems: 'flex-end' },
-  badgeText: { fontSize: fontSize.sm, color: colors.success, fontWeight: '600' },
-  badgeMonto: { fontSize: fontSize.sm, color: colors.accent, fontWeight: 'bold' },
-  ticketsContainer: { marginTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.sm },
+  badgeText: { fontSize: fontSize.sm, color: c.success, fontWeight: '600' },
+  badgeMonto: { fontSize: fontSize.sm, color: c.accent, fontWeight: 'bold' },
+  ticketsContainer: { marginTop: spacing.md, borderTopWidth: 1, borderTopColor: c.border, paddingTop: spacing.sm },
   ticketRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: c.border,
   },
-  ticketStatus: { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary },
-  ticketFecha: { fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
+  ticketStatus: { fontSize: fontSize.sm, fontWeight: '600', color: c.primary },
+  ticketFecha: { fontSize: fontSize.xs, color: c.muted, marginTop: 2 },
   ticketRight: { alignItems: 'flex-end' },
-  ticketCantidad: { fontSize: fontSize.sm, color: colors.secondary },
-  ticketMonto: { fontSize: fontSize.sm, color: colors.accent, fontWeight: '600' },
-  vacio: { fontSize: fontSize.sm, color: colors.muted, fontStyle: 'italic' },
+  ticketCantidad: { fontSize: fontSize.sm, color: c.secondary },
+  ticketMonto: { fontSize: fontSize.sm, color: c.accent, fontWeight: '600' },
+  vacio: { fontSize: fontSize.sm, color: c.muted, fontStyle: 'italic' },
 });

@@ -1,6 +1,6 @@
 # Spec 180 — Tema oscuro en los paneles del local y del músico
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — `tsc` sin errores en los 9 archivos y `expo export` web limpio; criterios 3 y 4 (`colors` y hex) sin resultados; criterios 5-7 a probar en dispositivo
 > Capa: FRONTEND. `src/screens/DashboardLocalScreen.tsx`, `src/screens/PerfilMusicoScreen.tsx`,
 > `src/screens/VentasMusicoScreen.tsx`, `src/screens/EditarLocalScreen.tsx`,
 > `src/screens/EditarPerfilBandaScreen.tsx`, `src/screens/SolicitudesScreen.tsx`,
