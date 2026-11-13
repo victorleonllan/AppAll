@@ -36,6 +36,19 @@ const FILTROS_FECHA: { clave: FiltroFecha; etiqueta: string }[] = [
   { clave: 'semana', etiqueta: 'Esta semana' },
 ];
 
+/**
+ * Spec 175 (W-156, Decisión 4) — qué es «sin filtrar» para cada filtro, declarado
+ * una sola vez: de aquí salen el contador y la limpieza del botón «Limpiar
+ * filtros», así no pueden discrepar. El país no está: no tiene estado «sin
+ * filtrar» (W-156, Decisión 1).
+ */
+const FILTROS_VACIOS = {
+  busqueda: '',
+  filtroFecha: 'todos' as FiltroFecha,
+  generoFiltro: null as string | null,
+  soloSonopolis: false,
+};
+
 /** Un rango nunca incluye eventos sin fecha: no se afirma que caen "hoy". */
 function enRango(iso: string | null | undefined, rango: [Date, Date] | null): boolean {
   if (!rango) return true;
@@ -121,6 +134,20 @@ export default function CarteleraScreen() {
   // Spec 119 (W-024, Decisión 4) — apagado por defecto: se ven los dos tipos.
   const [soloSonopolis, setSoloSonopolis] = useState(false);
   const [refrescando, setRefrescando] = useState(false);
+
+  // Spec 175 — filtros puestos, comparando cada uno con su vacío. `busqueda`
+  // se compara tal cual, sin `trim`, igual que la web.
+  const filtrosActivos = Object.entries({ busqueda, filtroFecha, generoFiltro, soloSonopolis }).filter(
+    ([clave, valor]) => valor !== FILTROS_VACIOS[clave as keyof typeof FILTROS_VACIOS],
+  );
+
+  // Spec 175 — suelta los cuatro filtros; el país (PaisContext) no se toca.
+  function limpiarFiltros() {
+    setBusqueda(FILTROS_VACIOS.busqueda);
+    setFiltroFecha(FILTROS_VACIOS.filtroFecha);
+    setGeneroFiltro(FILTROS_VACIOS.generoFiltro);
+    setSoloSonopolis(FILTROS_VACIOS.soloSonopolis);
+  }
 
   // Spec 119 — lo que la cartelera puede mostrar, antes de cualquier filtro.
   // Mismo criterio que la web (`page.js:97-104`).
@@ -268,6 +295,11 @@ export default function CarteleraScreen() {
             Género: {generoFiltro ?? 'Todos'}
           </Text>
         </TouchableOpacity>
+        {filtrosActivos.length > 0 && (
+          <TouchableOpacity style={styles.limpiar} onPress={limpiarFiltros} accessibilityRole="button">
+            <Text style={styles.limpiarTexto}>✕ Limpiar filtros ({filtrosActivos.length})</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {externos.length > 0 && (
@@ -351,6 +383,15 @@ const styles = StyleSheet.create({
   filtroTexto: { fontSize: fontSize.sm, color: colors.accent, fontWeight: '600' },
   filtroActivo: { backgroundColor: colors.accent, borderColor: colors.accent },
   filtroTextoActivo: { color: colors.white },
+  // Spec 175 (W-275) — píldora de acento, mismo tratamiento que la píldora activa.
+  limpiar: {
+    backgroundColor: colors.accent,
+    borderRadius: 999,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    alignSelf: 'flex-start',
+  },
+  limpiarTexto: { fontSize: fontSize.sm, fontWeight: '600', color: colors.white },
   contador: { fontSize: fontSize.sm, color: colors.muted, marginLeft: spacing.md, marginBottom: spacing.sm },
   busqueda: {
     backgroundColor: colors.cardBackground,
