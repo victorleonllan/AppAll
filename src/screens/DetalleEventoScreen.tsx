@@ -13,8 +13,12 @@ import { useEventos } from '../context/EventosContext';
 import { useEventoPermisos } from '../hooks/useEventoPermisos';
 import { useEstadoEventoEnVivo } from '../hooks/useEstadoEventoEnVivo';
 import { usePrecioVigente } from '../hooks/usePrecioVigente';
+import { useEspecialesVigentes } from '../hooks/useEspecialesVigentes';
 import AvisoCancelacion from '../components/AvisoCancelacion';
 import PrecioEvento from '../components/PrecioEvento';
+import SelectorTipoEntrada, { GENERAL } from '../components/SelectorTipoEntrada';
+import DestinatariosPack from '../components/DestinatariosPack';
+import { etiquetaDeEspecial, maxPacksPorCompra, primerDestinatarioInvalido } from '../lib/especiales';
 import OptInWhatsApp from '../components/OptInWhatsApp';
 import AvisarWhatsApp from '../components/AvisarWhatsApp';
 import { useTenantDelEvento } from '../hooks/useTenantCrm';
@@ -31,6 +35,9 @@ import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 type DetalleRoute = RouteProp<CarteleraStackParamList, 'DetalleEvento'>;
 type NavProp = NativeStackNavigationProp<CarteleraStackParamList, 'DetalleEvento'>;
+
+// Spec 166 — qué se compra: la general (`especialId` null, de a una) o `cantidad` packs.
+type CompraElegida = { especialId: string | null; cantidad: number; destinatarios: string[] };
 
 export default function DetalleEventoScreen() {
   const route = useRoute<DetalleRoute>();
@@ -61,6 +68,30 @@ export default function DetalleEventoScreen() {
   // Se consulta para todo evento no cancelado: además del precio, el RPC dice si
   // el país del evento vende hoy (`se_vende`, spec 100).
   const { vigente } = usePrecioVigente(evento && !enVivo.cancelado ? evento.id : null);
+
+  // Spec 166 — mismas condiciones que la web para pedir packs (`page.js:153`).
+  const { especiales, recargar: recargarEspeciales } = useEspecialesVigentes(
+    evento && !enVivo.cancelado && (evento.monto ?? 0) > 0 ? evento.id : null
+  );
+  const [opcion, setOpcion] = useState<string>(GENERAL);
+  const [cantidad, setCantidad] = useState(1); // con un pack son packs; la general va de a 1
+  const [destinatarios, setDestinatarios] = useState<string[]>([]);
+  // Default de la web: la general; agotada y con packs, el primer pack. No cabe en el
+  // useState inicial porque la lista llega después, y se decide una sola vez.
+  const opcionInicialFijada = useRef(false);
+  useEffect(() => {
+    if (especiales === null || opcionInicialFijada.current) return;
+    opcionInicialFijada.current = true;
+    const agotada = vigente?.restantes != null && vigente.restantes <= 0;
+    if (agotada && especiales.length > 0) setOpcion(especiales[0].id);
+  }, [especiales, vigente]);
+  // Decisión 4 — si tras releer el pack elegido ya no viene, queda elegida la general.
+  useEffect(() => {
+    if (especiales === null || opcion === GENERAL || especiales.some((e) => e.id === opcion)) return;
+    setOpcion(GENERAL);
+    setCantidad(1);
+    setDestinatarios([]);
+  }, [especiales, opcion]);
 
   // Spec 160 — pasarelas activas del país del evento, como la web (W-190).
   const [pasarelas, setPasarelas] = useState<Pasarela[] | null>(null); // null = cargando
@@ -117,6 +148,55 @@ export default function DetalleEventoScreen() {
   const ventaCerrada = vigente?.seVende === false || pasarelas?.length === 0;
   // Mientras carga se dibuja el botón de siempre: con una sola pasarela no hay parpadeo.
   const opciones: Pasarela[] = pasarelas ?? ['mercadopago'];
+
+  // Spec 166 — packs. Si el pack elegido deja de venir en la lista, `especialElegido`
+  // cae a null y la pantalla vuelve a la general sin comprar (Decisión 4).
+  const generalAgotada = vigente?.restantes != null && vigente.restantes <= 0;
+  const hayPacks = !ventaCerrada && (especiales?.length ?? 0) > 0;
+  const especialElegido =
+    opcion === GENERAL ? null : (especiales ?? []).find((e) => e.id === opcion) ?? null;
+  const entradas = cantidad * (especialElegido?.multiplicador ?? 1);
+  const tope = especialElegido
+    ? Math.max(1, Math.min(maxPacksPorCompra(especialElegido.multiplicador), especialElegido.restantes))
+    : 1;
+  const filas = especialElegido ? entradas - 1 : 0;
+  const visibles = Array.from({ length: filas }, (_, i) => destinatarios[i] ?? '');
+  const invalida = primerDestinatarioInvalido(visibles);
+  const errorDestinatarios = invalida >= 0 ? `Revisa el correo de la entrada ${invalida + 2}` : null;
+  const total = (especialElegido?.monto ?? 0) * cantidad;
+  const textoTotal = especialElegido
+    ? formatearMonto(total, especialElegido.moneda ?? evento.moneda)
+    : '';
+
+  const elegirOpcion = (o: string) => {
+    setOpcion(o);
+    setCantidad(1);
+    setDestinatarios([]);
+  };
+  // Recorta al final: lo escrito en las filas que quedan no se toca.
+  const cambiarCantidad = (n: number) => {
+    setCantidad(n);
+    const multiplicador = especialElegido?.multiplicador ?? 1;
+    setDestinatarios((d) => d.slice(0, Math.max(0, n * multiplicador - 1)));
+  };
+  const cambiarDestinatario = (i: number, valor: string) => {
+    setDestinatarios((d) => {
+      const nuevo = Array.from({ length: Math.max(d.length, i + 1) }, (_, k) => d[k] ?? '');
+      nuevo[i] = valor;
+      return nuevo;
+    });
+  };
+
+  // Spec 166 — la elección del pack para la vuelta del enlace mágico (Decisión 5). Si el
+  // almacenamiento no está, la compra sigue y la elección vuelve vacía.
+  const borrarPendingCompra = async () => {
+    try {
+      if (Platform.OS === 'web') localStorage.removeItem('pending_compra');
+      else await AsyncStorage.removeItem('pending_compra');
+    } catch (e) {
+      console.error('[DetalleEvento] no se pudo borrar pending_compra:', e);
+    }
+  };
 
   // Spec 120 — link a la web (quien lo recibe puede no tener la app) con `?v=` y
   // ningún otro parámetro, igual que BotonCompartir.js. Solo `message`: en iOS
@@ -175,7 +255,11 @@ export default function DetalleEventoScreen() {
         // efecto pueden solaparse y comprar dos veces. El chequeo del candado y
         // su marcado van juntos, sin await en medio, para cerrarlo.
         // Spec 160 — espera a las pasarelas: sin saber cuántas hay no se sabe si comprar.
-        if (pendingId !== evento.id || !user || pasarelas === null || autoCompraIniciada.current) return;
+        // Spec 166 — y a los packs: sin la lista no se sabe si el pack pedido sigue a la venta.
+        if (
+          pendingId !== evento.id || !user || pasarelas === null || especiales === null ||
+          autoCompraIniciada.current
+        ) return;
         autoCompraIniciada.current = true;
 
         if (Platform.OS === 'web') {
@@ -183,15 +267,47 @@ export default function DetalleEventoScreen() {
         } else {
           await AsyncStorage.removeItem('pending_ticket');
         }
+
+        // Spec 166 — la elección del pack, si la hubo. Leer y borrar en su propio
+        // try/catch: sin almacenamiento la compra sigue como general (W-260 §2).
+        let pendiente: { eventoId?: string; especialId?: string | null; cantidad?: number; destinatarios?: string[] } | null = null;
+        try {
+          const crudo = Platform.OS === 'web'
+            ? localStorage.getItem('pending_compra')
+            : await AsyncStorage.getItem('pending_compra');
+          pendiente = crudo ? JSON.parse(crudo) : null;
+        } catch (e) {
+          console.error('[DetalleEvento] auto-compra: no se pudo leer pending_compra:', e);
+        }
+        await borrarPendingCompra();
+
+        let compra: CompraElegida | undefined;
+        if (pendiente?.especialId && pendiente.eventoId === evento.id) {
+          const pack = especiales.find((e) => e.id === pendiente!.especialId);
+          // Caer en la general sería cobrar algo que el fan no pidió (W-255).
+          if (!pack) {
+            setErrorCompra('Este pack ya no está a la venta.');
+            return;
+          }
+          const topePack = Math.max(1, Math.min(maxPacksPorCompra(pack.multiplicador), pack.restantes));
+          const packs = Math.min(Math.max(1, Math.floor(pendiente.cantidad ?? 1)), topePack);
+          const correos = (pendiente.destinatarios ?? []).slice(0, packs * pack.multiplicador - 1);
+          setOpcion(pack.id);
+          setCantidad(packs);
+          setDestinatarios(correos);
+          // Explícitos: el setState de arriba todavía no se leyó en este render.
+          compra = { especialId: pack.id, cantidad: packs, destinatarios: correos };
+        }
+
         // Con varias no compra sola (W-190): elegir una por defecto mandaría a Mercado
         // Pago a quien quería Flow. Sin pasarelas no hay nada que comprar.
-        if (pasarelas.length === 1) handleComprarLogueado(pasarelas[0]);
+        if (pasarelas.length === 1) handleComprarLogueado(pasarelas[0], compra);
       } catch (e) {
         console.error('[DetalleEvento] auto-compra: no se pudo leer pending_ticket:', e);
       }
     };
     checkPending();
-  }, [user, evento.id, pasarelas]);
+  }, [user, evento.id, pasarelas, especiales]);
 
   // ────────────── FLUJO: email → magic link ──────────────
 
@@ -213,6 +329,20 @@ export default function DetalleEventoScreen() {
       } else {
         await AsyncStorage.setItem('pending_ticket', evento.id);
       }
+      // Spec 166 — la elección del pack va al lado, nunca en la URL (Decisión 5).
+      if (especialElegido) {
+        try {
+          const valor = JSON.stringify({
+            eventoId: evento.id, especialId: especialElegido.id, cantidad, destinatarios: visibles,
+          });
+          if (Platform.OS === 'web') localStorage.setItem('pending_compra', valor);
+          else await AsyncStorage.setItem('pending_compra', valor);
+        } catch (e) {
+          console.error('[DetalleEvento] no se pudo guardar pending_compra:', e);
+        }
+      } else {
+        await borrarPendingCompra();
+      }
       setEmailEnviado(email.trim());
       setStep('enviado');
     }
@@ -222,7 +352,15 @@ export default function DetalleEventoScreen() {
 
   // Spec 160 — `crearPagoCompra` (spec 151) cobra con la pasarela elegida y decide el
   // `origen` por plataforma: en nativo la vuelta reabre la app (specs 117 y 147).
-  const handleComprarLogueado = async (pasarela: Pasarela) => {
+  // Spec 166 — `compra` llega explícita desde la auto-compra; si no, la del estado.
+  const handleComprarLogueado = async (
+    pasarela: Pasarela,
+    compra: CompraElegida = {
+      especialId: especialElegido?.id ?? null,
+      cantidad,
+      destinatarios: visibles,
+    }
+  ) => {
     if (monto <= 0) {
       Alert.alert('Sin precio', 'Este evento no tiene un precio definido');
       return;
@@ -242,7 +380,17 @@ export default function DetalleEventoScreen() {
     setStep('comprando');
     setLoading(true);
     try {
-      const pago = await crearPagoCompra({ eventoId: evento.id, userId: user!.id, pasarela });
+      // `crearPagoCompra` decide qué viaja (spec 164): sin pack, ni pack ni correos.
+      const pago = await crearPagoCompra({
+        eventoId: evento.id,
+        userId: user!.id,
+        pasarela,
+        cantidad: compra.especialId ? compra.cantidad : 1,
+        especialId: compra.especialId,
+        destinatarios: compra.destinatarios,
+      });
+      // Los destinatarios no se quedan en el dispositivo una vez creado el pago.
+      await borrarPendingCompra();
 
       if (Platform.OS === 'web') {
         window.open(pago.checkoutUrl, '_blank');
@@ -285,6 +433,14 @@ export default function DetalleEventoScreen() {
       // puede volver a fallar.
       if (err instanceof ErrorPago && err.codigo === 'pasarela_inactiva') {
         setRecargaPasarelas((n) => n + 1);
+      }
+      // Spec 166 — la lista de packs quedó vieja: releerla. Si el pack elegido ya no
+      // viene, la pantalla vuelve a la general y el fan tiene que tocar de nuevo.
+      if (
+        err instanceof ErrorPago &&
+        (err.codigo === 'especial_agotado' || err.codigo === 'especial_cerrado' || err.codigo === 'especial_invalido')
+      ) {
+        recargarEspeciales();
       }
       setStep('idle');
     } finally {
@@ -423,7 +579,59 @@ export default function DetalleEventoScreen() {
         <View style={styles.divisor} />
 
         <Text style={styles.precioLabel}>Precio</Text>
-        <PrecioEvento evento={evento} vigente={vigente} alinear="inicio" />
+        {!hayPacks ? (
+          <PrecioEvento evento={evento} vigente={vigente} alinear="inicio" />
+        ) : (
+          // Spec 166 — con packs a la venta, el selector reemplaza al precio solo.
+          <>
+            <SelectorTipoEntrada
+              evento={evento}
+              vigente={vigente}
+              especiales={especiales ?? []}
+              opcion={opcion}
+              onElegir={elegirOpcion}
+              generalAgotada={generalAgotada}
+            />
+            {especialElegido && (
+              <>
+                <View style={styles.filaPacks}>
+                  <Text style={styles.etiquetaPacks}>Packs</Text>
+                  <View style={styles.contador}>
+                    <TouchableOpacity
+                      style={[styles.botonContador, cantidad <= 1 && styles.botonContadorOff]}
+                      onPress={() => cambiarCantidad(cantidad - 1)}
+                      disabled={cantidad <= 1}
+                      accessibilityLabel="Menos"
+                    >
+                      <Text style={styles.textoContador}>−</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.numeroContador}>{cantidad}</Text>
+                    <TouchableOpacity
+                      style={[styles.botonContador, cantidad >= tope && styles.botonContadorOff]}
+                      onPress={() => cambiarCantidad(cantidad + 1)}
+                      disabled={cantidad >= tope}
+                      accessibilityLabel="Más"
+                    >
+                      <Text style={styles.textoContador}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                {filas > 0 && (
+                  <DestinatariosPack
+                    valores={visibles}
+                    onCambiar={cambiarDestinatario}
+                    correoComprador={user?.email ?? null}
+                    error={errorDestinatarios}
+                  />
+                )}
+                <Text style={styles.totalPack}>{textoTotal}</Text>
+                <Text style={styles.detallePack}>
+                  {entradas} entradas · pack {etiquetaDeEspecial(especialElegido)}
+                </Text>
+              </>
+            )}
+          </>
+        )}
 
         {hayCompra && tenantEvento && !ventaCerrada && (
           <OptInWhatsApp
@@ -439,9 +647,12 @@ export default function DetalleEventoScreen() {
             el servidor con la preventa vigente (create-preference). */}
         {!monto || cancelado || ventaCerrada || opciones.length === 1 ? (
           <TouchableOpacity
-            style={[styles.botonComprar, (!monto || cancelado || ventaCerrada) && styles.botonDesactivado]}
+            style={[
+              styles.botonComprar,
+              (!monto || cancelado || ventaCerrada || !!errorDestinatarios) && styles.botonDesactivado,
+            ]}
             onPress={() => handleBotonComprar(opciones[0])}
-            disabled={!monto || cancelado || ventaCerrada || step === 'comprando'}
+            disabled={!monto || cancelado || ventaCerrada || step === 'comprando' || !!errorDestinatarios}
           >
             <Text style={styles.textoBotonComprar}>
               {cancelado
@@ -450,9 +661,13 @@ export default function DetalleEventoScreen() {
                   ? 'Procesando...'
                   : ventaCerrada
                     ? 'Venta no habilitada todavía en este país'
-                    : monto > 0
-                      ? `Comprar entrada — ${formatearMonto(vigente?.monto ?? monto, evento.moneda)}`
-                      : 'Evento gratuito'}
+                    : especialElegido
+                      ? cantidad === 1
+                        ? `Comprar pack ${etiquetaDeEspecial(especialElegido)} — ${textoTotal}`
+                        : `Comprar ${cantidad} packs — ${textoTotal}`
+                      : monto > 0
+                        ? `Comprar entrada — ${formatearMonto(vigente?.monto ?? monto, evento.moneda)}`
+                        : 'Evento gratuito'}
             </Text>
           </TouchableOpacity>
         ) : (
@@ -462,9 +677,13 @@ export default function DetalleEventoScreen() {
             {opciones.map((p, i) => (
               <TouchableOpacity
                 key={p}
-                style={[i === 0 ? styles.botonComprar : styles.botonPasarelaSecundaria, styles.botonEnLista]}
+                style={[
+                  i === 0 ? styles.botonComprar : styles.botonPasarelaSecundaria,
+                  styles.botonEnLista,
+                  i === 0 && !!errorDestinatarios && styles.botonDesactivado,
+                ]}
                 onPress={() => handleBotonComprar(p)}
-                disabled={step === 'comprando'}
+                disabled={step === 'comprando' || !!errorDestinatarios}
               >
                 <Text style={i === 0 ? styles.textoBotonComprar : styles.textoBotonPasarelaSecundaria}>
                   {pasarelaEnCurso === p ? 'Procesando...' : `Pagar con ${NOMBRE_PASARELA[p]}`}
@@ -639,6 +858,35 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
   },
   errorCompra: { fontSize: fontSize.sm, color: colors.danger, marginTop: spacing.sm },
+  // Spec 166 — contador de packs y total del pack.
+  filaPacks: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.md,
+  },
+  etiquetaPacks: { fontSize: fontSize.md, color: colors.primary, fontWeight: '500' },
+  contador: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  botonContador: {
+    width: 38,
+    height: 38,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  botonContadorOff: { opacity: 0.4 },
+  textoContador: { fontSize: fontSize.lg, color: colors.primary },
+  numeroContador: {
+    minWidth: 24,
+    textAlign: 'center',
+    fontSize: fontSize.md,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  totalPack: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary, marginTop: spacing.md },
+  detallePack: { fontSize: fontSize.sm, color: colors.muted },
   errorTexto: {
     fontSize: fontSize.md,
     color: colors.muted,

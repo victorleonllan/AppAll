@@ -1,6 +1,6 @@
 # Spec 166 — El fan elige el pack en rojo, escribe a quién van las entradas extra y lo compra desde el detalle
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — `tsc --noEmit` sin salida, `expo export --platform web` sin error, `pending_compra` siempre en try/catch; faltan la compra de prueba con sandbox (criterios 7-9) y las V-candidatas 166-a/b en teléfono
 > Capa: FRONTEND. `src/screens/DetalleEventoScreen.tsx`, `src/components/SelectorTipoEntrada.tsx` (nuevo), `src/components/DestinatariosPack.tsx` (nuevo), `src/screens/ConfirmacionCompraScreen.tsx`.
 > Depende de: spec 164 (`useEspecialesVigentes`, `crearPagoCompra` con `especialId` y `destinatarios`, mensajes de error), spec 165 (sin packs creados no hay qué comprar), spec 173 (los archivos nuevos de este spec arman sus estilos con `useEstilos` y leen los colores de JSX con `useTema().colores`, según la receta §6 del 173; los archivos que ya existen siguen con `colors` hasta su spec de migración); token `especial` del 173, spec 160 (aplicado: compra por pasarela en el detalle).
 > Hermano en la web: `app/(marketing)/cartelera/[id]/BotonComprar.js`, `app/(marketing)/compra/confirmacion/Confirmacion.js`, `libs/purchase.js` (W-255, W-260).
