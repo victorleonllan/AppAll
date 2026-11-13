@@ -1,6 +1,6 @@
 # Spec 173 — Tema claro y oscuro: paletas, proveedor, persistencia y hooks
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — criterios 1-6 verificados: `tsc` limpio, `expo export --platform web` sin error, script `tsx` con las 12 claves de `colors` iguales en `paletaClara` y las 27 claves iguales en las dos paletas, `temaDesdeGuardado` con los 4 casos, sin `catch {}` vacío. 7 y 8 sin verificar en dispositivo (8 se cumple por construcción: el proveedor devuelve `null` hasta leer `son-tema`)
 > Capa: LÓGICA. `src/theme/index.ts`, `src/context/TemaContext.tsx` (nuevo),
 > `src/hooks/useEstilos.ts` (nuevo), `App.tsx`.
 > Depende de: nada.
