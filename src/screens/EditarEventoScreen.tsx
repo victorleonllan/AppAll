@@ -21,7 +21,9 @@ import CampoImagen from '../components/CampoImagen';
 import { CampoFecha, CampoHora } from '../components/CampoFecha';
 import AccionesEvento from '../components/AccionesEvento';
 import { PAIS_POR_DEFECTO, etiquetaPais } from '../constants/paises';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 const MAX_DESCRIPCION = 900;
 
@@ -48,6 +50,8 @@ const MAX_DESCRIPCION = 900;
  * `popToTop()`, porque el detalle del que se vino ya no existe.
  */
 export default function EditarEventoScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const route = useRoute();
   const { eventoId } = route.params as { eventoId: string };
@@ -193,7 +197,7 @@ export default function EditarEventoScreen() {
           value={artista}
           onChangeText={setArtista}
           placeholder="Ej: Juana Fe"
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colores.muted}
         />
 
         <Text style={styles.label}>Fecha *</Text>
@@ -247,7 +251,7 @@ export default function EditarEventoScreen() {
           value={descripcion}
           onChangeText={setDescripcion}
           placeholder="De qué va el show, qué esperar, quién toca..."
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colores.muted}
           multiline
           maxLength={MAX_DESCRIPCION}
         />
@@ -259,7 +263,7 @@ export default function EditarEventoScreen() {
           value={precio}
           onChangeText={setPrecio}
           placeholder="Ej: $5.000"
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colores.muted}
         />
         {sinMonto && (
           <Text style={styles.aviso}>Sin un número en el precio, el evento no se puede comprar</Text>
@@ -271,7 +275,7 @@ export default function EditarEventoScreen() {
           <Switch
             value={preventaOn}
             onValueChange={setPreventaOn}
-            trackColor={{ true: colors.accent, false: colors.border }}
+            trackColor={{ true: colores.accent, false: colores.border }}
           />
           <View style={styles.interruptorTextos}>
             <Text style={styles.interruptorTitulo}>Preventa</Text>
@@ -287,7 +291,7 @@ export default function EditarEventoScreen() {
             value={especialOn}
             onValueChange={setEspecialOn}
             disabled={!especialesCargados || hayEspecialesActivos}
-            trackColor={{ true: colors.especial, false: colors.border }}
+            trackColor={{ true: colores.especial, false: colores.border }}
           />
           <View style={styles.interruptorTextos}>
             <Text style={[styles.interruptorTitulo, styles.interruptorTituloEspecial]}>🎟 Ticket especial</Text>
@@ -337,7 +341,7 @@ export default function EditarEventoScreen() {
           disabled={guardando}
         >
           {guardando ? (
-            <ActivityIndicator color={colors.white} />
+            <ActivityIndicator color={colores.onAccent} />
           ) : (
             <Text style={styles.textoBoton}>Guardar cambios</Text>
           )}
@@ -353,57 +357,57 @@ export default function EditarEventoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   content: { padding: spacing.md },
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
   },
   titulo: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     marginBottom: spacing.md,
   },
   label: {
     fontSize: fontSize.sm,
     fontWeight: '600',
-    color: colors.primary,
+    color: c.primary,
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
   input: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     padding: 12,
     borderRadius: borderRadius.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
   multilinea: { minHeight: 96, textAlignVertical: 'top' },
   // Spec 056 — igual que en CrearEventoScreen: el campo de género es un
   // TouchableOpacity, el texto interno necesita su propio estilo.
-  inputTexto: { fontSize: fontSize.md, color: colors.primary },
-  inputPlaceholder: { fontSize: fontSize.md, color: colors.muted },
-  ayuda: { fontSize: fontSize.xs, color: colors.muted, marginBottom: spacing.xs },
+  inputTexto: { fontSize: fontSize.md, color: c.primary },
+  inputPlaceholder: { fontSize: fontSize.md, color: c.muted },
+  ayuda: { fontSize: fontSize.xs, color: c.muted, marginBottom: spacing.xs },
   aviso: {
     fontSize: fontSize.xs,
-    color: colors.muted,
+    color: c.muted,
     marginTop: spacing.md,
   },
-  enlace: { fontSize: fontSize.sm, color: colors.accent, fontWeight: '600', marginTop: spacing.sm },
-  error: { fontSize: fontSize.sm, color: colors.danger, marginTop: spacing.md },
+  enlace: { fontSize: fontSize.sm, color: c.accent, fontWeight: '600', marginTop: spacing.sm },
+  error: { fontSize: fontSize.sm, color: c.danger, marginTop: spacing.md },
   interruptor: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
   interruptorTextos: { flex: 1 },
-  interruptorTitulo: { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary },
-  interruptorTituloEspecial: { color: colors.especial },
-  interruptorAyuda: { fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
-  interruptorBloqueado: { fontSize: fontSize.xs, color: colors.especial, marginTop: 2 },
+  interruptorTitulo: { fontSize: fontSize.sm, fontWeight: '600', color: c.primary },
+  interruptorTituloEspecial: { color: c.especial },
+  interruptorAyuda: { fontSize: fontSize.xs, color: c.muted, marginTop: 2 },
+  interruptorBloqueado: { fontSize: fontSize.xs, color: c.especial, marginTop: 2 },
   boton: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
@@ -412,10 +416,10 @@ const styles = StyleSheet.create({
   botonDesactivado: {
     opacity: 0.6,
   },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
   errorTexto: {
     fontSize: fontSize.md,
-    color: colors.muted,
+    color: c.muted,
     textAlign: 'center',
     marginTop: 40,
   },

@@ -9,7 +9,9 @@ import { useEntradasEvento } from '../hooks/useEntradasEvento';
 import { useEventoPermisos } from '../hooks/useEventoPermisos';
 import BotonReenviarEntrada from '../components/BotonReenviarEntrada';
 import { TicketItem } from '../types';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 function horaDeIso(iso: string | null): string {
   if (!iso) return '';
@@ -21,6 +23,8 @@ function horaDeIso(iso: string | null): string {
  * nada. El canje es del 040 (la función) y del 041 (la pantalla de escaneo).
  */
 export default function EntradasEventoScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const route = useRoute();
   const navigation = useNavigation();
   const { eventoId } = route.params as { eventoId: string };
@@ -34,7 +38,7 @@ export default function EntradasEventoScreen() {
   if (cargando) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={colores.accent} />
       </View>
     );
   }
@@ -180,60 +184,60 @@ export default function EntradasEventoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   content: { padding: spacing.md, paddingBottom: 100 },
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
-  tituloEvento: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
-  subtituloEvento: { fontSize: fontSize.sm, color: colors.secondary, marginTop: 2 },
+  tituloEvento: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
+  subtituloEvento: { fontSize: fontSize.sm, color: c.secondary, marginTop: 2 },
   botonEscanear: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     marginBottom: spacing.md,
   },
-  textoBotonEscanear: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
+  textoBotonEscanear: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
   filaContadores: { flexDirection: 'row', justifyContent: 'space-around' },
   contador: { alignItems: 'center' },
-  contadorNumero: { fontSize: fontSize.xl, fontWeight: 'bold', color: colors.accent },
-  contadorLabel: { fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
-  vacio: { fontSize: fontSize.sm, color: colors.muted, fontStyle: 'italic' },
+  contadorNumero: { fontSize: fontSize.xl, fontWeight: 'bold', color: c.accent },
+  contadorLabel: { fontSize: fontSize.xs, color: c.muted, marginTop: 2 },
+  vacio: { fontSize: fontSize.sm, color: c.muted, fontStyle: 'italic' },
   filaEntrada: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: c.border,
   },
   folio: {
     fontFamily: 'monospace',
     fontSize: fontSize.md,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     width: 56,
   },
   datosEntrada: { flex: 1 },
-  compradorNombre: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary },
-  estadoEntrada: { fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
+  compradorNombre: { fontSize: fontSize.md, fontWeight: '600', color: c.primary },
+  estadoEntrada: { fontSize: fontSize.xs, color: c.muted, marginTop: 2 },
   accionesEntrada: { alignItems: 'flex-end' },
   botonQr: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: borderRadius.sm,
   },
-  textoBotonQr: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  textoBotonQr: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm },
   iconoPendiente: { fontSize: fontSize.md, width: 56 },
-  textoPendiente: { fontSize: fontSize.sm, color: colors.muted, flex: 1 },
+  textoPendiente: { fontSize: fontSize.sm, color: c.muted, flex: 1 },
   errorTexto: {
     fontSize: fontSize.md,
-    color: colors.muted,
+    color: c.muted,
     textAlign: 'center',
     marginTop: 40,
     paddingHorizontal: spacing.lg,
@@ -241,12 +245,12 @@ const styles = StyleSheet.create({
   botonReintentar: {
     marginTop: spacing.md,
     alignSelf: 'center',
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     paddingHorizontal: spacing.lg,
     paddingVertical: 10,
     borderRadius: borderRadius.sm,
   },
-  textoBotonReintentar: { color: colors.white, fontWeight: 'bold' },
+  textoBotonReintentar: { color: c.onAccent, fontWeight: 'bold' },
   overlay: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
@@ -255,21 +259,21 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   qrCard: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     alignItems: 'center',
   },
-  qrFolio: { fontFamily: 'monospace', fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
-  qrComprador: { fontSize: fontSize.md, color: colors.secondary, marginTop: 2, marginBottom: spacing.md },
-  qrWrap: { padding: spacing.md, backgroundColor: colors.white, borderRadius: borderRadius.sm },
+  qrFolio: { fontFamily: 'monospace', fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
+  qrComprador: { fontSize: fontSize.md, color: c.secondary, marginTop: 2, marginBottom: spacing.md },
+  qrWrap: { padding: spacing.md, backgroundColor: c.white, borderRadius: borderRadius.sm },
   boton: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     marginTop: spacing.lg,
     alignSelf: 'stretch',
   },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
 });

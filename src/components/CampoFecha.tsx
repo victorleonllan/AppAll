@@ -5,7 +5,9 @@ import {
 } from 'react-native';
 import DateTimePicker, { DateTimePickerChangeEvent } from '@react-native-community/datetimepicker';
 import { formatearFechaEs } from '../lib/fecha';
-import { colors, spacing, fontSize } from '../theme';
+import { spacing, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 interface CampoFechaProps {
   value: string;                 // 'AAAA-MM-DD' o '' (CampoFecha) · 'HH:MM' o '' (CampoHora)
@@ -56,6 +58,8 @@ function desdeTexto(value: string, modo: Modo): Date {
 function Campo({
   modo, value, onChange, placeholder, minimo, opcional, disabled, style,
 }: CampoFechaProps & { modo: Modo }) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const [abierto, setAbierto] = useState(false);
 
   const quitar = opcional && !!value && !disabled ? (
@@ -72,7 +76,7 @@ function Campo({
           value={value}
           onChangeText={onChange}
           placeholder={placeholder}
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colores.muted}
           autoCapitalize="none"
           editable={!disabled}
         />
@@ -133,14 +137,14 @@ export function CampoHora(props: Omit<CampoFechaProps, 'minimo'>) {
   return <Campo {...props} modo="time" />;
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   fila: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   campo: { flex: 1 },
-  texto: { fontSize: fontSize.md, color: colors.primary },
-  placeholder: { fontSize: fontSize.md, color: colors.muted },
+  texto: { fontSize: fontSize.md, color: c.primary },
+  placeholder: { fontSize: fontSize.md, color: c.muted },
   quitar: { paddingVertical: spacing.xs },
-  textoQuitar: { fontSize: fontSize.sm, color: colors.accent, fontWeight: '600' },
+  textoQuitar: { fontSize: fontSize.sm, color: c.accent, fontWeight: '600' },
   cajaIos: { marginTop: spacing.xs },
   listo: { alignSelf: 'flex-end', paddingVertical: spacing.xs, paddingHorizontal: spacing.sm },
-  textoListo: { fontSize: fontSize.md, color: colors.accent, fontWeight: '600' },
+  textoListo: { fontSize: fontSize.md, color: c.accent, fontWeight: '600' },
 });

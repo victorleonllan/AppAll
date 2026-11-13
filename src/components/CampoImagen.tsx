@@ -4,7 +4,9 @@ import {
 } from 'react-native';
 import { CarpetaMedia } from '../lib/imagenes';
 import { useSubirImagen } from '../hooks/useSubirImagen';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 /**
  * Spec 130 — equivalente móvil de `ImageUpload.js` de la web. Lo reusan el
@@ -24,6 +26,8 @@ interface CampoImagenProps {
 }
 
 export default function CampoImagen({ carpeta, id, valor, onCambiar, aspecto, ayuda }: CampoImagenProps) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const { subiendo, elegirYSubir } = useSubirImagen({ carpeta, id });
 
   const handleSubir = async () => {
@@ -47,7 +51,7 @@ export default function CampoImagen({ carpeta, id, valor, onCambiar, aspecto, ay
         disabled={subiendo}
       >
         {subiendo ? (
-          <ActivityIndicator color={colors.accent} />
+          <ActivityIndicator color={colores.accent} />
         ) : (
           <Text style={styles.textoBoton}>{valor ? 'Cambiar imagen' : 'Subir imagen'}</Text>
         )}
@@ -60,7 +64,7 @@ export default function CampoImagen({ carpeta, id, valor, onCambiar, aspecto, ay
         value={valor}
         onChangeText={onCambiar}
         placeholder="O pega una URL"
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={colores.muted}
         autoCapitalize="none"
         autoCorrect={false}
       />
@@ -68,32 +72,32 @@ export default function CampoImagen({ carpeta, id, valor, onCambiar, aspecto, ay
   );
 }
 
-const styles = StyleSheet.create({
-  ayuda: { fontSize: fontSize.xs, color: colors.muted, marginBottom: spacing.xs },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  ayuda: { fontSize: fontSize.xs, color: c.muted, marginBottom: spacing.xs },
   preview: {
     width: 96,
     height: 96,
     borderRadius: borderRadius.sm,
     marginBottom: spacing.sm,
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
   },
   boton: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     padding: 12,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
   },
   botonDesactivado: { opacity: 0.6 },
-  textoBoton: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  textoBoton: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm },
   inputUrl: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
     borderRadius: borderRadius.sm,
     fontSize: fontSize.sm,
-    color: colors.secondary,
+    color: c.secondary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     marginTop: spacing.xs,
   },
 });

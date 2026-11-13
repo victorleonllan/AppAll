@@ -1,6 +1,6 @@
 # Spec 179 — Tema oscuro en crear, editar y operar un evento
 
-> Estado: propuesto, sin aplicar (13-nov-2026)
+> Estado: aplicado (13-nov-2026) — `tsc` sin errores en los 10 archivos y `expo export` web limpio; `rg colors` vacío en los 10; criterios 4-7 a probar en dispositivo
 > Capa: FRONTEND. `src/screens/CrearEventoScreen.tsx`, `src/screens/EditarEventoScreen.tsx`,
 > `src/screens/EquipoEventoScreen.tsx`, `src/screens/EntradasEventoScreen.tsx`,
 > `src/screens/EscanerQRScreen.tsx`, `src/screens/CobrarEventoScreen.tsx`,
