@@ -10,7 +10,9 @@ import { useEventoPermisos } from '../hooks/useEventoPermisos';
 import { useInvitacionesEquipo, PARECE_CORREO, RolInvitacion, InvitacionPendiente } from '../hooks/useInvitacionesEquipo';
 import { confirmar } from '../lib/confirm';
 import { Colaborador, ColaboradorSource, EventRole } from '../types';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 const SOURCE_LABEL: Record<ColaboradorSource, string> = {
   claim: 'Creador',
@@ -25,6 +27,8 @@ const ROLE_LABEL: Record<EventRole, string> = {
 };
 
 export default function EquipoEventoScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const route = useRoute();
   const { eventoId } = route.params as { eventoId: string };
   const { user } = useAuth();
@@ -198,7 +202,7 @@ export default function EquipoEventoScreen() {
   if (cargando) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={colores.accent} />
       </View>
     );
   }
@@ -279,9 +283,9 @@ export default function EquipoEventoScreen() {
             value={query}
             onChangeText={handleBuscar}
             placeholder="Nombre o correo…"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colores.muted}
           />
-          {buscando && <ActivityIndicator color={colors.accent} style={{ marginTop: spacing.sm }} />}
+          {buscando && <ActivityIndicator color={colores.accent} style={{ marginTop: spacing.sm }} />}
           {resultados.map((r) => (
             <View key={r.id} style={styles.filaResultado}>
               <Text style={styles.nombreColaborador}>{r.nombre}</Text>
@@ -356,26 +360,26 @@ export default function EquipoEventoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   content: { padding: spacing.md, paddingBottom: 100 },
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
-  tituloEvento: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
-  subtituloEvento: { fontSize: fontSize.sm, color: colors.secondary, marginTop: 2 },
-  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary, marginBottom: spacing.md },
-  vacio: { fontSize: fontSize.sm, color: colors.muted, fontStyle: 'italic' },
-  ayuda: { fontSize: fontSize.sm, color: colors.muted, marginBottom: spacing.sm },
+  tituloEvento: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
+  subtituloEvento: { fontSize: fontSize.sm, color: c.secondary, marginTop: 2 },
+  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary, marginBottom: spacing.md },
+  vacio: { fontSize: fontSize.sm, color: c.muted, fontStyle: 'italic' },
+  ayuda: { fontSize: fontSize.sm, color: c.muted, marginBottom: spacing.sm },
   filaColaborador: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: c.border,
   },
   filaResultado: {
     flexDirection: 'row',
@@ -383,36 +387,36 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: c.border,
   },
-  nombreColaborador: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary },
-  correoColaborador: { fontSize: fontSize.sm, color: colors.muted, marginTop: 2 },
-  metaColaborador: { fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
-  pieTarjeta: { fontSize: fontSize.sm, color: colors.muted, marginTop: spacing.sm },
-  textoError: { fontSize: fontSize.sm, color: colors.danger, marginTop: spacing.sm },
-  textoAviso: { fontSize: fontSize.sm, color: colors.success, marginTop: spacing.sm },
+  nombreColaborador: { fontSize: fontSize.md, fontWeight: '600', color: c.primary },
+  correoColaborador: { fontSize: fontSize.sm, color: c.muted, marginTop: 2 },
+  metaColaborador: { fontSize: fontSize.xs, color: c.muted, marginTop: 2 },
+  pieTarjeta: { fontSize: fontSize.sm, color: c.muted, marginTop: spacing.sm },
+  textoError: { fontSize: fontSize.sm, color: c.danger, marginTop: spacing.sm },
+  textoAviso: { fontSize: fontSize.sm, color: c.success, marginTop: spacing.sm },
   accionesColaborador: { flexDirection: 'row', gap: 6 },
   botonChico: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: borderRadius.sm,
     marginLeft: 6,
   },
-  textoBotonChico: { color: colors.accent, fontWeight: '600', fontSize: fontSize.xs },
+  textoBotonChico: { color: c.accent, fontWeight: '600', fontSize: fontSize.xs },
   botonQuitar: {
     marginLeft: 6,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  textoBotonQuitar: { color: colors.muted, fontSize: fontSize.md, fontWeight: 'bold' },
+  textoBotonQuitar: { color: c.muted, fontSize: fontSize.md, fontWeight: 'bold' },
   input: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     padding: 12,
     borderRadius: borderRadius.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
 });

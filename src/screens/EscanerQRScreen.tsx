@@ -9,7 +9,9 @@ import { useAuth } from '../context/AuthContext';
 import { useEventos } from '../context/EventosContext';
 import { useEventoPermisos } from '../hooks/useEventoPermisos';
 import { useCanjeEntrada, ColorResultado } from '../hooks/useCanjeEntrada';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 /** Cuánto queda el resultado en pantalla antes de volver sola a la cámara. */
 const ESPERA_MS: Record<ColorResultado, number> = {
@@ -21,11 +23,11 @@ const ESPERA_MS: Record<ColorResultado, number> = {
   naranja: 4000,
 };
 
-const FONDO: Record<ColorResultado, string> = {
-  verde: colors.success,
-  rojo: colors.danger,
-  naranja: colors.warning,
-};
+const fondoResultado = (c: Paleta): Record<ColorResultado, string> => ({
+  verde: c.success,
+  rojo: c.danger,
+  naranja: c.warning,
+});
 
 /**
  * ¿Puede esta plataforma leer un QR con la cámara? En nativo, siempre. En web,
@@ -59,6 +61,8 @@ function contextoInseguroWeb(): boolean {
  * equipo del evento y no por el rol de la persona.
  */
 export default function EscanerQRScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const route = useRoute();
   const params = (route.params ?? {}) as { eventoId?: string };
   const { user } = useAuth();
@@ -214,7 +218,7 @@ export default function EscanerQRScreen() {
                 )}
               </>
             ) : (
-              <ActivityIndicator color={colors.white} />
+              <ActivityIndicator color={colores.white} />
             )}
           </View>
         )}
@@ -232,7 +236,7 @@ export default function EscanerQRScreen() {
             value={folioTexto}
             onChangeText={setFolioTexto}
             placeholder="007"
-            placeholderTextColor={colors.muted}
+            placeholderTextColor={colores.muted}
             keyboardType="number-pad"
             editable={!procesando}
           />
@@ -249,7 +253,7 @@ export default function EscanerQRScreen() {
 
       {ultimo && (
         <TouchableOpacity
-          style={[styles.resultado, { backgroundColor: FONDO[ultimo.color] }]}
+          style={[styles.resultado, { backgroundColor: fondoResultado(colores)[ultimo.color] }]}
           activeOpacity={1}
           onPress={limpiar}
         >
@@ -264,46 +268,46 @@ export default function EscanerQRScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   content: { padding: spacing.md },
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
-  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary },
-  ayuda: { fontSize: fontSize.sm, color: colors.muted, marginTop: spacing.sm },
-  vacio: { fontSize: fontSize.sm, color: colors.muted, fontStyle: 'italic' },
+  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary },
+  ayuda: { fontSize: fontSize.sm, color: c.muted, marginTop: spacing.sm },
+  vacio: { fontSize: fontSize.sm, color: c.muted, fontStyle: 'italic' },
   filaEvento: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: c.border,
   },
   datosEvento: { flex: 1 },
-  eventoArtista: { fontSize: fontSize.md, fontWeight: '600', color: colors.primary },
-  eventoDetalle: { fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
-  chevron: { fontSize: fontSize.lg, color: colors.muted, paddingLeft: spacing.sm },
+  eventoArtista: { fontSize: fontSize.md, fontWeight: '600', color: c.primary },
+  eventoDetalle: { fontSize: fontSize.xs, color: c.muted, marginTop: 2 },
+  chevron: { fontSize: fontSize.lg, color: c.muted, paddingLeft: spacing.sm },
 
   encabezado: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.md,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: c.border,
   },
-  encabezadoTitulo: { fontSize: fontSize.md, fontWeight: 'bold', color: colors.primary },
-  encabezadoDetalle: { fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
-  cambiarEvento: { color: colors.accent, fontWeight: 'bold', fontSize: fontSize.sm, paddingHorizontal: spacing.sm },
+  encabezadoTitulo: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary },
+  encabezadoDetalle: { fontSize: fontSize.xs, color: c.muted, marginTop: 2 },
+  cambiarEvento: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm, paddingHorizontal: spacing.sm },
   contadorSesion: { alignItems: 'center', paddingLeft: spacing.md },
-  contadorNumero: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.accent },
-  contadorLabel: { fontSize: fontSize.xs, color: colors.muted },
+  contadorNumero: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.accent },
+  contadorLabel: { fontSize: fontSize.xs, color: c.muted },
 
-  camaraWrap: { flex: 1, backgroundColor: colors.primary, overflow: 'hidden' },
+  camaraWrap: { flex: 1, backgroundColor: c.block, overflow: 'hidden' },
   camaraOff: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
@@ -312,7 +316,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   camaraOffTexto: {
-    color: colors.white,
+    color: c.white,
     fontSize: fontSize.sm,
     textAlign: 'center',
     lineHeight: 20,
@@ -320,40 +324,40 @@ const styles = StyleSheet.create({
 
   manual: {
     padding: spacing.md,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: c.border,
   },
-  manualLabel: { fontSize: fontSize.xs, color: colors.muted, marginBottom: spacing.sm },
+  manualLabel: { fontSize: fontSize.xs, color: c.muted, marginBottom: spacing.sm },
   manualFila: { flexDirection: 'row', alignItems: 'center' },
   manualInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     fontFamily: 'monospace',
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     marginRight: spacing.sm,
   },
   botonManual: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     paddingHorizontal: spacing.lg,
     paddingVertical: 12,
     borderRadius: borderRadius.sm,
   },
   botonDeshabilitado: { opacity: 0.4 },
   boton: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     paddingHorizontal: spacing.lg,
     paddingVertical: 12,
     borderRadius: borderRadius.sm,
     marginTop: spacing.md,
   },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
-  errorInline: { color: colors.danger, fontSize: fontSize.sm, marginTop: spacing.sm },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
+  errorInline: { color: c.danger, fontSize: fontSize.sm, marginTop: spacing.sm },
 
   // El resultado ocupa la pantalla entera: el color se lee de reojo, la palabra no.
   resultado: {
@@ -367,24 +371,24 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
     fontSize: fontSize.xxl,
     fontWeight: 'bold',
-    color: colors.white,
+    color: c.white,
   },
   resultadoTitulo: {
     fontSize: fontSize.xl,
     fontWeight: 'bold',
-    color: colors.white,
+    color: c.white,
     marginTop: spacing.sm,
     textAlign: 'center',
   },
   resultadoDetalle: {
     fontSize: fontSize.md,
-    color: colors.white,
+    color: c.white,
     marginTop: spacing.sm,
     textAlign: 'center',
   },
   errorTexto: {
     fontSize: fontSize.md,
-    color: colors.muted,
+    color: c.muted,
     textAlign: 'center',
     marginTop: 40,
     paddingHorizontal: spacing.lg,

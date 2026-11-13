@@ -6,7 +6,9 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { useEventoPermisos } from '../hooks/useEventoPermisos';
 import { useCobroEvento } from '../hooks/useCobroEvento';
 import { formatearMonto } from '../lib/precio';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 function fechaHora(iso: string): string {
   return new Date(iso).toLocaleString('es-CL', {
@@ -27,6 +29,8 @@ function ultimos4(numeroCuenta: string | null | undefined): string {
  * implementaciones de la misma fórmula terminan dando números distintos.
  */
 export default function CobrarEventoScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const route = useRoute();
   const navigation = useNavigation();
   const { eventoId } = route.params as { eventoId: string };
@@ -62,7 +66,7 @@ export default function CobrarEventoScreen() {
     }
 
     if (cobro.cargando) {
-      return <ActivityIndicator size="large" color={colors.accent} style={styles.cargando} />;
+      return <ActivityIndicator size="large" color={colores.accent} style={styles.cargando} />;
     }
 
     if (cobro.error) {
@@ -178,63 +182,63 @@ export default function CobrarEventoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   content: { padding: spacing.md, paddingBottom: 100 },
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
   cardAviso: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
     borderWidth: 1,
-    borderColor: colors.warning,
+    borderColor: c.warning,
   },
   cargando: { marginTop: 40 },
   mensaje: {
     fontSize: fontSize.md,
-    color: colors.muted,
+    color: c.muted,
     textAlign: 'center',
     marginTop: 40,
     paddingHorizontal: spacing.lg,
   },
-  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: colors.primary, marginBottom: spacing.sm },
-  texto: { fontSize: fontSize.md, color: colors.primary },
-  textoSecundario: { fontSize: fontSize.sm, color: colors.muted, marginTop: spacing.sm },
+  titulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary, marginBottom: spacing.sm },
+  texto: { fontSize: fontSize.md, color: c.primary },
+  textoSecundario: { fontSize: fontSize.sm, color: c.muted, marginTop: spacing.sm },
   montoGrande: {
     fontSize: fontSize.xl,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     marginVertical: spacing.sm,
   },
-  check: { fontSize: fontSize.xl, color: colors.success, fontWeight: 'bold', marginBottom: spacing.sm },
-  exito: { fontSize: fontSize.sm, color: colors.success, fontWeight: 'bold', marginBottom: spacing.sm },
-  error: { fontSize: fontSize.sm, color: colors.danger, marginTop: spacing.sm },
+  check: { fontSize: fontSize.xl, color: c.success, fontWeight: 'bold', marginBottom: spacing.sm },
+  exito: { fontSize: fontSize.sm, color: c.success, fontWeight: 'bold', marginBottom: spacing.sm },
+  error: { fontSize: fontSize.sm, color: c.danger, marginTop: spacing.sm },
   boton: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     marginTop: spacing.md,
   },
   botonCobrar: {
-    backgroundColor: colors.danger,
+    backgroundColor: c.danger,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
     marginTop: spacing.md,
   },
   botonDeshabilitado: { opacity: 0.5 },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
   botonReintentar: {
     marginTop: spacing.md,
     alignSelf: 'center',
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     paddingHorizontal: spacing.lg,
     paddingVertical: 10,
     borderRadius: borderRadius.sm,
   },
-  textoBotonReintentar: { color: colors.white, fontWeight: 'bold' },
+  textoBotonReintentar: { color: c.onAccent, fontWeight: 'bold' },
 });

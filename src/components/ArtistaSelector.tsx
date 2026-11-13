@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { ArtistaBreve, buscarArtistas, crearArtista } from '../lib/artistas';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 /**
  * Spec 136 — equivalente de `ArtistaSelect.js` de la web. Busca y crea en la
@@ -18,6 +20,8 @@ interface ArtistaSelectorProps {
 }
 
 export default function ArtistaSelector({ userId, value, onChange }: ArtistaSelectorProps) {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const [texto, setTexto] = useState('');
   const [resultados, setResultados] = useState<ArtistaBreve[]>([]);
   const [mostrarContacto, setMostrarContacto] = useState(false);
@@ -99,7 +103,7 @@ export default function ArtistaSelector({ userId, value, onChange }: ArtistaSele
         value={texto}
         onChangeText={setTexto}
         placeholder="Buscar o escribir el artista..."
-        placeholderTextColor={colors.muted}
+        placeholderTextColor={colores.muted}
       />
       {(resultados.length > 0 || puedeCrear) && (
         <View style={styles.lista}>
@@ -115,7 +119,7 @@ export default function ArtistaSelector({ userId, value, onChange }: ArtistaSele
               disabled={creando}
             >
               {creando ? (
-                <ActivityIndicator color={colors.accent} />
+                <ActivityIndicator color={colores.accent} />
               ) : (
                 <Text style={styles.itemTexto}>+ Crear "{limpio}" como artista nuevo</Text>
               )}
@@ -135,7 +139,7 @@ export default function ArtistaSelector({ userId, value, onChange }: ArtistaSele
                 value={contacto}
                 onChangeText={setContacto}
                 placeholder="Contacto (teléfono o correo)"
-                placeholderTextColor={colors.muted}
+                placeholderTextColor={colores.muted}
                 autoCapitalize="none"
               />
               <TextInput
@@ -143,7 +147,7 @@ export default function ArtistaSelector({ userId, value, onChange }: ArtistaSele
                 value={instagram}
                 onChangeText={setInstagram}
                 placeholder="Instagram (@usuario)"
-                placeholderTextColor={colors.muted}
+                placeholderTextColor={colores.muted}
                 autoCapitalize="none"
                 autoCorrect={false}
               />
@@ -156,31 +160,31 @@ export default function ArtistaSelector({ userId, value, onChange }: ArtistaSele
   );
 }
 
-const styles = StyleSheet.create({
+const crearEstilos = (c: Paleta) => StyleSheet.create({
   input: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     padding: 12,
     borderRadius: borderRadius.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
   inputExtra: { marginTop: spacing.xs },
   lista: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     marginTop: spacing.xs,
   },
   item: {
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: c.border,
   },
-  itemNuevo: { backgroundColor: colors.accentLight },
-  itemTexto: { fontSize: fontSize.md, color: colors.primary, fontWeight: '500' },
+  itemNuevo: { backgroundColor: c.accentLight },
+  itemTexto: { fontSize: fontSize.md, color: c.primary, fontWeight: '500' },
   elegido: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -188,9 +192,9 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: borderRadius.sm,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
-  elegidoTexto: { fontSize: fontSize.md, color: colors.primary, fontWeight: '600', flexShrink: 1 },
-  enlace: { fontSize: fontSize.sm, color: colors.accent, fontWeight: '600', marginTop: spacing.xs },
-  error: { fontSize: fontSize.sm, color: colors.danger, marginTop: spacing.xs },
+  elegidoTexto: { fontSize: fontSize.md, color: c.primary, fontWeight: '600', flexShrink: 1 },
+  enlace: { fontSize: fontSize.sm, color: c.accent, fontWeight: '600', marginTop: spacing.xs },
+  error: { fontSize: fontSize.sm, color: c.danger, marginTop: spacing.xs },
 });

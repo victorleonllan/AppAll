@@ -25,7 +25,9 @@ import DatosPagoEvento, { DATOS_PAGO_VACIOS } from '../components/DatosPagoEvent
 import CampoImagen from '../components/CampoImagen';
 import { CampoFecha, CampoHora } from '../components/CampoFecha';
 import { PAIS_POR_DEFECTO, etiquetaPais } from '../constants/paises';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
+import { spacing, borderRadius, fontSize, Paleta } from '../theme';
+import { useEstilos } from '../hooks/useEstilos';
+import { useTema } from '../context/TemaContext';
 
 const TIPOS_VENUE = Object.keys(VENUE_LABEL) as VenueType[];
 const MAX_DESCRIPCION = 900;
@@ -40,6 +42,8 @@ const MAX_DESCRIPCION = 900;
  * build web de Expo `Alert.alert` no hace nada (`src/lib/confirm.ts`).
  */
 export default function CrearEventoScreen() {
+  const styles = useEstilos(crearEstilos);
+  const { colores } = useTema();
   const navigation = useNavigation();
   const { user, role } = useAuth();
   const { allVenues, createVenue } = useVenues();
@@ -270,7 +274,7 @@ export default function CrearEventoScreen() {
               value={venueQuery}
               onChangeText={(t) => { setVenueQuery(t); setSelectedVenue(null); }}
               placeholder="Buscar o escribir nuevo local..."
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={colores.muted}
             />
             {(suggestions.length > 0 || (venueQuery.trim().length > 0 && !selectedVenue)) && (
               <View style={styles.suggestions}>
@@ -309,7 +313,7 @@ export default function CrearEventoScreen() {
               style={styles.input}
               value={nuevoNombre}
               onChangeText={setNuevoNombre}
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={colores.muted}
             />
 
             <Text style={styles.sublabel}>Tipo *</Text>
@@ -336,7 +340,7 @@ export default function CrearEventoScreen() {
               value={nuevaDireccion}
               onChangeText={setNuevaDireccion}
               placeholder="Ej: Av. Italia 1234"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={colores.muted}
             />
 
             <Text style={styles.sublabel}>País *</Text>
@@ -350,7 +354,7 @@ export default function CrearEventoScreen() {
               value={nuevaComuna}
               onChangeText={setNuevaComuna}
               placeholder="Ej: Providencia"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={colores.muted}
             />
 
             <Text style={styles.sublabel}>Teléfono (opcional)</Text>
@@ -359,7 +363,7 @@ export default function CrearEventoScreen() {
               value={nuevoTelefono}
               onChangeText={setNuevoTelefono}
               placeholder="+56 9 1234 5678"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={colores.muted}
               keyboardType="phone-pad"
             />
 
@@ -369,7 +373,7 @@ export default function CrearEventoScreen() {
               value={nuevoInstagram}
               onChangeText={setNuevoInstagram}
               placeholder="@local"
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={colores.muted}
               autoCapitalize="none"
               autoCorrect={false}
             />
@@ -423,7 +427,7 @@ export default function CrearEventoScreen() {
           value={descripcion}
           onChangeText={setDescripcion}
           placeholder="De qué va el show, qué esperar, quién toca..."
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colores.muted}
           multiline
           maxLength={MAX_DESCRIPCION}
         />
@@ -435,7 +439,7 @@ export default function CrearEventoScreen() {
           value={precio}
           onChangeText={setPrecio}
           placeholder="Ej: $5.000"
-          placeholderTextColor={colors.muted}
+          placeholderTextColor={colores.muted}
         />
         {sinMonto && (
           <Text style={styles.aviso}>Sin un número en el precio, el evento no se puede comprar</Text>
@@ -446,7 +450,7 @@ export default function CrearEventoScreen() {
           <Switch
             value={preventaOn}
             onValueChange={setPreventaOn}
-            trackColor={{ true: colors.accent, false: colors.border }}
+            trackColor={{ true: colores.accent, false: colores.border }}
           />
           <View style={styles.interruptorTextos}>
             <Text style={styles.interruptorTitulo}>Preventa</Text>
@@ -463,7 +467,7 @@ export default function CrearEventoScreen() {
           <Switch
             value={especialOn}
             onValueChange={setEspecialOn}
-            trackColor={{ true: colors.especial, false: colors.border }}
+            trackColor={{ true: colores.especial, false: colores.border }}
           />
           <View style={styles.interruptorTextos}>
             <Text style={[styles.interruptorTitulo, styles.interruptorTituloEspecial]}>🎟 Ticket especial</Text>
@@ -497,7 +501,7 @@ export default function CrearEventoScreen() {
           disabled={publicando || Boolean(eventoCreadoId)}
         >
           {publicando ? (
-            <ActivityIndicator color={colors.white} />
+            <ActivityIndicator color={colores.onAccent} />
           ) : (
             <Text style={styles.textoBoton}>{eventoCreadoId ? 'Evento publicado' : 'Publicar evento'}</Text>
           )}
@@ -507,107 +511,107 @@ export default function CrearEventoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+const crearEstilos = (c: Paleta) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
   content: { padding: spacing.md },
   card: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
   },
   titulo: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: c.primary,
     marginBottom: spacing.md,
   },
   label: {
     fontSize: fontSize.sm,
     fontWeight: '600',
-    color: colors.primary,
+    color: c.primary,
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
   sublabel: {
     fontSize: fontSize.xs,
     fontWeight: '600',
-    color: colors.secondary,
+    color: c.secondary,
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
   input: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     padding: 12,
     borderRadius: borderRadius.sm,
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
   multilinea: { minHeight: 96, textAlignVertical: 'top' },
   // Spec 056 — el campo de género es un TouchableOpacity, no un TextInput: el
   // texto interno necesita su propio estilo (fontSize/color no le llegan al Text hijo).
-  inputTexto: { fontSize: fontSize.md, color: colors.primary },
-  inputPlaceholder: { fontSize: fontSize.md, color: colors.muted },
-  ayuda: { fontSize: fontSize.xs, color: colors.muted, marginTop: spacing.xs },
-  aviso: { fontSize: fontSize.xs, color: colors.warning, marginTop: spacing.xs },
-  enlace: { fontSize: fontSize.sm, color: colors.accent, fontWeight: '600', marginTop: spacing.sm },
-  error: { fontSize: fontSize.sm, color: colors.danger, marginTop: spacing.md },
+  inputTexto: { fontSize: fontSize.md, color: c.primary },
+  inputPlaceholder: { fontSize: fontSize.md, color: c.muted },
+  ayuda: { fontSize: fontSize.xs, color: c.muted, marginTop: spacing.xs },
+  aviso: { fontSize: fontSize.xs, color: c.warning, marginTop: spacing.xs },
+  enlace: { fontSize: fontSize.sm, color: c.accent, fontWeight: '600', marginTop: spacing.sm },
+  error: { fontSize: fontSize.sm, color: c.danger, marginTop: spacing.md },
   subform: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     padding: spacing.sm,
   },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   interruptor: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
   interruptorTextos: { flex: 1 },
-  interruptorTitulo: { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary },
-  interruptorTituloEspecial: { color: colors.especial },
-  interruptorAyuda: { fontSize: fontSize.xs, color: colors.muted, marginTop: 2 },
+  interruptorTitulo: { fontSize: fontSize.sm, fontWeight: '600', color: c.primary },
+  interruptorTituloEspecial: { color: c.especial },
+  interruptorAyuda: { fontSize: fontSize.xs, color: c.muted, marginTop: 2 },
   chip: {
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
     borderRadius: borderRadius.sm,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
   },
-  chipActivo: { backgroundColor: colors.accent, borderColor: colors.accent },
-  chipTexto: { fontSize: fontSize.sm, color: colors.primary },
-  chipTextoActivo: { color: colors.white, fontWeight: '600' },
+  chipActivo: { backgroundColor: c.accent, borderColor: c.accent },
+  chipTexto: { fontSize: fontSize.sm, color: c.primary },
+  chipTextoActivo: { color: c.onAccent, fontWeight: '600' },
   suggestions: {
-    backgroundColor: colors.cardBackground,
+    backgroundColor: c.cardBackground,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: c.border,
     borderRadius: borderRadius.sm,
     marginTop: spacing.xs,
   },
   suggestionItem: {
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: c.border,
   },
   suggestionNew: {
-    backgroundColor: colors.accentLight,
+    backgroundColor: c.accentLight,
   },
   suggestionText: {
     fontSize: fontSize.md,
-    color: colors.primary,
+    color: c.primary,
     fontWeight: '500',
   },
   suggestionSub: {
     fontSize: fontSize.sm,
-    color: colors.muted,
+    color: c.muted,
     marginTop: 2,
   },
   selectedVenue: {
     fontSize: fontSize.sm,
-    color: colors.success,
+    color: c.success,
     marginTop: spacing.xs,
     fontWeight: '600',
   },
   boton: {
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     padding: 14,
     borderRadius: borderRadius.sm,
     alignItems: 'center',
@@ -616,5 +620,5 @@ const styles = StyleSheet.create({
   botonDesactivado: {
     opacity: 0.6,
   },
-  textoBoton: { color: colors.white, fontWeight: 'bold', fontSize: fontSize.md },
+  textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
 });
