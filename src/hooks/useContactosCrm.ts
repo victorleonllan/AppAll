@@ -103,6 +103,15 @@ export function resumirContactos(c: ContactoCrm[]): {
   };
 }
 
+/**
+ * Spec 183 — sin Sonópolis Pro la pantalla no muestra el número de WhatsApp. Se conserva
+ * `aceptaWhatsapp` para decir «dejó su WhatsApp» y para el filtro y el conteo.
+ * Port de `ocultarWhatsapp` (`sonopolisWeb/libs/privacidad.js`, W-276).
+ */
+export function ocultarWhatsapp(contactos: ContactoCrm[]): ContactoCrm[] {
+  return contactos.map((c) => ({ ...c, telefono: null }));
+}
+
 /** Port de `contarPorSegmento` (`sonopolisWeb/libs/data/crm.js:108-115`). El piso es
  * `aceptaWhatsapp`: el segmento recorta los opt-ins, nunca los amplía (W-107). */
 export function contarPorSegmento(

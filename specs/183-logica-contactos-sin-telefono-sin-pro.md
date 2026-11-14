@@ -1,6 +1,6 @@
 # Spec 183 — La app sabe quitar los teléfonos de la lista de contactos de quien no tiene Pro
 
-> Estado: diseñado (14-nov-2026)
+> Estado: aplicado (14-nov-2026) — `npx tsc --noEmit` sin errores fuera de `supabase/functions` (criterio 1); el commit toca solo el hook y el cierre (criterio 2); `ocultarWhatsapp` devuelve objetos nuevos con `telefono: null` (criterio 3, por lectura)
 > Capa: LÓGICA. `src/hooks/useContactosCrm.ts`.
 > Depende de: spec 149 (`useContactosCrm`, `ContactoCrm`). Sin migración ni Edge Functions.
 > Alimenta: spec 184 (FRONTEND).
