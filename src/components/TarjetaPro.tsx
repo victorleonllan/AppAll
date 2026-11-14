@@ -31,7 +31,8 @@ interface Props {
 
 const ESTADOS_SUSCRIPCION = ['activa', 'pausada', 'cancelada'];
 
-export default function TarjetaPro({ tenant, tipo, etiqueta, onVerContactos, suscripcion, onCambio }: Props) {
+// Spec 184 — `etiqueta` ya no se usa en el texto; se conserva en `Props` porque la pasan las pantallas.
+export default function TarjetaPro({ tenant, tipo, onVerContactos, suscripcion, onCambio }: Props) {
   const styles = useEstilos(crearEstilos);
   const { colores } = useTema();
   const activo = esPro(tenant);
@@ -88,8 +89,8 @@ export default function TarjetaPro({ tenant, tipo, etiqueta, onVerContactos, sus
       ) : (
         <>
           <Text style={styles.texto}>
-            Con Sonópolis Pro ves en un solo lugar a tu público: quienes compran entradas para {etiqueta}, quienes
-            te siguen y quienes dejan su WhatsApp.
+            Tus contactos y los correos a tu público son gratis. Con Sonópolis Pro avisas a tu público por
+            WhatsApp desde la ficha de cada evento y ves el número de quienes lo dejaron.
           </Text>
           <Text style={[styles.texto, { color: colores.muted }]}>Tu cuenta no tiene Sonópolis Pro activo.</Text>
         </>

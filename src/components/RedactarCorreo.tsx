@@ -6,7 +6,7 @@
 // lleva una parte de texto armada con las mismas piezas, así que lo que se ve acá es
 // lo que dice el correo; solo faltan el logo, los colores y la tipografía.
 //
-// Solo se monta con Pro: sin Pro `/api/crm/correo` responde 402.
+// Se monta para cualquier tenant: `/api/crm/correo` ya no exige Pro (W-276 de la web).
 
 import { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
