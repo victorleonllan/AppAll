@@ -118,6 +118,7 @@
 | 183 | `ocultarWhatsapp` en `useContactosCrm`: la lista de contactos sin números de teléfono para quien no tiene Pro. Habilita 184. Hermano de `sonopolisWeb/specs/w276` | Aplicado (14-nov-2026) — `tsc` limpio fuera de `supabase/functions`; función pura exportada junto a `resumirContactos`, sin tocar los demás helpers |
 | 184 | Contactos y correo gratis en la app: `ContactosScreen` sin gate de Pro, «WhatsApp: con Sonópolis Pro» en vez del número, `TarjetaPro` vende WhatsApp y textos del admin. Requiere `sonopolisWeb/specs/w276` | Diseñado (14-nov-2026) |
 | 185 | Muro de locales y bandas: tablas `muro_publicaciones` y `muro_comentarios`, `muro_eventos_pasados`, `muro_comentar` y moderación por RLS. Habilita 186 y `sonopolisWeb/specs/w279` | Diseñado (14-nov-2026) |
+| 186 | La app lee el muro, comenta y borra: `src/lib/muro.ts`, `useMuro`, `enMuro` en `useCorreoCrm`. Habilita 187 | Diseñado (14-nov-2026) |
 | 028 | Correo transaccional por Resend (SMTP + plantillas + dominio propio) | Aplicado y confirmado (2026-08-11) — SMTP, límites, plantilla y remitente en `sonopolis.org` (verificado en Resend). El primero con `onboarding@resend.dev` cayó en spam; con dominio propio, confirmado que ya no |
 | 029 | Correo de confirmación de compra | Propuesto — depende del 028 y del 021 |
 | 030 | Dashboard de banda: perfil completo y panel | Implementado y desplegado — falta verificar en runtime |
