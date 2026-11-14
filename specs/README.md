@@ -119,6 +119,7 @@
 | 184 | Contactos y correo gratis en la app: `ContactosScreen` sin gate de Pro, «WhatsApp: con Sonópolis Pro» en vez del número, `TarjetaPro` vende WhatsApp y textos del admin. Requiere `sonopolisWeb/specs/w276` | Diseñado (14-nov-2026) |
 | 185 | Muro de locales y bandas: tablas `muro_publicaciones` y `muro_comentarios`, `muro_eventos_pasados`, `muro_comentar` y moderación por RLS. Habilita 186 y `sonopolisWeb/specs/w279` | Diseñado (14-nov-2026) |
 | 186 | La app lee el muro, comenta y borra: `src/lib/muro.ts`, `useMuro`, `enMuro` en `useCorreoCrm`. Habilita 187 | Diseñado (14-nov-2026) |
+| 187 | El muro en `DetalleLocalScreen` y `VerMusicoScreen` con comentarios; aviso de publicación en `RedactarCorreo` | Diseñado (14-nov-2026) |
 | 028 | Correo transaccional por Resend (SMTP + plantillas + dominio propio) | Aplicado y confirmado (2026-08-11) — SMTP, límites, plantilla y remitente en `sonopolis.org` (verificado en Resend). El primero con `onboarding@resend.dev` cayó en spam; con dominio propio, confirmado que ya no |
 | 029 | Correo de confirmación de compra | Propuesto — depende del 028 y del 021 |
 | 030 | Dashboard de banda: perfil completo y panel | Implementado y desplegado — falta verificar en runtime |
