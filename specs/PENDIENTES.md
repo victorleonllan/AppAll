@@ -1034,6 +1034,15 @@ Plan — la app al nivel de la web.md` («Pendientes después de la orquestació
    - FRONTEND: «¿Olvidaste tu contraseña?» directo, como W-228 (hoy se llega por enlace por
      correo + 128).
 
+## Contactos y correo gratis en la app 🟢 spec 184 aplicado, falta verificar en dispositivo (14-nov-2026)
+
+Se cerró con `tsc` y `expo export`: no se probó en un teléfono.
+
+1. **V (184-a):** cuenta **sin Pro** — en Contactos se ve el redactor de correo, la lista con
+   «WhatsApp: con Sonópolis Pro» en vez del número y la tarjeta de Pro; un envío de correo
+   real llega. Requiere W-276 desplegado en la web: sin él `/api/crm/correo` responde 402.
+2. **V (184-b):** cuenta **con Pro** — la pantalla se ve igual que antes del spec 184.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

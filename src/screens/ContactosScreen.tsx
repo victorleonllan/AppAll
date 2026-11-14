@@ -1,7 +1,10 @@
 // Spec 155 — Contactos del local o del músico. Hermana de `/local/contactos` y
-// `/musico/contactos` de la web (W-101, W-177, W-187, W-197, W-200): sin Pro, cuántas
-// personas hay en su público y la tarjeta Pro; con Pro, el redactor de correo, el
-// resumen, la búsqueda, los filtros y la lista agrupada.
+// `/musico/contactos` de la web (W-101, W-177, W-187, W-197, W-200): el redactor de correo,
+// el resumen, la búsqueda, los filtros y la lista agrupada.
+//
+// Spec 184 — los contactos y el correo son gratis (W-277 de la web): la pantalla es la
+// misma para todos. Sin Pro la lista llega sin teléfonos (`ocultarWhatsapp`, spec 183), en
+// vez del número dice «WhatsApp: con Sonópolis Pro» y aparece la tarjeta de Pro.
 //
 // Una sola pantalla para MiLocalStack y MusicoStack, como `Escaner` (spec 041): lo que
 // cambia es el tenant (`route.params.tipo`), no el código.
@@ -26,6 +29,7 @@ import {
   resumirContactos,
   filtrarContactos,
   agruparContactos,
+  ocultarWhatsapp,
   ContactoCrm,
   FiltroContactos,
   OrigenContacto,
@@ -68,17 +72,29 @@ function AvisoSinWhatsapp() {
   );
 }
 
-function TarjetaContacto({ c }: { c: ContactoCrm }) {
+// Spec 184 — `verWhatsapp` es `esPro(tenant)`. Sin Pro el contacto llega sin `telefono`
+// (`ocultarWhatsapp`), así que lo que dice si dejó su número es `aceptaWhatsapp`.
+function TarjetaContacto({ c, verWhatsapp }: { c: ContactoCrm; verWhatsapp: boolean }) {
   const styles = useEstilos(crearEstilos);
   const fechaISO = separarFechaHora(c.primerContacto).fechaISO;
+  const dejoWhatsappOculto = !verWhatsapp && c.aceptaWhatsapp;
+  const lineaWhatsapp = verWhatsapp
+    ? c.telefono
+      ? `WhatsApp: ${c.telefono}`
+      : 'Sin WhatsApp'
+    : c.aceptaWhatsapp
+      ? 'WhatsApp: con Sonópolis Pro'
+      : 'Sin WhatsApp';
   return (
     <View style={styles.contacto}>
       {!c.email && !c.telefono ? (
-        <Text style={styles.sinDatos}>Seguidor sin datos de contacto</Text>
+        <Text style={styles.sinDatos}>
+          {dejoWhatsappOculto ? 'Dejó su WhatsApp' : 'Seguidor sin datos de contacto'}
+        </Text>
       ) : c.email ? (
         <Text style={styles.contactoEmail}>{c.email}</Text>
       ) : null}
-      <Text style={styles.contactoLinea}>{c.telefono ? `WhatsApp: ${c.telefono}` : 'Sin WhatsApp'}</Text>
+      <Text style={styles.contactoLinea}>{lineaWhatsapp}</Text>
       <View style={styles.insignias}>
         {c.origenes.map((o) => (
           <View key={o} style={[styles.insignia, o === 'comprador' && styles.insigniaComprador]}>
@@ -142,26 +158,12 @@ export default function ContactosScreen() {
     );
   }
 
-  // 4. Sin Pro: el número hace visible el valor de Pro; el gate es de producto.
-  if (!esPro(tenant)) {
-    const n = contactos.length;
-    return (
-      <View style={styles.contenedor}>
-        <View style={styles.sinPro}>
-          <Text style={styles.mensaje}>
-            Tienes <Text style={styles.negrita}>{n}</Text> persona{n === 1 ? '' : 's'} en tu público.
-          </Text>
-          <View style={styles.tarjetaPro}>
-            <TarjetaPro tenant={tenant} etiqueta={etiqueta} />
-          </View>
-        </View>
-      </View>
-    );
-  }
-
-  // 5. Con Pro.
+  // 4. Spec 184 — la pantalla es la misma con y sin Pro. Sin Pro la lista va sin teléfonos;
+  // el resumen sale de `contactos` original para que «Con WhatsApp» cuente bien.
+  const pro = esPro(tenant);
+  const lista = pro ? contactos : ocultarWhatsapp(contactos);
   const resumen = resumirContactos(contactos);
-  const sections = agruparContactos(filtrarContactos(contactos, filtro, busqueda)).map((g) => ({
+  const sections = agruparContactos(filtrarContactos(lista, filtro, busqueda)).map((g) => ({
     title: g.titulo,
     data: g.contactos,
   }));
@@ -171,8 +173,9 @@ export default function ContactosScreen() {
   const encabezado = (
     <View>
       {/* Spec 169 — solo con suscripción; con Pro regalado por el admin, como antes.
-          Sin onVerContactos: ya está en Contactos. */}
-      {suscripcion && (
+          Sin onVerContactos: ya está en Contactos. Con `pro`: sin Pro vigente esta tarjeta
+          diría lo mismo que la de más abajo (addenda del spec 184). */}
+      {pro && suscripcion && (
         <View style={styles.tarjetaPro}>
           <TarjetaPro
             tenant={tenant}
@@ -185,6 +188,13 @@ export default function ContactosScreen() {
       )}
 
       <RedactarCorreo tipo={tipo} nombreTenant={tenant.nombre} />
+
+      {/* Spec 184 — sin Pro, la tarjeta que cuenta qué suma Pro (WhatsApp). */}
+      {!pro && (
+        <View style={styles.tarjetaPro}>
+          <TarjetaPro tenant={tenant} etiqueta={etiqueta} />
+        </View>
+      )}
 
       <View style={styles.resumenFila}>
         <View style={styles.resumenCard}>
@@ -207,7 +217,7 @@ export default function ContactosScreen() {
         style={styles.buscador}
         value={busqueda}
         onChangeText={setBusqueda}
-        placeholder="Buscar por email o teléfono"
+        placeholder={pro ? 'Buscar por email o teléfono' : 'Buscar por email'}
         placeholderTextColor={colores.muted}
         autoCapitalize="none"
         autoCorrect={false}
@@ -251,7 +261,7 @@ export default function ContactosScreen() {
       <SectionList
         sections={sections}
         keyExtractor={(c) => c.clave}
-        renderItem={({ item }) => <TarjetaContacto c={item} />}
+        renderItem={({ item }) => <TarjetaContacto c={item} verWhatsapp={pro} />}
         renderSectionHeader={({ section }) => (
           <Text style={styles.seccion}>
             {section.title.toUpperCase()} · {section.data.length}
@@ -278,7 +288,6 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
     padding: spacing.lg,
   },
   lista: { padding: spacing.md, paddingBottom: spacing.xl },
-  sinPro: { padding: spacing.md },
   tarjetaPro: { marginTop: spacing.md },
   mensaje: { fontSize: fontSize.md, color: c.primary, textAlign: 'center' },
   error: { fontSize: fontSize.md, color: c.danger, textAlign: 'center' },

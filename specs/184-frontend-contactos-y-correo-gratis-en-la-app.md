@@ -1,6 +1,6 @@
 # Spec 184 — Contactos y correo gratis en la app; WhatsApp sigue con Pro
 
-> Estado: diseñado (14-nov-2026)
+> Estado: aplicado (14-nov-2026) — `tsc --noEmit` limpio fuera de `supabase/functions`, `expo export --platform web` sin errores, greps de los criterios 3-5 sin resultados y `esPro` intacto en las 3 pantallas del criterio 4. Falta probarlo en dispositivo (V 184-a y 184-b en `PENDIENTES.md`).
 > Capa: FRONTEND. `src/screens/ContactosScreen.tsx`, `src/components/TarjetaPro.tsx`, `src/components/RedactarCorreo.tsx` (solo un comentario), `src/screens/AdminTenantScreen.tsx`.
 > Depende de: spec 183 (`ocultarWhatsapp`), spec 155, spec 169, spec 173 (`useEstilos`, `useTema`). En la web: `sonopolisWeb` W-276 (sin él, `/api/crm/correo` responde 402 a quien no tiene Pro).
 > Hermano en la web: `app/(private)/local/contactos/page.js`, `musico/contactos/page.js`, `components/TablaContactos.js` (W-277) y `components/CardSonopolisPro.js`, `admin/crm/[tipo]/[id]/page.js` (W-278).
@@ -93,3 +93,16 @@ Si `n` (el conteo) queda sin uso, se quita su cálculo.
 - Cuenta **sin Pro**: se ve el redactor, la lista con «WhatsApp: con Sonópolis Pro» y la
   tarjeta; un envío de correo real llega (requiere W-276 desplegado en la web).
 - Cuenta **con Pro**: la pantalla se ve igual que antes de este spec.
+
+## Bugs encontrados al aplicar (14-nov-2026)
+
+- **Dos tarjetas de Pro iguales con suscripción vencida.** El punto 3 de la Decisión pide la
+  `TarjetaPro` de estado «con `suscripcion`» y otra «sin Pro». `useMiSuscripcionPro` puede
+  devolver una suscripción de un tenant que ya no tiene Pro (cancelada y vencida), y en ese
+  caso `TarjetaPro` ignora la suscripción y escribe el texto sin Pro: la pantalla mostraría
+  dos tarjetas idénticas. Antes del spec no pasaba porque sin Pro la pantalla retornaba antes.
+  Se aplicó `pro && suscripcion` para la tarjeta de estado, que es lo que «como hoy»
+  significaba en la práctica: sin Pro queda solo la tarjeta de debajo del redactor.
+- **`sinPro` quedó sin uso** en los estilos de `ContactosScreen` al quitar el retorno temprano;
+  se borró. En `TarjetaPro`, `etiqueta` salió del destructuring y sigue en `Props`, como pide
+  el spec.

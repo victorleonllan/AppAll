@@ -246,7 +246,6 @@ export default function AdminTenantScreen() {
 
   const { tenant } = t;
   const etiqueta = tipo === 'venue' ? 'Este local' : 'Esta banda';
-  const n = t.contactos.length;
 
   // DetalleEvento vive en CarteleraStack: `navigate` sube hasta el Tab que la tiene.
   const verEvento = (eventoId: string) =>
@@ -265,13 +264,12 @@ export default function AdminTenantScreen() {
         <BotonesPro tipo={tipo} id={id} nombre={tenant.nombre} proHasta={tenant.proHasta} onCambio={t.recargar} />
         <Text style={styles.texto}>
           {tenant.esPro
-            ? `${etiqueta} ve esta misma lista en su panel de contactos.`
-            : `Sin Pro: ${etiqueta.toLowerCase()} solo ve el conteo (${n} ${n === 1 ? 'persona' : 'personas'}) y la invitación a Pro.`}
+            ? `${etiqueta} ve esta misma lista en su panel de contactos y le escribe a su público por correo. Con Pro, además ve los números de WhatsApp, avisa por WhatsApp y publica en redes.`
+            : `${etiqueta} ve esta misma lista en su panel de contactos y le escribe a su público por correo. Sin Pro no ve los números de WhatsApp (aquí sí se muestran), no avisa por WhatsApp ni publica en redes.`}
         </Text>
         <View style={styles.notaAdmin}>
           <Text style={styles.textoChico}>
-            <Text style={styles.negrita}>Vista de admin:</Text> así ve {tenant.nombre} su CRM con Pro. Desde aquí no se
-            envía nada.
+            <Text style={styles.negrita}>Vista de admin:</Text> así ve {tenant.nombre} su CRM. Desde aquí no se envía nada.
           </Text>
         </View>
       </View>
