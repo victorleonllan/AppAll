@@ -1,6 +1,6 @@
 # Spec 186 — La app lee el muro de un local o banda, comenta y borra
 
-> Estado: diseñado (14-nov-2026)
+> Estado: aplicado (14-nov-2026) — `npx tsc --noEmit` limpio fuera de `supabase/functions`; `src/lib/muro.ts` probado con `node` (orden por fecha, corte en 30, comentarios en su entrada y en orden, huérfano descartado, argumentos sin modificar, los cinco mensajes de error); lectura del código: `useMuro` usa solo el cliente de `src/lib/supabase` (llave anónima). Sin probar contra la base ni en un dispositivo: eso llega con las pantallas del 187.
 > Capa: LÓGICA. `src/lib/muro.ts` (nuevo), `src/hooks/useMuro.ts` (nuevo), `src/hooks/useCorreoCrm.ts`.
 > Depende de: spec 185 (tablas `muro_publicaciones`, `muro_comentarios`; funciones `muro_eventos_pasados`, `muro_comentar`), con su migración ya pusheada.
 > Alimenta: spec 187 (FRONTEND).
