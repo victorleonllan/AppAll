@@ -1,6 +1,6 @@
 # Spec 185 — El muro de locales y bandas: publicaciones, comentarios y eventos pasados
 
-> Estado: diseñado (14-nov-2026)
+> Estado: aplicado (14-nov-2026) — migración escrita, **sin pushear a producción** (el push lo pide Victor o lo corre la cadena): `supabase/migrations/20261114202000_spec_185_muro.sql`. Verificado en un Postgres 17 local desechable con réplicas mínimas de `auth`, `venues`, `profiles`, `artists`, `events`, `crm_correos` y `es_admin_sonopolis`: los criterios 1 a 5 pasan (migración corrida dos veces; `anon` lee y no inserta; eventos pasados solo con flyer, ya ocurridos, publicados y visibles; `muro_comentar` con sus cuatro errores y el undécimo comentario rechazado; borrado por autor, dueño del muro y admin, y cascada al quitar la publicación). Faltan el criterio 6 (`supabase db push --linked`) y repetir 2-5 contra producción en transacción abortada. `tsc` limpio fuera de `supabase/functions`.
 > Capa: DATOS. Migración nueva en `supabase/migrations/` (`<timestamp>_spec_185_muro.sql`).
 > Depende de: spec 074 (`es_admin_sonopolis`), `crm_correos` (W-198), `events`, `artists`, `venues`, `profiles`. No hay otra migración pendiente al diseñarlo (`supabase migration list`: ninguna fila sin `remote`, última `20261027120000`).
 > Alimenta: `sonopolisWeb` W-279 (LÓGICA) → W-280 y W-281 (FRONTEND); specs 186 (LÓGICA) → 187 (FRONTEND) de la app.
