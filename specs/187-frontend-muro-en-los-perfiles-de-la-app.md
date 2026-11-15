@@ -1,6 +1,6 @@
 # Spec 187 — El muro en el perfil de locales y bandas de la app, con comentarios
 
-> Estado: diseñado (14-nov-2026)
+> Estado: aplicado (15-nov-2026) — `npx tsc --noEmit` limpio fuera de `supabase/functions`; `npx expo export --platform web` sin errores; sin hex nuevos en el diff; el grep del criterio 4 devuelve la línea del aviso. Sin probar en dispositivo ni contra la base (V 187-a/b/c en `PENDIENTES.md`). Dos desviaciones en la addenda.
 > Capa: FRONTEND. `src/components/Muro.tsx` (nuevo), `src/screens/DetalleLocalScreen.tsx`, `src/screens/VerMusicoScreen.tsx`, `src/components/RedactarCorreo.tsx`.
 > Depende de: spec 186 (`useMuro`, `EntradaMuro`, `MAX_COMENTARIO`, `enMuro` en `useCorreoCrm`), spec 184 (toca el mismo `RedactarCorreo.tsx`; debe estar aplicado antes), spec 173 (`useEstilos`, `useTema`).
 > Hermano en la web: `components/Muro.js`, `components/ComentariosMuro.js`, `locales/[id]/page.js`, `musicos/[id]/page.js` (W-280) y `components/RedactarCorreo.js` (W-281).
@@ -90,3 +90,18 @@ final del `ScrollView`. `puedeModerar` = `user.id === musico.id` o admin.
 - Perfil de un local con eventos pasados: se ven los flyers en el muro, del más nuevo al más viejo.
 - Con sesión de fan: comentar, ver el comentario con su nombre y borrarlo.
 - Con sesión del dueño: borrar un comentario ajeno y quitar un correo del muro.
+
+## Bugs encontrados al aplicar (15-nov-2026)
+
+1. **«Antes del mapa» choca con la pantalla real.** El diseño asume que en
+   `DetalleLocalScreen` el mapa va después del bloque de datos del local, pero ahí el mapa
+   está en la sección «Dónde», justo bajo la cabecera y el opt-in de WhatsApp; «Sobre el
+   local», «Contacto» y «Próximas fechas» vienen después. Poner el muro antes del mapa
+   habría empujado la dirección, los datos y las próximas fechas bajo hasta 30 entradas. Se
+   aplicó la otra mitad de la regla («después del bloque de datos»): el muro va al final del
+   `ScrollView`, después de «Próximas fechas», igual que en `VerMusicoScreen`.
+2. **No hay navegación a la pantalla de sesión que reutilizar.** `BotonSeguir` sin usuario
+   no navega: muestra un `Alert.alert` («Inicia sesión»), que además es un no-op en web
+   (ver `src/lib/confirm.ts`). `OptInWhatsApp` funciona sin sesión. Sin sesión, el muro
+   muestra el texto «Inicia sesión para comentar» sin enlace. Llevar a la pantalla de sesión
+   desde el muro sería un spec nuevo.

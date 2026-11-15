@@ -11,6 +11,8 @@ import { useConexiones, musicosYaConectados } from '../hooks/useConexiones';
 import ModalSolicitud from '../components/ModalSolicitud';
 import BotonSeguir from '../components/BotonSeguir';
 import OptInWhatsApp from '../components/OptInWhatsApp';
+import Muro from '../components/Muro';
+import { useEsAdmin } from '../hooks/useEsAdmin';
 import { useTelefonoPropio } from '../hooks/useOptInWhatsApp';
 import { MENSAJES_SOLICITUD } from '../constants/solicitudes';
 import { etiquetaPais } from '../constants/paises';
@@ -34,6 +36,7 @@ export default function VerMusicoScreen() {
   // Spec 132 — «Solicitar»/«Conectar» desde la ficha: en la app es donde el
   // local decide. Los hooks se llaman siempre; quién mira decide cuál se usa.
   const { user, role } = useAuth();
+  const { esAdmin } = useEsAdmin();
   const { allVenues } = useVenues();
   const sol = useSolicitudes();
   const con = useConexiones();
@@ -210,6 +213,14 @@ export default function VerMusicoScreen() {
 
         {botonSolicitud()}
       </View>
+
+      {/* Spec 187 — el muro de la banda: correos publicados y flyers de eventos pasados. */}
+      <Muro
+        tipo="musician"
+        id={musico.id}
+        nombreTenant={musico.nombre}
+        puedeModerar={(!!user && user.id === musico.id) || esAdmin}
+      />
 
       {modo && (
         <ModalSolicitud
