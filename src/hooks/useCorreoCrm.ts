@@ -44,7 +44,7 @@ export function mensajeApiWeb(e: unknown, respaldo: string): string {
 export function useCorreoCrm(tipo: TipoTenant | null): {
   estado: EstadoCorreo | null; cargando: boolean; error: string | null; enviando: boolean;
   enviar: (p: { segmento: SegmentoCorreo; asunto: string; cuerpo: string }) =>
-    Promise<{ ok: true; enviados: number } | { ok: false; mensaje: string }>;
+    Promise<{ ok: true; enviados: number; enMuro?: boolean } | { ok: false; mensaje: string }>;
 } {
   const [estado, setEstado] = useState<EstadoCorreo | null>(null);
   const [cargando, setCargando] = useState(tipo !== null);
@@ -86,7 +86,9 @@ export function useCorreoCrm(tipo: TipoTenant | null): {
       if (tipo === null) return { ok: false as const, mensaje: 'No se pudo mandar el correo' };
       setEnviando(true);
       try {
-        const data = await llamarApiWeb<{ enviados: number }>('/api/crm/correo', {
+        // `enMuro` (spec 186): desde W-279 la ruta dice si el correo quedó también en el
+        // muro; una web que todavía no lo manda lo deja en `undefined`.
+        const data = await llamarApiWeb<{ enviados: number; enMuro?: boolean }>('/api/crm/correo', {
           metodo: 'POST',
           cuerpo: { tenantType: tipo, segmento: p.segmento, asunto: p.asunto, cuerpo: p.cuerpo },
         });
@@ -101,7 +103,7 @@ export function useCorreoCrm(tipo: TipoTenant | null): {
               }
             : prev
         );
-        return { ok: true as const, enviados: data.enviados };
+        return { ok: true as const, enviados: data.enviados, enMuro: data.enMuro };
       } catch (e) {
         // 429 (ya se mandó uno) o 502 (salió solo una parte, ya registrada): ErrorApiWeb
         // pierde `proximoEnvio`, así que se vuelve a pedir el GET para traer el real.
