@@ -9,6 +9,8 @@ import BotonSeguir from '../components/BotonSeguir';
 import OptInWhatsApp from '../components/OptInWhatsApp';
 import { useTelefonoPropio } from '../hooks/useOptInWhatsApp';
 import MapaLocales from '../components/MapaLocales';
+import Muro from '../components/Muro';
+import { useEsAdmin } from '../hooks/useEsAdmin';
 import { mapaDisponible, puntosDeVenues, urlComoLlegar } from '../lib/mapa';
 import { venueEmoji, venueLabel } from '../lib/venues';
 import { LocalesStackParamList } from '../navigation/LocalesStack';
@@ -41,6 +43,7 @@ export default function DetalleLocalScreen() {
   const venue = allVenues.find((v) => v.id === venueId);
   const fechas = useEventosDelLocal(venue?.id);
   const telefonoPropio = useTelefonoPropio();
+  const { esAdmin } = useEsAdmin();
 
   if (loading) {
     return (
@@ -165,6 +168,13 @@ export default function DetalleLocalScreen() {
           </TouchableOpacity>
         ))
       )}
+      {/* Spec 187 — el muro del local: correos publicados y flyers de eventos pasados. */}
+      <Muro
+        tipo="venue"
+        id={venue.id}
+        nombreTenant={venue.name}
+        puedeModerar={(!!user && user.id === venue.ownerId) || esAdmin}
+      />
       {/* `rating` no se muestra: los valores se cargaron a mano, no salen de
           reseñas (spec 031). */}
     </ScrollView>

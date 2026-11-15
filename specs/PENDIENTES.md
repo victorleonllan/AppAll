@@ -1043,6 +1043,15 @@ Se cerró con `tsc` y `expo export`: no se probó en un teléfono.
    real llega. Requiere W-276 desplegado en la web: sin él `/api/crm/correo` responde 402.
 2. **V (184-b):** cuenta **con Pro** — la pantalla se ve igual que antes del spec 184.
 
+## El muro en los perfiles de la app 🟢 spec 187 aplicado, falta verificar en dispositivo (15-nov-2026)
+
+Se cerró con `tsc` y `expo export`: no se probó en un teléfono ni contra la base.
+
+1. **V (187-a):** perfil de un local con eventos pasados — se ven los flyers en el muro, del
+   más nuevo al más viejo.
+2. **V (187-b):** con sesión de fan — comentar, ver el comentario con su nombre y borrarlo.
+3. **V (187-c):** con sesión del dueño — borrar un comentario ajeno y quitar un correo del muro.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

@@ -33,6 +33,14 @@ function personas(n: number): string {
   return `${n} persona${n === 1 ? '' : 's'}`;
 }
 
+/** Spec 187 — lo que se suma al éxito según si el correo quedó en el muro
+ * (`enMuro` de `/api/crm/correo`, W-279). `undefined`: la ruta no lo dijo, no se suma nada. */
+function textoMuro(enMuro: boolean | undefined): string {
+  if (enMuro === true) return ' Quedó publicado en tu muro.';
+  if (enMuro === false) return ' No se pudo publicar en tu muro; el correo sí se envió.';
+  return '';
+}
+
 /** Fecha y hora locales sin `toLocaleString` (Hermes, spec 148). */
 function fechaYHora(iso: string): { fecha: string; hora: string } {
   const { fechaISO, horaISO } = separarFechaHora(iso);
@@ -88,7 +96,9 @@ export default function RedactarCorreo({ tipo, nombreTenant }: Props) {
         setResultado(null);
         const r = await enviar({ segmento: lista, asunto, cuerpo });
         setResultado(
-          r.ok ? { ok: true, texto: `Correo enviado a ${personas(r.enviados)}.` } : { ok: false, texto: r.mensaje }
+          r.ok
+            ? { ok: true, texto: `Correo enviado a ${personas(r.enviados)}.${textoMuro(r.enMuro)}` }
+            : { ok: false, texto: r.mensaje }
         );
       }
     );
@@ -198,6 +208,9 @@ export default function RedactarCorreo({ tipo, nombreTenant }: Props) {
         </View>
       )}
 
+      <Text style={styles.aviso}>
+        Este correo también se publica en tu muro: lo ve cualquiera que entre a tu perfil público en Sonópolis.
+      </Text>
       <TouchableOpacity
         style={[styles.botonEnviar, !puedeEnviar && styles.botonDeshabilitado]}
         onPress={alEnviar}
@@ -277,6 +290,7 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.md,
   },
+  aviso: { fontSize: fontSize.xs, color: c.secondary, marginTop: spacing.md },
   botonDeshabilitado: { opacity: 0.5 },
   botonEnviarTexto: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.sm },
 });
