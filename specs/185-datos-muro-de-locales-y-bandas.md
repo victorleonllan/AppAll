@@ -1,6 +1,6 @@
 # Spec 185 — El muro de locales y bandas: publicaciones, comentarios y eventos pasados
 
-> Estado: aplicado (14-nov-2026) — migración escrita, **sin pushear a producción** (el push lo pide Victor o lo corre la cadena): `supabase/migrations/20261114202000_spec_185_muro.sql`. Verificado en un Postgres 17 local desechable con réplicas mínimas de `auth`, `venues`, `profiles`, `artists`, `events`, `crm_correos` y `es_admin_sonopolis`: los criterios 1 a 5 pasan (migración corrida dos veces; `anon` lee y no inserta; eventos pasados solo con flyer, ya ocurridos, publicados y visibles; `muro_comentar` con sus cuatro errores y el undécimo comentario rechazado; borrado por autor, dueño del muro y admin, y cascada al quitar la publicación). Faltan el criterio 6 (`supabase db push --linked`) y repetir 2-5 contra producción en transacción abortada. `tsc` limpio fuera de `supabase/functions`.
+> Estado: aplicado y **pusheado a producción** (14-nov-2026, `supabase db push`, única pendiente; ver addenda sobre el push). Migración: `supabase/migrations/20261114202000_spec_185_muro.sql`. Verificado en un Postgres 17 local desechable con réplicas mínimas de `auth`, `venues`, `profiles`, `artists`, `events`, `crm_correos` y `es_admin_sonopolis`: los criterios 1 a 5 pasan (migración corrida dos veces; `anon` lee y no inserta; eventos pasados solo con flyer, ya ocurridos, publicados y visibles; `muro_comentar` con sus cuatro errores y el undécimo comentario rechazado; borrado por autor, dueño del muro y admin, y cascada al quitar la publicación). Faltan el criterio 6 (`supabase db push --linked`) y repetir 2-5 contra producción en transacción abortada. `tsc` limpio fuera de `supabase/functions`.
 > Capa: DATOS. Migración nueva en `supabase/migrations/` (`<timestamp>_spec_185_muro.sql`).
 > Depende de: spec 074 (`es_admin_sonopolis`), `crm_correos` (W-198), `events`, `artists`, `venues`, `profiles`. No hay otra migración pendiente al diseñarlo (`supabase migration list`: ninguna fila sin `remote`, última `20261027120000`).
 > Alimenta: `sonopolisWeb` W-279 (LÓGICA) → W-280 y W-281 (FRONTEND); specs 186 (LÓGICA) → 187 (FRONTEND) de la app.
@@ -171,3 +171,16 @@ termina en `raise exception`), como el spec 161, sin dejar filas. Para simular u
 
 - **Reportar un comentario.** Hoy modera el dueño del muro y el admin; no hay botón de
   «reportar» para el público.
+
+## Bugs encontrados al aplicar
+
+- **14-nov-2026 — la cadena se saltó el `db push`.** `spec-fleet-cadena` dijo «las migraciones
+  de 185 ya están en la base» cuando `supabase migration list` la mostraba sin `remote`; W-279
+  quedó aplicado sin las tablas en producción. No se pudo reproducir después (la misma función
+  la detecta como pendiente). El push se corrió a mano esa noche. Verificado en producción: con
+  la llave anónima se leen las dos tablas (200, vacías) y no se inserta (401);
+  `muro_eventos_pasados` devuelve los 4 eventos pasados con flyer de Quintal Clandesta y `[]`
+  con un uuid inexistente; dentro de una transacción abortada, `muro_comentar` inserta con el
+  nombre del perfil y el texto recortado, y rechaza el comentario vacío (`comentario_invalido`),
+  sin destino y sobre un evento de otro local (`destino_desconocido`); el autor borra el suyo.
+  No quedaron filas.
