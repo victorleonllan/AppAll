@@ -119,7 +119,7 @@ insert into tok values ('b3', public.invitar_a_sonopolis('b3@prueba-w302.test', 
 select pg_temp.ok((select count(*) from public.sonopolis_invites) = 4, 'el local ve sus 4 invitaciones');
 
 select pg_temp.falla($q$select public.invitar_a_sonopolis('x@prueba-w302.test', null, '00000000-0000-4000-c000-000000000009')$q$,
-  'no puedes invitar a esa banda');
+  'solo quien registró');
 select pg_temp.falla($q$select public.invitar_a_sonopolis('no-es-correo', 'Algo')$q$, 'correo inválido');
 select pg_temp.falla($q$select public.invitar_a_sonopolis('otro-local@prueba-w302.test', 'Algo')$q$, 'cuenta de local');
 select pg_temp.falla($q$select public.invitar_a_sonopolis('x2@prueba-w302.test', 'Algo', null, '00000000-0000-4000-d000-999999999999')$q$,
@@ -238,4 +238,61 @@ select pg_temp.falla(format('select public.reclamar_invitacion_sonopolis(%L)', (
   'esta invitación es para');
 reset role;
 
-select 'W-300/W-301/W-302: todas las pruebas pasaron' as resultado;
+-- W-307: los tres huecos de la revisión -------------------------------------------------
+-- Cuenta E: editor (no admin) del evento de L.
+insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, email_confirmed_at, created_at, updated_at)
+values ('00000000-0000-4000-a000-000000000006', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'editor@prueba-w302.test', '{"role":"musician","nombre":"Editor"}', now(), now(), now());
+insert into public.event_collaborators (event_id, user_id, role, can_delete, source)
+values ('00000000-0000-4000-d000-000000000001', '00000000-0000-4000-a000-000000000006', 'editor', false, 'invited');
+
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-000000000006","role":"authenticated"}', true);
+-- B2 (hueco 2): no puede crear una ficha a nombre de otra cuenta...
+select pg_temp.falla($q$insert into public.artists (name, created_by, profile_id)
+  values ('Trampa', '00000000-0000-4000-a000-000000000006', '00000000-0000-4000-a000-000000000005')$q$,
+  'row-level security');
+-- ...ni enlazar después una ficha suya a otra cuenta.
+insert into public.artists (id, name, created_by) values
+ ('00000000-0000-4000-c000-000000000006', 'Ficha del editor', '00000000-0000-4000-a000-000000000006');
+select pg_temp.falla($q$update public.artists set profile_id = '00000000-0000-4000-a000-000000000005'
+  where id = '00000000-0000-4000-c000-000000000006'$q$, 'se enlaza con una invitación');
+-- Agregar al lineup una banda ya reclamada (B3) siendo editor no le da admin a B3.
+insert into public.event_artists (event_id, artist_id)
+select '00000000-0000-4000-d000-000000000001', id from public.artists
+ where profile_id = '00000000-0000-4000-a000-000000000004';
+reset role;
+select pg_temp.ok(not exists (select 1 from public.event_collaborators where event_id = '00000000-0000-4000-d000-000000000001'
+                                and user_id = '00000000-0000-4000-a000-000000000004'),
+                  'un editor no fabrica un admin agregando una banda reclamada');
+
+-- B1 (hueco 1): X agrega una ficha sin cuenta de L a su evento y no puede invitarse.
+insert into public.artists (id, name, created_by) values
+ ('00000000-0000-4000-c000-000000000003', 'Banda Libre W302', '00000000-0000-4000-a000-000000000001');
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-000000000005","role":"authenticated"}', true);
+insert into public.events (id, artist_name, artist_id, venue_id, venue_name, fecha, hora, genero, precio, created_by, pais)
+values ('00000000-0000-4000-d000-000000000003', 'Banda Libre W302', '00000000-0000-4000-c000-000000000003',
+        '00000000-0000-4000-b000-000000000002', 'Sala Otra W302', '2027-02-01', '21:00', 'rock', '5000',
+        '00000000-0000-4000-a000-000000000005', 'CL');
+select pg_temp.falla($q$select public.invitar_a_sonopolis('x-se-la-queda@prueba-w302.test', null,
+  '00000000-0000-4000-c000-000000000003', '00000000-0000-4000-d000-000000000003')$q$, 'solo quien registró');
+
+-- B3 (hueco 3): reenviar antes de 10 minutos de un envío marcado, no.
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}', true);
+insert into tok values ('libre', public.invitar_a_sonopolis('libre@prueba-w302.test', null, '00000000-0000-4000-c000-000000000003'));
+select public.marcar_invitacion_sonopolis_enviada((select t from tok where k = 'libre'));
+select pg_temp.falla($q$select public.invitar_a_sonopolis('libre@prueba-w302.test', null, '00000000-0000-4000-c000-000000000003')$q$,
+  'hace menos de 10 minutos');
+reset role;
+
+-- El reclamo (security definer) sigue pudiendo enlazar la ficha: lo probó B1 arriba, y
+-- aquí con la ficha libre después del trigger nuevo.
+insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, email_confirmed_at, created_at, updated_at)
+values ('00000000-0000-4000-a000-000000000007', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+        'libre@prueba-w302.test', '{"role":"musician"}', now(), now(), now());
+select pg_temp.ok((select profile_id from public.artists where id = '00000000-0000-4000-c000-000000000003') = '00000000-0000-4000-a000-000000000007',
+                  'el reclamo por invitación enlaza la ficha pese al guardia de profile_id');
+
+select 'W-300/W-301/W-302/W-307: todas las pruebas pasaron' as resultado;
+
