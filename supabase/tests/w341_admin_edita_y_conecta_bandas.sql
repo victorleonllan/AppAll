@@ -153,9 +153,12 @@ select public.admin_vincular_banda('00000000-0000-4000-c341-000000000001', '0000
 -- F4 también con M1: en E2 ya es admin, no se duplica.
 select public.admin_vincular_banda('00000000-0000-4000-c341-000000000004', '00000000-0000-4000-a341-000000000001');
 reset role;
-select pg_temp.ok((select profile_id = '00000000-0000-4000-a341-000000000001'
-                     from public.artists where id = '00000000-0000-4000-c341-000000000001'),
-                  'vincular: la ficha quedó con la cuenta');
+-- W-347: vincular convierte la ficha en la cuenta (los eventos pasan a la cuenta y la ficha
+-- desaparece) en vez de dejarle profile_id.
+select pg_temp.ok(not exists (select 1 from public.artists where id = '00000000-0000-4000-c341-000000000001')
+                  and (select musico_id = '00000000-0000-4000-a341-000000000001' and artist_id is null
+                         from public.events where id = '00000000-0000-4000-d341-000000000001'),
+                  'vincular: el evento pasó a la cuenta y la ficha ya no existe');
 select pg_temp.ok((select count(*) = 1 from public.event_collaborators
                     where event_id = '00000000-0000-4000-d341-000000000001'
                       and user_id = '00000000-0000-4000-a341-000000000001'
@@ -170,10 +173,14 @@ select pg_temp.ok((select role = 'owner' from public.event_collaborators
                     where event_id = '00000000-0000-4000-d341-000000000001'
                       and user_id = '00000000-0000-4000-a341-000000000003'),
                   'vincular: no toca al owner del evento');
+-- Una ficha con cuenta (como la deja la app móvil al crear la suya) no se vuelve a vincular.
+insert into public.artists (id, name, created_by, profile_id) values
+ ('00000000-0000-4000-c341-0000000000d1', 'Ficha con cuenta W341', '00000000-0000-4000-a341-000000000003',
+  '00000000-0000-4000-a341-000000000002');
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a341-00000000000a","role":"authenticated"}', true);
 
-select pg_temp.falla($q$select public.admin_vincular_banda('00000000-0000-4000-c341-000000000001', '00000000-0000-4000-a341-000000000002')$q$,
+select pg_temp.falla($q$select public.admin_vincular_banda('00000000-0000-4000-c341-0000000000d1', '00000000-0000-4000-a341-000000000002')$q$,
                      'esa ficha ya está conectada a una cuenta; desconéctala primero');
 select pg_temp.falla($q$select public.admin_vincular_banda('00000000-0000-4000-c341-000000000002', '00000000-0000-4000-a341-000000000003')$q$,
                      'esa cuenta no es de músico');
@@ -183,32 +190,32 @@ select pg_temp.falla($q$select public.admin_vincular_banda(gen_random_uuid(), '0
                      'no existe esa ficha');
 
 -- 4. Desvincular ---------------------------------------------------------------------------
--- F1 se suelta de M1: pierde E1, pero conserva E2 porque ahí sigue con F4 (adicional).
-select public.admin_desvincular_banda('00000000-0000-4000-c341-000000000001');
+-- W-347: una banda con cuenta ya no tiene ficha; vincular es irreversible. La función se queda
+-- (misma firma) y lanza el error nuevo, incluso con la ficha que acaba de desaparecer (F1).
+select pg_temp.falla($q$select public.admin_desvincular_banda('00000000-0000-4000-c341-000000000001')$q$,
+                     'una banda con cuenta ya no tiene ficha; no hay qué desconectar');
+select pg_temp.falla($q$select public.admin_desvincular_banda('00000000-0000-4000-c341-0000000000d1')$q$,
+                     'una banda con cuenta ya no tiene ficha; no hay qué desconectar');
 reset role;
-select pg_temp.ok((select profile_id is null from public.artists where id = '00000000-0000-4000-c341-000000000001'),
-                  'desvincular: la ficha quedó sin cuenta');
-select pg_temp.ok(not exists (select 1 from public.event_collaborators
-                               where event_id = '00000000-0000-4000-d341-000000000001'
-                                 and user_id = '00000000-0000-4000-a341-000000000001'),
-                  'desvincular: M1 deja de ser admin del evento de F1');
-select pg_temp.ok(exists (select 1 from public.event_collaborators
-                           where event_id = '00000000-0000-4000-d341-000000000002'
-                             and user_id = '00000000-0000-4000-a341-000000000001' and source = 'artist'),
-                  'desvincular: M1 sigue admin del evento donde tiene otra ficha (F4)');
+select pg_temp.ok(exists (select 1 from public.artists where id = '00000000-0000-4000-c341-0000000000d1'
+                                                       and profile_id = '00000000-0000-4000-a341-000000000002'),
+                  'desvincular no toca la ficha con cuenta');
 select pg_temp.ok(exists (select 1 from public.event_collaborators
                            where event_id = '00000000-0000-4000-d341-000000000001'
                              and user_id = '00000000-0000-4000-a341-000000000003' and role = 'owner'),
                   'desvincular: el owner sigue');
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a341-00000000000a","role":"authenticated"}', true);
-select pg_temp.falla($q$select public.admin_desvincular_banda('00000000-0000-4000-c341-000000000001')$q$,
-                     'esa ficha no está conectada a ninguna cuenta');
 
 -- 5. Unir ----------------------------------------------------------------------------------
--- Dos cuentas distintas: error, y no se movió nada.
-select public.admin_vincular_banda('00000000-0000-4000-c341-0000000000c1', '00000000-0000-4000-a341-000000000001');
-select public.admin_vincular_banda('00000000-0000-4000-c341-0000000000c2', '00000000-0000-4000-a341-000000000002');
+-- Dos cuentas distintas: error, y no se movió nada. W-347: vincular ya no deja una ficha con
+-- cuenta, así que las fichas con cuenta de estas pruebas se arman como las dejaría la app móvil
+-- (profile_id puesto a mano); admin_unir_bandas sigue operando sobre ellas.
+reset role;
+update public.artists set profile_id = '00000000-0000-4000-a341-000000000001' where id = '00000000-0000-4000-c341-0000000000c1';
+update public.artists set profile_id = '00000000-0000-4000-a341-000000000002' where id = '00000000-0000-4000-c341-0000000000c2';
+set local role authenticated;
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a341-00000000000a","role":"authenticated"}', true);
 select pg_temp.falla($q$select public.admin_unir_bandas('00000000-0000-4000-c341-0000000000c1', '00000000-0000-4000-c341-0000000000c2')$q$,
                      'las dos fichas son de cuentas distintas');
 select pg_temp.falla($q$select public.admin_unir_bandas('00000000-0000-4000-c341-0000000000c1', '00000000-0000-4000-c341-0000000000c1')$q$,
@@ -239,11 +246,11 @@ insert into public.event_artists (event_id, artist_id, orden) values
  ('00000000-0000-4000-d341-0000000000a4', '00000000-0000-4000-c341-0000000000a1', 1);
 insert into public.sonopolis_invites (email, nombre, artist_id, invited_by) values
  ('u1@prueba-w341.test', 'Origen U1 W341', '00000000-0000-4000-c341-0000000000a1', '00000000-0000-4000-a341-000000000003');
--- U1 se conecta con M2 (admin de EU1, EU2, EU3, EU4 por ser U1 principal o adicional).
-set local role authenticated;
-select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a341-00000000000a","role":"authenticated"}', true);
-select public.admin_vincular_banda('00000000-0000-4000-c341-0000000000a1', '00000000-0000-4000-a341-000000000002');
-reset role;
+-- U1 queda con la cuenta M2, como una ficha de la app móvil (W-347: admin_vincular_banda ya
+-- no deja fichas con cuenta, así que se arma a mano), y M2 admin de EU1, EU2, EU3, EU4 por ser
+-- U1 principal o adicional.
+update public.artists set profile_id = '00000000-0000-4000-a341-000000000002' where id = '00000000-0000-4000-c341-0000000000a1';
+select public._admin_conectar_colaboradores('00000000-0000-4000-c341-0000000000a1');
 select pg_temp.ok((select count(*) = 4 from public.event_collaborators
                     where user_id = '00000000-0000-4000-a341-000000000002' and source = 'artist'
                       and event_id in ('00000000-0000-4000-d341-0000000000a1', '00000000-0000-4000-d341-0000000000a2',
@@ -320,16 +327,13 @@ select pg_temp.ok((select count(*) = 1 from public.admin_ediciones
                   'admin_ediciones: editar_banda');
 select pg_temp.ok((select count(*) = 1 from public.admin_ediciones
                     where tabla = 'artists' and accion = 'vincular'
-                      and fila_id = '00000000-0000-4000-c341-000000000004'
-                      and antes->>'profile_id' is null
-                      and despues->>'profile_id' = '00000000-0000-4000-a341-000000000001'),
-                  'admin_ediciones: vincular_banda');
-select pg_temp.ok((select count(*) = 1 from public.admin_ediciones
-                    where tabla = 'artists' and accion = 'desvincular'
                       and fila_id = '00000000-0000-4000-c341-000000000001'
-                      and antes->>'profile_id' = '00000000-0000-4000-a341-000000000001'
-                      and despues->>'profile_id' is null),
-                  'admin_ediciones: desvincular_banda');
+                      and antes->>'name' = 'Ficha Uno W341'
+                      and antes->>'profile_id' is null
+                      and (despues->>'eventos_principal')::int = 1
+                      and (despues->>'eventos_adicional')::int = 1),
+                  'admin_ediciones: vincular_banda (W-347: antes = la ficha, despues = el resumen)');
+-- (W-347: desvincular ya no hace nada y no deja fila: la ficha de una banda con cuenta no existe.)
 select pg_temp.ok((select count(*) = 1 from public.admin_ediciones
                     where tabla = 'artists' and accion = 'unir'
                       and fila_id = '00000000-0000-4000-c341-0000000000a2'
@@ -337,15 +341,16 @@ select pg_temp.ok((select count(*) = 1 from public.admin_ediciones
                       and antes->>'name' = 'Origen U1 W341'
                       and (despues->'resumen'->>'eventos_principal')::int = 2),
                   'admin_ediciones: unir_bandas guarda la ficha origen completa');
--- Los intentos fallidos y los de quien no es admin no dejaron nada: 3 editar + 5 vincular
--- (F1, F4, C1, C2, U1) + 1 desvincular + 2 unir.
-select pg_temp.ok((select count(*) = 11 from public.admin_ediciones),
+-- Los intentos fallidos y los de quien no es admin no dejaron nada (se cuentan solo las filas del
+-- admin de la prueba: producción ya trae filas reales): 3 editar + 2 vincular
+-- (F1, F4; W-347: C1, C2 y U1 ya no se vinculan, se arman a mano) + 0 desvincular + 2 unir.
+select pg_temp.ok((select count(*) = 7 from public.admin_ediciones where por = '00000000-0000-4000-a341-00000000000a'),
                   'admin_ediciones: solo las acciones que sí se hicieron');
 
 -- El admin sí lee el registro.
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a341-00000000000a","role":"authenticated"}', true);
-select pg_temp.ok((select count(*) = 11 from public.admin_ediciones), 'el admin lee admin_ediciones');
+select pg_temp.ok((select count(*) = 7 from public.admin_ediciones where por = '00000000-0000-4000-a341-00000000000a'), 'el admin lee admin_ediciones');
 reset role;
 
 select 'W-341: todo OK' as resultado;

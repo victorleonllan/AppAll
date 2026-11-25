@@ -147,14 +147,18 @@ select pg_temp.ok((select status from public.sonopolis_invites where token = (se
 update auth.users set email_confirmed_at = now() where id = '00000000-0000-4000-a000-000000000002';
 select pg_temp.ok((select status from public.sonopolis_invites where token = (select t from tok where k = 'b1')) = 'accepted',
                   'al confirmar el correo se reclama');
-select pg_temp.ok((select profile_id from public.artists where id = '00000000-0000-4000-c000-000000000001') = '00000000-0000-4000-a000-000000000002',
-                  'B1 reclama la ficha que creó el local');
+-- W-347: reclamar la ficha ya no la enlaza a la cuenta: el evento pasa a la cuenta y la
+-- ficha desaparece.
+select pg_temp.ok((select musico_id = '00000000-0000-4000-a000-000000000002' and artist_id is null
+                     from public.events where id = '00000000-0000-4000-d000-000000000001')
+                  and not exists (select 1 from public.artists where id = '00000000-0000-4000-c000-000000000001'),
+                  'B1 reclama la ficha que creó el local: el evento pasa a su cuenta y la ficha desaparece');
 select pg_temp.ok((select role from public.profiles where id = '00000000-0000-4000-a000-000000000002') = 'musician', 'B1 es músico');
 select pg_temp.ok(exists (select 1 from public.event_collaborators where event_id = '00000000-0000-4000-d000-000000000001'
                             and user_id = '00000000-0000-4000-a000-000000000002' and role = 'admin' and source = 'artist'),
                   'B1 queda admin del evento');
-select pg_temp.ok((select count(*) from public.artists where profile_id = '00000000-0000-4000-a000-000000000002') = 1,
-                  'B1 no queda con dos fichas');
+select pg_temp.ok((select count(*) from public.artists where profile_id = '00000000-0000-4000-a000-000000000002') = 0,
+                  'B1 no queda con ficha: la cuenta es la banda');
 
 -- B2 entra como fan, ya confirmado (p. ej. Google): la invitación lo pasa a músico ----
 insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, email_confirmed_at, created_at, updated_at)
@@ -166,18 +170,21 @@ select pg_temp.ok((select raw_user_meta_data->>'role' from auth.users where id =
                   'B2 pasa a músico en user_metadata');
 select pg_temp.ok((select nombre from public.profiles where id = '00000000-0000-4000-a000-000000000003') = 'Banda Dos W302',
                   'B2 sin nombre toma el nombre de la invitación');
-select pg_temp.ok((select profile_id from public.artists where id = '00000000-0000-4000-c000-000000000002') = '00000000-0000-4000-a000-000000000003',
-                  'B2 reclama la ficha adicional');
+select pg_temp.ok((select count(*) = 1 from public.event_artists
+                    where event_id = '00000000-0000-4000-d000-000000000001'
+                      and musico_id = '00000000-0000-4000-a000-000000000003' and artist_id is null)
+                  and not exists (select 1 from public.artists where id = '00000000-0000-4000-c000-000000000002'),
+                  'B2 reclama la ficha adicional: la fila pasa a su cuenta y la ficha desaparece');
 select pg_temp.ok(exists (select 1 from public.event_collaborators where event_id = '00000000-0000-4000-d000-000000000001'
                             and user_id = '00000000-0000-4000-a000-000000000003' and role = 'admin'),
                   'B2 (banda adicional) queda admin del evento');
 
--- B3 (invitación sin ficha) recibe una ficha propia.
+-- B3 (invitación sin ficha): la cuenta ya es la banda, no se le crea una ficha (W-347).
 insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, email_confirmed_at, created_at, updated_at)
 values ('00000000-0000-4000-a000-000000000004', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
         'b3@prueba-w302.test', '{"role":"musician","nombre":"Banda Tres W302"}', now(), now(), now());
-select pg_temp.ok(exists (select 1 from public.artists where profile_id = '00000000-0000-4000-a000-000000000004' and name = 'Banda Tres W302'),
-                  'B3 sin ficha recibe una ficha propia con el nombre invitado');
+select pg_temp.ok(not exists (select 1 from public.artists where profile_id = '00000000-0000-4000-a000-000000000004'),
+                  'B3 sin ficha no recibe una ficha propia: la cuenta es la banda');
 
 -- W-301: el comprador del evento compartido está en las tres bases --------------------
 select pg_temp.ok((select count(*) from privado.crm_base where email = 'fan1@prueba-w302.test') = 3,
@@ -200,8 +207,8 @@ select pg_temp.ok((select count(*) from public.crm_contactos where tenant_type =
 
 -- B1 crea su propio evento en OTRO local: su base crece, la de B2 y la del local no.
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-000000000002","role":"authenticated"}', true);
-insert into public.events (id, artist_name, artist_id, venue_id, venue_name, fecha, hora, genero, precio, created_by, pais)
-values ('00000000-0000-4000-d000-000000000002', 'Banda Uno W302', '00000000-0000-4000-c000-000000000001',
+insert into public.events (id, artist_name, musico_id, venue_id, venue_name, fecha, hora, genero, precio, created_by, pais)
+values ('00000000-0000-4000-d000-000000000002', 'Banda Uno W302', '00000000-0000-4000-a000-000000000002',
         '00000000-0000-4000-b000-000000000002', 'Sala Otra W302', '2027-01-10', '21:00', 'rock', '5000',
         '00000000-0000-4000-a000-000000000002', 'CL');
 reset role;
@@ -222,7 +229,7 @@ select pg_temp.ok(exists (select 1 from privado.crm_base where tenant_id = '0000
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-000000000001","role":"authenticated"}', true);
 delete from public.event_artists where event_id = '00000000-0000-4000-d000-000000000001'
-   and artist_id = '00000000-0000-4000-c000-000000000002';
+   and musico_id = '00000000-0000-4000-a000-000000000003';
 reset role;
 select pg_temp.ok(not exists (select 1 from public.event_collaborators where event_id = '00000000-0000-4000-d000-000000000001'
                                 and user_id = '00000000-0000-4000-a000-000000000003'),
@@ -258,9 +265,8 @@ insert into public.artists (id, name, created_by) values
 select pg_temp.falla($q$update public.artists set profile_id = '00000000-0000-4000-a000-000000000005'
   where id = '00000000-0000-4000-c000-000000000006'$q$, 'se enlaza con una invitación');
 -- Agregar al lineup una banda ya reclamada (B3) siendo editor no le da admin a B3.
-insert into public.event_artists (event_id, artist_id)
-select '00000000-0000-4000-d000-000000000001', id from public.artists
- where profile_id = '00000000-0000-4000-a000-000000000004';
+insert into public.event_artists (event_id, musico_id)
+values ('00000000-0000-4000-d000-000000000001', '00000000-0000-4000-a000-000000000004');
 reset role;
 select pg_temp.ok(not exists (select 1 from public.event_collaborators where event_id = '00000000-0000-4000-d000-000000000001'
                                 and user_id = '00000000-0000-4000-a000-000000000004'),
@@ -291,8 +297,11 @@ reset role;
 insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, email_confirmed_at, created_at, updated_at)
 values ('00000000-0000-4000-a000-000000000007', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
         'libre@prueba-w302.test', '{"role":"musician"}', now(), now(), now());
-select pg_temp.ok((select profile_id from public.artists where id = '00000000-0000-4000-c000-000000000003') = '00000000-0000-4000-a000-000000000007',
-                  'el reclamo por invitación enlaza la ficha pese al guardia de profile_id');
+-- (W-347: el reclamo convierte la ficha: el evento pasa a la cuenta y la ficha desaparece.)
+select pg_temp.ok((select musico_id = '00000000-0000-4000-a000-000000000007' and artist_id is null
+                     from public.events where id = '00000000-0000-4000-d000-000000000003')
+                  and not exists (select 1 from public.artists where id = '00000000-0000-4000-c000-000000000003'),
+                  'el reclamo por invitación convierte la ficha en la cuenta pese al guardia de profile_id');
 
 select 'W-300/W-301/W-302/W-307: todas las pruebas pasaron' as resultado;
 
