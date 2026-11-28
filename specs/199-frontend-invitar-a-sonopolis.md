@@ -1,6 +1,6 @@
 # Spec 199 — Invitar a las bandas y al local a Sonópolis desde el evento y desde el panel del local
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `tsc` limpio fuera de `supabase/functions`, `expo export --platform web` sin errores y los `grep` de los criterios 3 a 6 OK. Sin probar en navegador ni en dispositivo, ni contra las rutas de invitación (V 199-a a 199-d en `PENDIENTES.md`).
 > Capa: FRONTEND. `src/components/InvitarBandasDelEvento.tsx` (nuevo), `src/components/InvitarLocalDelEvento.tsx` (nuevo), `src/components/BotonInvitarASonopolis.tsx` (nuevo), `src/screens/EditarEventoScreen.tsx`, `src/screens/DashboardLocalScreen.tsx`, `src/screens/CrearEventoScreen.tsx`.
 > Depende de: spec 190 (`enviarInvitacionSonopolis`, `cancelarInvitacionSonopolis`, `getMisInvitacionesSonopolis`, `mensajeErrorInvitacion`, `ESTADO_INVITACION`, `invitarDuenoLocalDelEvento`), spec 198 (toca el mismo `CrearEventoScreen.tsx`: debe estar aplicado antes; deja `artista`/`otrasBandas` como `Banda`), spec 189 (`useBandasDelEvento`), spec 173 (`useEstilos`, `useTema`).
 > Hermano en la web: W-306 (`components/InvitarBandasDelEvento.js`, `components/BotonInvitarASonopolis.js`, `eventos/[id]/editar/page.js`, `local/page.js`) y W-338 (`components/FormEvento.js`, `components/InvitarLocalDelEvento.js`).

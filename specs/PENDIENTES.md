@@ -1071,6 +1071,23 @@ Llega con las pantallas del spec 199.
 2. **V (190-b):** como músico, invitar al dueño de un local que registró — llega el correo con el
    enlace `/invitacion/<token>`.
 
+## Pantallas de invitación a Sonópolis 🟢 spec 199 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc`, `expo export` web y `grep`: no se probó en navegador, en teléfono ni contra las
+rutas de invitación.
+
+1. **V (199-a):** como local, crear un evento con una banda nueva (ficha) y su correo: llega el
+   correo con `/unete/<token>`, y en la edición la banda sale «Invitada: <correo>» con Reenviar /
+   Cambiar correo / Cancelar.
+2. **V (199-b):** como músico, crear un evento en un local nuevo con el correo del local: llega el
+   correo con `/invitacion/<token>`; en la edición aparece «Invita a <local> a Sonópolis».
+3. **V (199-c):** panel del local: «Enviar invitación a Sonópolis» manda la invitación y la lista
+   la muestra «Pendiente»; «Cancelar» la saca.
+4. **V (199-d):** en el build web de Expo, el modal abre y cierra y los mensajes se ven.
+
+Hueco: la línea «Invitación enviada» va en el `Alert` «Evento publicado», que en el build web no
+se muestra (los fallos sí, en texto rojo sobre el botón). Si se quiere ver en web, es spec nuevo.
+
 ## Punto de la portada en la app 🟢 spec 192 aplicado, falta verificar en dispositivo (28-nov-2026)
 
 Se cerró con `tsc` y `npx tsx`: no se probó en un teléfono ni contra la base.
