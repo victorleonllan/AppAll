@@ -1,6 +1,6 @@
 # Spec 188 — La app lee y escribe la banda como cuenta de músico o ficha suelta
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `tsc` limpio fuera de `supabase/functions`; funciones puras de `cuentaEsBanda.ts` probadas con `node`; greps de los criterios 3-5 OK; sin probar contra la base ni en un dispositivo (V 188-a/b/c/d en `PENDIENTES.md`)
 > Capa: LÓGICA. `src/types/index.ts`, `src/context/EventosContext.tsx`, `src/lib/artistas.ts`, `src/lib/cuentaEsBanda.ts` (nuevo), `src/hooks/useFeedFan.ts`, `src/hooks/useTenantCrm.ts`, `src/hooks/useAdminCrm.ts`, `src/hooks/useTenantAdmin.ts`, `src/screens/VentasMusicoScreen.tsx`.
 > Depende de: W-347 (migración `supabase/migrations/20261125140000_spec_w347_cuenta_de_musico_es_la_banda.sql`, ya en producción: `events.musico_id`, `event_artists.musico_id`, normalización de fichas con cuenta). Ningún spec de la app.
 > Alimenta: spec 189 (lineup), spec 198 (frontend de bandas del evento).
