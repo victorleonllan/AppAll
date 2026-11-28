@@ -1052,6 +1052,17 @@ Se cerró con `tsc` y `expo export`: no se probó en un teléfono ni contra la b
 2. **V (187-b):** con sesión de fan — comentar, ver el comentario con su nombre y borrarlo.
 3. **V (187-c):** con sesión del dueño — borrar un comentario ajeno y quitar un correo del muro.
 
+## Géneros en español y errores de cuenta 🟢 spec 194 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc` y `node`: no se probó en un teléfono ni contra Supabase.
+
+1. **V (194-a):** al crear o editar un evento y un perfil de banda, el selector de géneros
+   muestra «Metal», «Pop Latino», «Urbano», y buscar «romantico» encuentra «Romántico».
+2. **V (194-b):** con las pantallas del spec 203 — crear cuenta con un correo que ya existe
+   muestra el mensaje de cuenta existente y no «revisa tu correo».
+3. **Deuda:** quitar `signIn` y `signUp` de `AuthContext` (marcados `@deprecated`) cuando
+   queden sin llamadores, desde el spec 203.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

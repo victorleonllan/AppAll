@@ -1,6 +1,6 @@
 # Spec 194 — Géneros en español en el listado, y a qué campo va cada error de cuenta
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `tsc --noEmit` limpio fuera de `supabase/functions`; criterios 2, 3 y 4 verificados con `node` (190 géneros, idénticos a la web); 5 por lectura del diff. Sin probar contra Supabase ni en dispositivo
 > Capa: LÓGICA. `src/constants/generos.ts`, `src/lib/validacionAuth.ts` (nuevo), `src/context/AuthContext.tsx`.
 > Depende de: spec 054 (listado cerrado de géneros), spec 128 (`src/lib/contrasena.ts`: `mensajeDeErrorAuth`, `MENSAJE_CUENTA_EXISTENTE`).
 > Alimenta: spec 203 (FRONTEND).
