@@ -82,7 +82,7 @@ export function useTenantPropio(tipo: TipoTenant): {
 }
 
 /** Perfil por id → tenant musician. `exigirMusico` distingue el paso 1 (creador) del
- * paso 3 (artista vinculado), que la web resuelve con `getPerfilMusico` sin mirar `role`. */
+ * paso 3 (la cuenta que es la banda), que la web resuelve con `getPerfilMusico` sin mirar `role`. */
 async function tenantDePerfil(
   profileId: string,
   nombreRespaldo: string,
@@ -111,8 +111,8 @@ async function tenantDePerfil(
  * misma regla que la CTE `eventos_tenant` de la vista `crm_contactos` (W-184): si la
  * app usara otra, el opt-in de la compra caería en una lista y el aviso saldría de otra.
  *
- * `events.artist_id` apunta a `artists` (spec 061), no a `profiles` como dice el
- * comentario viejo de `Evento.artistId`: el perfil se alcanza por `artists.profile_id`.
+ * Spec 188 (W-348) — la banda con cuenta es `events.musico_id`. Una ficha suelta
+ * (`events.artist_id`) no tiene cuenta ni tenant.
  */
 async function resolverTenantDelEvento(evento: Evento): Promise<TenantCrm | null> {
   // 1. Creador músico. Para un tercero la RLS de profiles (spec 020) solo deja ver
@@ -137,18 +137,8 @@ async function resolverTenantDelEvento(evento: Evento): Promise<TenantCrm | null
       : null;
   }
 
-  // 3. Artista vinculado y reclamado.
-  if (evento.artistId) {
-    const { data, error } = await supabase
-      .from('artists')
-      .select('profile_id')
-      .eq('id', evento.artistId)
-      .maybeSingle();
-    if (error) throw error;
-    const profileId = (data as any)?.profile_id;
-    if (!profileId) return null;
-    return tenantDePerfil(profileId, evento.artista, false);
-  }
+  // 3. La cuenta que es la banda principal.
+  if (evento.musicoId) return tenantDePerfil(evento.musicoId, evento.artista, false);
 
   return null;
 }
@@ -162,7 +152,7 @@ export function useTenantDelEvento(evento: Evento | null | undefined): {
   const eventoId = evento?.id;
   const createdBy = evento?.createdBy;
   const venueId = evento?.venueId;
-  const artistId = evento?.artistId;
+  const musicoId = evento?.musicoId;
 
   useEffect(() => {
     if (!evento) {
@@ -189,7 +179,7 @@ export function useTenantDelEvento(evento: Evento | null | undefined): {
     };
     // Solo los campos que deciden el tenant: `evento` es un objeto nuevo en cada render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eventoId, createdBy, venueId, artistId]);
+  }, [eventoId, createdBy, venueId, musicoId]);
 
   return { tenant, cargando };
 }

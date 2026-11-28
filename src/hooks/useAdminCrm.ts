@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { esPro } from '../lib/pro';
+import { tenantsDeEvento } from '../lib/cuentaEsBanda';
 import type { TipoTenant } from '../lib/adminPro';
 
 export interface TenantCrm {
@@ -8,29 +9,11 @@ export interface TenantCrm {
   proHasta: string | null; esPro: boolean;
   contactos: number; compradores: number; conWhatsapp: number; eventosActivos: number;
 }
-export interface ReglasTenant { musicosIds: Set<string>; perfilPorArtista: Map<string, string> }
+export interface ReglasTenant { musicosIds: Set<string>; adicionalesPorEvento: Map<string, string[]> }
 export interface EventoDeTenant {
   id: string; artista: string; venueName: string | null; fecha: string; comienzaAt: string | null;
   cerradoAt: string | null; status: string; createdBy: string | null; venueId: string | null; artistId: string | null;
-}
-
-/**
- * A quién pertenece un evento: músico creador → local → artista reclamado.
- * Copia literal de `sonopolisWeb/libs/data/adminCrm.js:21-28`. Depende de la
- * definición de la vista `crm_contactos` (W-184): si esta difiriera, el admin
- * contaría eventos de un tenant cuyos compradores están en el CRM de otro.
- * Cuatro definiciones de una regla: pendiente #34 de la web.
- */
-export function tenantDeEvento(
-  evento: EventoDeTenant,
-  { musicosIds, perfilPorArtista }: ReglasTenant
-): { type: TipoTenant; id: string } | null {
-  if (evento.createdBy && musicosIds.has(evento.createdBy)) {
-    return { type: 'musician', id: evento.createdBy };
-  }
-  if (evento.venueId) return { type: 'venue', id: evento.venueId };
-  const perfil = evento.artistId ? perfilPorArtista.get(evento.artistId) : null;
-  return perfil ? { type: 'musician', id: perfil } : null;
+  musicoId: string | null;
 }
 
 /** Copia de `esActivo` (`adminCrm.js:31-34`): próximo (o sin fecha), sin cerrar y no cancelado. */
@@ -40,22 +23,27 @@ export function esEventoActivo(evento: EventoDeTenant, ahora: number): boolean {
 }
 
 /**
- * Todos los eventos y lo que `tenantDeEvento` necesita. Los músicos son TODOS los
+ * Todos los eventos y lo que `tenantsDeEvento` (spec 188) necesita. Los músicos son TODOS los
  * perfiles `role = 'musician'`, también los sin nombre: la vista SQL mira solo el
  * rol (`adminCrm.js:36-47`).
  */
 export async function cargarEventosYReglas(): Promise<{ eventos: EventoDeTenant[]; reglas: ReglasTenant }> {
-  const [ev, mus, art] = await Promise.all([
+  const [ev, mus, adi] = await Promise.all([
     supabase
       .from('events')
-      .select('id, artist_name, venue_name, fecha, comienza_at, closed_at, status, created_by, venue_id, artist_id')
+      .select('id, artist_name, venue_name, fecha, comienza_at, closed_at, status, created_by, venue_id, artist_id, musico_id')
       .order('comienza_at', { ascending: true, nullsFirst: false }),
     supabase.from('profiles').select('id').eq('role', 'musician'),
-    supabase.from('artists').select('id, profile_id'),
+    supabase.from('event_artists').select('event_id, musico_id').not('musico_id', 'is', null),
   ]);
   if (ev.error) throw ev.error;
   if (mus.error) throw mus.error;
-  if (art.error) throw art.error;
+  if (adi.error) throw adi.error;
+
+  const adicionalesPorEvento = new Map<string, string[]>();
+  for (const a of (adi.data ?? []) as any[]) {
+    adicionalesPorEvento.set(a.event_id, [...(adicionalesPorEvento.get(a.event_id) ?? []), a.musico_id]);
+  }
 
   const eventos: EventoDeTenant[] = ((ev.data ?? []) as any[]).map((db) => ({
     id: db.id,
@@ -68,14 +56,13 @@ export async function cargarEventosYReglas(): Promise<{ eventos: EventoDeTenant[
     createdBy: db.created_by ?? null,
     venueId: db.venue_id ?? null,
     artistId: db.artist_id ?? null,
+    musicoId: db.musico_id ?? null,
   }));
   return {
     eventos,
     reglas: {
       musicosIds: new Set(((mus.data ?? []) as any[]).map((m) => m.id)),
-      perfilPorArtista: new Map(
-        ((art.data ?? []) as any[]).filter((a) => a.profile_id).map((a) => [a.id, a.profile_id])
-      ),
+      adicionalesPorEvento,
     },
   };
 }
@@ -133,10 +120,11 @@ export function useAdminCrm(): AdminCrmState {
       const activosPor = new Map<string, number>();
       for (const e of eventos) {
         if (!esEventoActivo(e, ahora)) continue;
-        const t = tenantDeEvento(e, reglas);
-        if (!t) continue;
-        const k = clave(t.type, t.id);
-        activosPor.set(k, (activosPor.get(k) ?? 0) + 1);
+        // Spec 188 (W-303) — cuenta para cada tenant del evento, no para un dueño único.
+        for (const t of tenantsDeEvento(e, reglas)) {
+          const k = clave(t.type, t.id);
+          activosPor.set(k, (activosPor.get(k) ?? 0) + 1);
+        }
       }
 
       const fila = (type: TipoTenant, db: any, nombre: string | null): TenantCrm => {
