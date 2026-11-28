@@ -4,10 +4,12 @@ import {
   StyleSheet, ScrollView, Alert, ActivityIndicator, Switch,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { BorradorPreventa, TipoPrecio, Venue, VenueType } from '../types';
+import { Banda, BorradorPreventa, TipoPrecio, Venue, VenueType } from '../types';
 import { BorradorEspecial, crearEspecialesDeBorrador } from '../lib/especiales';
 import { VENUE_LABEL, venueEmoji, venueLabel } from '../lib/venues';
-import { ArtistaBreve } from '../lib/artistas';
+import { mismaBanda, tituloDelLineup } from '../lib/lineup';
+import { agregarBandasAdicionales } from '../hooks/useBandasDelEvento';
+import { usePerfilMusico } from '../hooks/useMusicos';
 import { armarFechaHora, fechaHoraValidas } from '../lib/fecha';
 import { montoDesdePrecio } from '../lib/precio';
 import { Punto, puntoDeVenue } from '../lib/ubicacion';
@@ -52,7 +54,13 @@ export default function CrearEventoScreen() {
   const { allVenues, createVenue, guardarUbicacionLocal } = useVenues();
   const { createEvento } = useEventos();
 
-  const [artista, setArtista] = useState<ArtistaBreve | null>(null);
+  const [artista, setArtista] = useState<Banda | null>(null);
+  const [otrasBandas, setOtrasBandas] = useState<Banda[]>([]);
+  // `key` del segundo selector: cambiarla lo vacía tras cada banda agregada.
+  const [selectorOtra, setSelectorOtra] = useState(0);
+  // Spec 198 — «Soy yo» (W-338): un músico puede ser la principal o una adicional.
+  const { musico: miPerfil } = usePerfilMusico(role === 'musician' && user ? user.id : null);
+  const yo = role === 'musician' ? { nombre: miPerfil?.nombre ?? '', foto: miPerfil?.foto ?? null } : null;
 
   const [venueQuery, setVenueQuery] = useState('');
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
@@ -123,6 +131,15 @@ export default function CrearEventoScreen() {
       }
     }
   }, [role, user, allVenues, selectedVenue]);
+
+  const agregarOtraBanda = (banda: Banda | null) => {
+    if (!banda) return;
+    // Actualizador funcional: «Crear … como artista nuevo» llega después de un await.
+    if (!mismaBanda(banda, artista)) {
+      setOtrasBandas((lista) => (lista.some((b) => mismaBanda(b, banda)) ? lista : [...lista, banda]));
+    }
+    setSelectorOtra((n) => n + 1);
+  };
 
   const handleSelectVenue = (venue: Venue) => {
     setSelectedVenue(venue);
@@ -209,9 +226,11 @@ export default function CrearEventoScreen() {
       }
 
       const { fecha: fechaTexto, hora: horaTexto, comienzaAt } = armarFechaHora(fecha.trim(), hora.trim());
+      const titulo = tituloDelLineup([artista.nombre, ...otrasBandas.map((b) => b.nombre)]);
       const creado = await createEvento({
-        artista: artista.nombre,
-        artistId: artista.id,
+        artista: titulo,
+        // Una cuenta va a `musico_id` y una ficha a `artist_id`, nunca los dos.
+        ...(artista.tipo === 'cuenta' ? { musicoId: artista.id } : { artistId: artista.id }),
         venueId: venue.id,
         venueName: venue.name,
         pais: venue.pais,
@@ -238,6 +257,12 @@ export default function CrearEventoScreen() {
       } catch (err: any) {
         fallos.push(`El evento se publicó, pero no se guardaron los datos bancarios: ${err?.message ?? 'error desconocido'}. Complétalo desde Editar.`);
       }
+      // Spec 198 — después de crear: `event_artists` exige `can_edit_event`.
+      try {
+        await agregarBandasAdicionales(creado.id, artista, otrasBandas);
+      } catch (err: any) {
+        fallos.push(`El evento se publicó, pero no se guardaron las otras bandas: ${err?.message ?? 'error desconocido'}.`);
+      }
       if (preventaOn && preventas.length > 0) {
         try {
           await crearPreventasDeBorrador(creado.id, preventas);
@@ -260,7 +285,7 @@ export default function CrearEventoScreen() {
       // lo que hay que mostrar: le dice al organizador dónde está el dashboard.
       Alert.alert(
         'Evento publicado',
-        `"${artista.nombre}" en ${venue.name} el ${fechaTexto}`,
+        `"${titulo}" en ${venue.name} el ${fechaTexto}`,
         [
           { text: 'Editar evento', onPress: () =>
               (navigation as any).navigate('EditarEvento', { eventoId: creado.id }) },
@@ -284,10 +309,35 @@ export default function CrearEventoScreen() {
         <Text style={styles.titulo}>Nuevo Evento</Text>
 
         <Text style={styles.label}>Artista *</Text>
-        {user && <ArtistaSelector userId={user.id} value={artista} onChange={setArtista} />}
+        {user && <ArtistaSelector userId={user.id} value={artista} onChange={setArtista} yo={yo} />}
         <Text style={styles.ayuda}>
-          Si el artista tiene cuenta en Sonópolis y ya reclamó su perfil, entra al equipo del evento
+          Si la banda está en Sonópolis, elígela de la lista: entra al equipo del evento.
         </Text>
+
+        <Text style={styles.label}>Otras bandas (opcional)</Text>
+        {otrasBandas.map((b) => (
+          <View key={`${b.tipo}:${b.id}`} style={styles.otraBanda}>
+            <View style={styles.otraBandaDatos}>
+              <Text style={styles.otraBandaNombre}>{b.nombre}</Text>
+              {b.tipo === 'cuenta' && <Text style={styles.enSonopolis}>En Sonópolis</Text>}
+            </View>
+            <TouchableOpacity
+              onPress={() => setOtrasBandas((lista) => lista.filter((x) => !mismaBanda(x, b)))}
+            >
+              <Text style={styles.enlace}>Quitar</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+        {user && (
+          <ArtistaSelector
+            key={selectorOtra}
+            userId={user.id}
+            value={null}
+            onChange={agregarOtraBanda}
+            yo={yo}
+          />
+        )}
+        <Text style={styles.ayuda}>Si tocan dos o más bandas, agrégalas aquí.</Text>
 
         <Text style={styles.label}>Local (venue) *</Text>
         {!creandoLocal ? (
@@ -618,6 +668,16 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
   inputPlaceholder: { fontSize: fontSize.md, color: c.muted },
   ayuda: { fontSize: fontSize.xs, color: c.muted, marginTop: spacing.xs },
   aviso: { fontSize: fontSize.xs, color: c.warning, marginTop: spacing.xs },
+  otraBanda: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  otraBandaDatos: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexShrink: 1 },
+  otraBandaNombre: { fontSize: fontSize.md, color: c.primary, flexShrink: 1 },
+  enSonopolis: { fontSize: fontSize.xs, color: c.success, fontWeight: '600' },
   enlace: { fontSize: fontSize.sm, color: c.accent, fontWeight: '600', marginTop: spacing.sm },
   error: { fontSize: fontSize.sm, color: c.danger, marginTop: spacing.md },
   subform: {
