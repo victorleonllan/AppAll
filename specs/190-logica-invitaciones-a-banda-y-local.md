@@ -1,6 +1,6 @@
 # Spec 190 — La app invita a una banda a Sonópolis y al dueño del local que registró
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `tsc` limpio fuera de `supabase/functions`; greps de los criterios 2-4; cuerpos de las tres llamadas y `mensajeErrorInvitacion` probados con `node` y dobles. Sin probar contra las rutas ni en un dispositivo (llega con el 199)
 > Capa: LÓGICA. `src/lib/invitacionesSonopolis.ts` (nuevo), `src/lib/invitacionLocal.ts`.
 > Depende de: W-302, W-307 y W-336 (tabla `sonopolis_invites`, RPC `invitar_a_sonopolis`, `revocar_invitacion_sonopolis`, `invitar_dueno_local`; ya en producción); W-304 y W-337 (rutas `POST`/`DELETE /api/invitaciones-sonopolis` y `POST /api/invitaciones-local` de la web, que aceptan el Bearer de la app, W-246). Ningún spec de la app.
 > Alimenta: spec 199 (pantallas).

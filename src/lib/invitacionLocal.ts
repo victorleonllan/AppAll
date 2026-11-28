@@ -1,3 +1,4 @@
+import { llamarApiWeb } from './apiWeb';
 import { supabase } from './supabase';
 
 /**
@@ -66,4 +67,17 @@ export async function reclamarInvitacionLocal(token: string): Promise<void> {
 export async function cerrarSesionSoloAqui(): Promise<void> {
   const { error } = await supabase.auth.signOut({ scope: 'local' });
   if (error) throw new Error(error.message);
+}
+
+/** Spec 190 (W-337) — el músico invita al dueño real del local que registró al crear su evento.
+ * El permiso lo decide `invitar_dueno_local` en Postgres; el error llega en español (se muestra
+ * con `mensajeErrorInvitacion`). Si Resend falla, `emailError` y la invitación vale igual. */
+export function invitarDuenoLocalDelEvento(datos: {
+  venueId: string;
+  email: string;
+}): Promise<{ ok: true; token: string; emailError?: string }> {
+  return llamarApiWeb('/api/invitaciones-local', {
+    metodo: 'POST',
+    cuerpo: { venueId: datos.venueId, email: datos.email.trim() },
+  });
 }

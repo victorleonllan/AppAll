@@ -1063,6 +1063,14 @@ Se cerró con `tsc` y `node`: no se probó en un teléfono ni contra Supabase.
 3. **Deuda:** quitar `signIn` y `signUp` de `AuthContext` (marcados `@deprecated`) cuando
    queden sin llamadores, desde el spec 203.
 
+## Invitaciones a Sonópolis desde la app 🟡 spec 190 aplicado (lógica), falta verificar en dispositivo (28-nov-2026)
+
+Llega con las pantallas del spec 199.
+
+1. **V (190-a):** invitar una banda desde la app — llega el correo con el enlace `/unete/<token>`.
+2. **V (190-b):** como músico, invitar al dueño de un local que registró — llega el correo con el
+   enlace `/invitacion/<token>`.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs
