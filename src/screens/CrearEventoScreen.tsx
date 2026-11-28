@@ -9,6 +9,8 @@ import { BorradorEspecial, crearEspecialesDeBorrador } from '../lib/especiales';
 import { VENUE_LABEL, venueEmoji, venueLabel } from '../lib/venues';
 import { mismaBanda, tituloDelLineup } from '../lib/lineup';
 import { agregarBandasAdicionales } from '../hooks/useBandasDelEvento';
+import { enviarInvitacionSonopolis, mensajeErrorInvitacion } from '../lib/invitacionesSonopolis';
+import { invitarDuenoLocalDelEvento } from '../lib/invitacionLocal';
 import { usePerfilMusico } from '../hooks/useMusicos';
 import { armarFechaHora, fechaHoraValidas } from '../lib/fecha';
 import { montoDesdePrecio } from '../lib/precio';
@@ -36,6 +38,7 @@ import { useTema } from '../context/TemaContext';
 const TIPOS_VENUE = Object.keys(VENUE_LABEL) as VenueType[];
 const MAX_DESCRIPCION = 900;
 const FALTA_UBICACION = 'Confirma la ubicación del local para crear el evento';
+const claveBanda = (b: Banda) => `${b.tipo}:${b.id}`;
 
 /**
  * Spec 136 — pide lo mismo que `FormEvento.js` de la web, en el mismo orden de
@@ -58,6 +61,9 @@ export default function CrearEventoScreen() {
   const [otrasBandas, setOtrasBandas] = useState<Banda[]>([]);
   // `key` del segundo selector: cambiarla lo vacía tras cada banda agregada.
   const [selectorOtra, setSelectorOtra] = useState(0);
+  // Spec 199 — correos para invitar al publicar: bandas sin cuenta (por `tipo:id`) y local nuevo.
+  const [correosBandas, setCorreosBandas] = useState<Record<string, string>>({});
+  const [correoLocal, setCorreoLocal] = useState('');
   // Spec 198 — «Soy yo» (W-338): un músico puede ser la principal o una adicional.
   const { musico: miPerfil } = usePerfilMusico(role === 'musician' && user ? user.id : null);
   const yo = role === 'musician' ? { nombre: miPerfil?.nombre ?? '', foto: miPerfil?.foto ?? null } : null;
@@ -140,6 +146,21 @@ export default function CrearEventoScreen() {
     }
     setSelectorOtra((n) => n + 1);
   };
+
+  // Spec 199 — solo una ficha suelta pide correo: una cuenta ya está en Sonópolis (W-349).
+  const campoCorreoBanda = (b: Banda) => (
+    <TextInput
+      style={[styles.input, styles.inputCorreo]}
+      value={correosBandas[claveBanda(b)] ?? ''}
+      onChangeText={(t) => setCorreosBandas((m) => ({ ...m, [claveBanda(b)]: t }))}
+      placeholder={`Correo de ${b.nombre} para invitarla (opcional)`}
+      accessibilityLabel={`Correo de ${b.nombre} para invitarla`}
+      placeholderTextColor={colores.muted}
+      keyboardType="email-address"
+      autoCapitalize="none"
+      autoCorrect={false}
+    />
+  );
 
   const handleSelectVenue = (venue: Venue) => {
     setSelectedVenue(venue);
@@ -279,13 +300,43 @@ export default function CrearEventoScreen() {
           fallos.push(`El evento se publicó, pero no se guardaron los packs del ticket especial: ${err?.message ?? 'error desconocido'}. Complétalo desde Editar.`);
         }
       }
+      // Spec 199 — invitaciones con el evento ya creado (W-338 §4). Cada una resuelve
+      // a `null` o al texto de su fallo: ninguna rechaza.
+      const invitaciones: Promise<string | null>[] = [];
+      const invitar = (nombre: string, envio: Promise<{ emailError?: string }>) =>
+        invitaciones.push(
+          envio.then(
+            (r) => (r.emailError ? `${nombre}: ${r.emailError}` : null),
+            (err) => `${nombre}: ${mensajeErrorInvitacion(err)}`
+          )
+        );
+      // Por clave: la principal puede estar repetida en «Otras bandas».
+      const bandas = new Map([artista, ...otrasBandas].map((b) => [claveBanda(b), b]));
+      bandas.forEach((b, clave) => {
+        const email = correosBandas[clave]?.trim();
+        if (b.tipo === 'ficha' && email) {
+          invitar(b.nombre, enviarInvitacionSonopolis({ email, artistId: b.id, eventId: creado.id }));
+        }
+      });
+      // Solo el local creado en este formulario.
+      if (!selectedVenue && correoLocal.trim()) {
+        invitar(venue.name, invitarDuenoLocalDelEvento({ email: correoLocal.trim(), venueId: venue.id }));
+      }
+      const noSalieron = (await Promise.all(invitaciones)).filter((f): f is string => f !== null);
+      if (noSalieron.length > 0) {
+        fallos.push(`Evento creado, pero no salió alguna invitación — ${noSalieron.join(' · ')}`);
+      }
+      const lineaInvitaciones =
+        noSalieron.length === 0 && invitaciones.length > 0
+          ? `\n${invitaciones.length === 1 ? 'Invitación enviada' : 'Invitaciones enviadas'}`
+          : '';
       if (fallos.length > 0) setError(fallos.join('\n'));
 
       // Spec 039 — un evento recién publicado tiene 0 entradas, y eso es justo
       // lo que hay que mostrar: le dice al organizador dónde está el dashboard.
       Alert.alert(
         'Evento publicado',
-        `"${titulo}" en ${venue.name} el ${fechaTexto}`,
+        `"${titulo}" en ${venue.name} el ${fechaTexto}${lineaInvitaciones}`,
         [
           { text: 'Editar evento', onPress: () =>
               (navigation as any).navigate('EditarEvento', { eventoId: creado.id }) },
@@ -310,22 +361,26 @@ export default function CrearEventoScreen() {
 
         <Text style={styles.label}>Artista *</Text>
         {user && <ArtistaSelector userId={user.id} value={artista} onChange={setArtista} yo={yo} />}
+        {artista?.tipo === 'ficha' && campoCorreoBanda(artista)}
         <Text style={styles.ayuda}>
           Si la banda está en Sonópolis, elígela de la lista: entra al equipo del evento.
         </Text>
 
         <Text style={styles.label}>Otras bandas (opcional)</Text>
         {otrasBandas.map((b) => (
-          <View key={`${b.tipo}:${b.id}`} style={styles.otraBanda}>
-            <View style={styles.otraBandaDatos}>
-              <Text style={styles.otraBandaNombre}>{b.nombre}</Text>
-              {b.tipo === 'cuenta' && <Text style={styles.enSonopolis}>En Sonópolis</Text>}
+          <View key={claveBanda(b)} style={styles.otraBandaBloque}>
+            <View style={styles.otraBanda}>
+              <View style={styles.otraBandaDatos}>
+                <Text style={styles.otraBandaNombre}>{b.nombre}</Text>
+                {b.tipo === 'cuenta' && <Text style={styles.enSonopolis}>En Sonópolis</Text>}
+              </View>
+              <TouchableOpacity
+                onPress={() => setOtrasBandas((lista) => lista.filter((x) => !mismaBanda(x, b)))}
+              >
+                <Text style={styles.enlace}>Quitar</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              onPress={() => setOtrasBandas((lista) => lista.filter((x) => !mismaBanda(x, b)))}
-            >
-              <Text style={styles.enlace}>Quitar</Text>
-            </TouchableOpacity>
+            {b.tipo === 'ficha' && campoCorreoBanda(b)}
           </View>
         ))}
         {user && (
@@ -337,7 +392,10 @@ export default function CrearEventoScreen() {
             yo={yo}
           />
         )}
-        <Text style={styles.ayuda}>Si tocan dos o más bandas, agrégalas aquí.</Text>
+        <Text style={styles.ayuda}>
+          Si tocan dos o más bandas, agrégalas aquí. Si una no está en Sonópolis, deja su correo y le
+          llega la invitación al crear el evento.
+        </Text>
 
         <Text style={styles.label}>Local (venue) *</Text>
         {!creandoLocal ? (
@@ -468,6 +526,18 @@ export default function CrearEventoScreen() {
               onChangeText={setNuevoInstagram}
               placeholder="@local"
               placeholderTextColor={colores.muted}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            <TextInput
+              style={[styles.input, styles.inputCorreoLocal]}
+              value={correoLocal}
+              onChangeText={setCorreoLocal}
+              placeholder="Correo del local para invitarlo a Sonópolis (opcional)"
+              accessibilityLabel="Correo del local para invitarlo a Sonópolis"
+              placeholderTextColor={colores.muted}
+              keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
             />
@@ -668,13 +738,15 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
   inputPlaceholder: { fontSize: fontSize.md, color: c.muted },
   ayuda: { fontSize: fontSize.xs, color: c.muted, marginTop: spacing.xs },
   aviso: { fontSize: fontSize.xs, color: c.warning, marginTop: spacing.xs },
+  otraBandaBloque: { marginBottom: spacing.xs },
   otraBanda: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
-    marginBottom: spacing.xs,
   },
+  inputCorreo: { marginTop: spacing.xs },
+  inputCorreoLocal: { marginTop: spacing.sm },
   otraBandaDatos: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexShrink: 1 },
   otraBandaNombre: { fontSize: fontSize.md, color: c.primary, flexShrink: 1 },
   enSonopolis: { fontSize: fontSize.xs, color: c.success, fontWeight: '600' },

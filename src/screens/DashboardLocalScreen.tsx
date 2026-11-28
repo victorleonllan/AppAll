@@ -11,6 +11,7 @@ import TarjetaEvento from '../components/TarjetaEvento';
 import TarjetaPro from '../components/TarjetaPro';
 import { useMiSuscripcionPro } from '../hooks/useMiSuscripcionPro';
 import BotonAdmin from '../components/BotonAdmin';
+import BotonInvitarASonopolis from '../components/BotonInvitarASonopolis';
 import NumerosPanel from '../components/NumerosPanel';
 import { venueEmoji, venueLabel } from '../lib/venues';
 import { spacing, borderRadius, fontSize, Paleta } from '../theme';
@@ -190,6 +191,8 @@ export default function DashboardLocalScreen() {
               <Text style={styles.textoBotonSecundario}>✏️ Editar local</Text>
             </TouchableOpacity>
           </View>
+          {/* Spec 199 — invitar a una banda sin pasar por un evento (W-306). */}
+          <BotonInvitarASonopolis />
           {/* Spec 041 — el mismo EscanerQRScreen que monta MusicoStack, sin
               evento en los params: la pantalla pide cuál antes de la cámara. */}
           <TouchableOpacity style={styles.botonEscaner} onPress={() => navigation.navigate('Escaner')}>
