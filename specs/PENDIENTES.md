@@ -1255,6 +1255,20 @@ Se cerró con `tsc`, `expo export --platform web` y `grep`: las pantallas no se 
 Hueco: la Cartelera dibuja `EventoDestacado`, no `TarjetaEvento`, así que ahí no sale «Ver banda ›».
 Si se quiere, es spec nuevo.
 
+## Spec 201 — Respetar el punto de la portada y «Ajustar portada» (28-nov-2026)
+
+Se cerró con `tsc`, `expo export` web y lectura del código: no se probó en navegador ni en teléfono.
+
+1. **V (201-a):** ficha de un músico con portada ajustada en la web (Felio Saud): la app muestra el
+   mismo encuadre que la web; el directorio también.
+2. **V (201-b):** cuenta del músico: «Ajustar portada», arrastrar la foto hacia abajo → se ve más de
+   arriba; «Guardar» → la ficha muestra el nuevo encuadre al volver.
+3. **V (201-c):** cambiar la foto sin guardar → «Guarda la foto nueva para ajustar su encuadre.»;
+   guardar el formulario → la ficha centra la foto nueva.
+4. **V (201-d):** dueño de un local: ajustar y guardar; la ficha web en el celular muestra ese punto.
+5. **V (201-e):** build web en computador: el marco del modal usa todo el ancho, así que en una
+   ventana ancha puede quedar tan alto que «Guardar» no se vea (el modal no tiene scroll).
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

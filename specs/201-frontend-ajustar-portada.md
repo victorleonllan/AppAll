@@ -1,6 +1,6 @@
 # Spec 201 — Respetar el punto de la portada y «Ajustar portada» (frontend)
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `tsc` limpio fuera de `supabase/functions` y export web sin errores; criterios 3-7 revisados (ver addenda sobre el 3). Sin probar en navegador ni en dispositivo (V 201-a…201-e)
 > Capa: FRONTEND. `src/components/PortadaEncuadrada.tsx` (nuevo), `src/components/AjustarPortada.tsx` (nuevo), `src/screens/VerMusicoScreen.tsx`, `src/screens/DirectorioMusicosScreen.tsx`, `src/screens/EditarPerfilBandaScreen.tsx`, `src/screens/EditarLocalScreen.tsx`.
 > Depende de: spec 192 (`PuntoPortada`, `PUNTO_CENTRO`, `esCentro`, `encuadreCover`, `puntoTrasArrastre`, `hayQueAjustar`, `puntoDeFila`, `leerPuntoPortadaLocal`, `guardarPuntoPortadaMusico`, `guardarPuntoPortadaLocal`, `PerfilConPortada`), spec 173 (`useEstilos`, `useTema`). `VerMusicoScreen.tsx` también lo toca 202, y `EditarLocalScreen.tsx` lo tocan 200 y 206: la cadena los serializa.
 > Hermano en la web: `components/perfil/EncabezadoPerfil.js`, `components/perfil/AjustarPortada.js` — W-346.
@@ -168,3 +168,15 @@ salen de `colores.white`).
 - «Ajustar portada» sobre la ficha pública (la web lo pone ahí; en la app vive en las
   pantallas de edición, donde el dueño ya cambia su foto).
 - Zoom o recorte. Teclado (las flechas de la web): la app no tiene foco de teclado en el modal.
+
+## Bugs encontrados al aplicar (28-nov-2026)
+
+1. **Criterio 3.** `grep -rn "expo-image" src` ya devolvía líneas antes de este spec: coincide con
+   `expo-image-picker` y `expo-image-manipulator`. Lo que se comprobó es la intención:
+   `grep -rnE "from ['\"]expo-image['\"]" src` no devuelve nada y `package.json` no cambió.
+2. **Foto que no carga en el modal.** El diseño no decía qué pasa si `getSize` falla dentro de
+   `AjustarPortada` (quedaría el indicador para siempre). Muestra «No se pudo cargar la foto.» y
+   solo «Cerrar».
+3. **Punto del local que llega tarde.** Si `leerPuntoPortadaLocal` responde con el modal ya
+   abierto, el modal toma el punto leído; sin eso, «Guardar» escribiría el centro encima.
+
