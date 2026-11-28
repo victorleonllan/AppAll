@@ -1169,6 +1169,22 @@ Se cerró con `tsc` y `tsx`: no se probó contra la base ni en un teléfono. Las
 Deuda: el enlace de Google de `enlacesComoLlegar` (`src/lib/perfil.ts`) duplica `urlComoLlegar`
 (`src/lib/mapa.ts`); unificarlos.
 
+## Errores bajo el campo y «Correo» 🟡 spec 203 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc`, `expo export` y `grep`. Probar en la web de la app (export servido) y en un
+teléfono.
+
+1. **V (203-a):** entrar con `ana.rojas@gmail` muestra el error bajo el correo, sin llamar a la
+   base; con contraseña incorrecta, «Correo o contraseña incorrectos» bajo la contraseña.
+2. **V (203-b):** crear cuenta sin nombre muestra «Falta el nombre»; con un correo que ya tiene
+   cuenta, el aviso sobre el botón (cubre V 194-b); con un correo nuevo, «Revisa tu correo para
+   confirmar la cuenta.» en lugar del formulario.
+3. **V (203-c):** «¿Olvidaste tu contraseña?» con `ana@` muestra el error nuevo bajo el campo.
+4. **V (203-d):** en el panel del local y del músico, el botón «✉️ Correo» abre la pantalla
+   titulada «Correo».
+5. **Deuda:** `signIn` y `signUp` de `AuthContext` ya no tienen llamadores; se pueden quitar
+   (anotado en el spec 194, fuera del alcance del 203).
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs
