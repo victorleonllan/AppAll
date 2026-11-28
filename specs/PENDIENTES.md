@@ -1134,6 +1134,16 @@ sin cuentas de terceros).
 4. **V (197-d):** un dueño de evento que no es admin sigue igual (sin «Equipo» de más ni bloque de
    admin).
 
+## Bandas adicionales del evento en la app 🟢 spec 189 aplicado (lógica), falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc`, `node` y `grep`: no se probó contra la base. Llega con las pantallas del
+spec 198.
+
+1. **V (189-a):** abrir en la app un evento creado en la web con dos bandas y ver las dos en la
+   ficha.
+2. **V (189-b):** crear en la app un evento con una banda adicional: queda la fila en
+   `event_artists` y la web la muestra.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs
