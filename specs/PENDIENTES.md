@@ -1269,6 +1269,19 @@ Se cerró con `tsc`, `expo export` web y lectura del código: no se probó en na
 5. **V (201-e):** build web en computador: el marco del modal usa todo el ancho, así que en una
    ventana ancha puede quedar tan alto que «Guardar» no se vea (el modal no tiene scroll).
 
+## Spec 202 — Próximos eventos, evento en cartelera sobre el muro y «Cómo llegar» (28-nov-2026)
+
+Se cerró con `tsc`, `expo export` web y lectura del código: no se probó en navegador ni en teléfono.
+
+1. **V (202-a):** ficha de una banda con eventos futuros (también uno donde es banda adicional): se
+   ven en «Próximos eventos» con el bloque de fecha y el más próximo destacado sobre el muro con
+   «● En cartelera · …»; tocar «Ver evento» abre la ficha del evento.
+2. **V (202-b):** ficha de un local con un evento hoy que ya empezó: aparece destacado y no se
+   repite como flyer en el muro.
+3. **V (202-c):** iPhone: «Cómo llegar» muestra las tres opciones; Android y web, sin «Mapas de
+   Apple»; Waze abre la app si está instalada.
+4. **V (202-d):** una banda sin eventos futuros: no aparecen ni la sección ni la tarjeta destacada.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

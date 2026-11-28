@@ -1,6 +1,6 @@
 # Spec 202 — Perfiles: próximos eventos, evento en cartelera sobre el muro y «Cómo llegar» (frontend)
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `tsc` limpio fuera de `supabase/functions`, export web sin errores y criterios 3-7 (grep y diff) cumplidos; sin probar en navegador ni en dispositivo (V 202-a a 202-d)
 > Capa: FRONTEND. `src/components/Muro.tsx`, `src/screens/VerMusicoScreen.tsx`, `src/screens/DetalleLocalScreen.tsx`.
 > Depende de: spec 193 (`useProximosEventos`, `bloqueFecha`, `lineaEvento`, `cuandoCorto`, `quitarEventoDelMuro`, `redesDelPerfil`, `enlacesComoLlegar`), spec 187 (`Muro`), spec 173 (`useEstilos`, `useTema`). `VerMusicoScreen.tsx` también lo toca 201: la cadena los serializa.
 > Hermano en la web: `components/EventoEnCartelera.js`, `components/Muro.js` (W-309); `components/perfil/ListaProximosEventos.js`, `components/perfil/GrillaRedes.js` y la hoja «Cómo llegar» de `app/(marketing)/locales/[id]/page.js` (W-317 a W-319, que consumen W-316).
