@@ -1,6 +1,6 @@
 # Spec 203 — Errores de cuenta bajo su campo, y la sección «Contactos» se llama «Correo»
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `85ba2ba`; `tsc --noEmit` limpio, `expo export --platform web` sin errores y criterios 3-8 por `grep` y `git diff`; sin probar en navegador ni en dispositivo (ver `PENDIENTES.md`).
 > Capa: FRONTEND. `src/screens/LoginScreen.tsx`, `src/screens/RegisterScreen.tsx`, `src/navigation/MusicoStack.tsx`, `src/navigation/MiLocalStack.tsx`, `src/screens/DashboardLocalScreen.tsx`, `src/screens/PerfilMusicoScreen.tsx`.
 > Depende de: spec 194 (`validarCorreo`, `campoDeErrorAuth`, `entrar`, `crearCuenta`), spec 173 (`useEstilos`, `useTema`). Comparte `DashboardLocalScreen.tsx` con los specs 199 y 204 y `PerfilMusicoScreen.tsx` con el 204: **serializar** con ellos (el cambio aquí es una línea en cada uno; ubicarla por contenido, no por número de línea).
 > Hermano en la web: `app/(auth)/signin/AuthForm.js` (W-324, que usa W-323) y `app/(private)/local/layout.js`, `app/(private)/musico/layout.js`, `…/contactos/page.js` (W-287).
@@ -138,3 +138,9 @@ import de `Alert`.
   requisitos de contraseña en chips).
 - Quitar `signIn` y `signUp` de `AuthContext` (deuda anotada por el 194).
 - Renombrar la ruta `Contactos` o cualquier otro texto del CRM.
+
+## Bugs encontrados al aplicar (28-nov-2026)
+
+- **Criterio 3.** `grep -n "Alert"` también encontraba un comentario anterior de
+  `LoginScreen.tsx` («Error en un Text y no en Alert…»), no solo el import y las llamadas. El
+  comentario pasa a decir «y no en un diálogo»; el diseño no cambia.
