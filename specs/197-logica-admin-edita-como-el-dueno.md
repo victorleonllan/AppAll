@@ -1,6 +1,6 @@
 # Spec 197 — El admin edita como el dueño, conecta y une bandas, y cambia bandas y local del evento
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `tsc` sin errores fuera de `supabase/functions`; criterios 2 y 3 probados con `node`, 4 y 5 con `grep`; sin probar contra la base ni en un dispositivo (llega con el 206).
 > Capa: LÓGICA. `src/lib/bandas.ts` (nuevo), `src/lib/edicionAdmin.ts` (nuevo), `src/lib/adminEdicion.ts` (nuevo), `src/hooks/useEventoPermisos.ts`.
 > Depende de: migraciones ya en producción de W-341 (`20261124120000_…`), W-347 (`20261125140000_…`), W-350 (`20261125160000_…`) y W-353 (`20261125180000_…`); spec 152 (`useEsAdmin`). No edita `src/hooks/useAdminCrm.ts` (lo edita el 188) ni `src/lib/lineup.ts` (lo crea el 189).
 > Alimenta: spec 206 (FRONTEND).
@@ -275,3 +275,13 @@ con `scope: 'local'` al terminar, sin cuentas de terceros):
 - Unir locales duplicados, cambiar el dueño de un local o crear un local para otro (sigue
   la invitación de W-230 en `AdminLocalesScreen`).
 - Pagos del evento ajeno (`event_payouts`): siguen siendo solo del owner (W-350).
+
+## Bugs encontrados al aplicar (28-nov-2026)
+
+- **Orden de `eventosDeFichas`.** El spec pide «principales primero, ordenados por `comienza_at`»,
+  pero `eventosPorFicha` de la web ordena todo junto por fecha (su comentario dice lo contrario).
+  Se aplicó el texto del spec: principales primero y, dentro de cada grupo, por fecha. Por eso
+  `primerLocal` puede diferir del que muestra la web en una ficha que además es adicional de un
+  evento más antiguo.
+- **`esAdmin` al cambiar de cuenta.** `useEsAdmin` conserva la respuesta anterior mientras pregunta
+  por la nueva. El hook usa `esAdmin && !cargando` para cumplir «mientras carga es `false`».

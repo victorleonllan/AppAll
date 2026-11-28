@@ -1119,6 +1119,21 @@ Se cerró con `tsc` y `tsx`: no se probó contra la base ni en un teléfono. Las
 Deuda: `totalesPorMoneda` (`src/lib/panel.ts`) es copia de `formatearTotales`
 (`src/hooks/useAdminPagos.ts`); moverlas a un solo módulo sin imports de Supabase.
 
+## El admin edita como el dueño en la app 🟢 spec 197 aplicado (lógica), falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc`, `node` y `grep`: no se probó contra la base. Se prueba con las pantallas del
+spec 206 (sesión del admin, eventos y fichas de prueba, logout con `scope: 'local'` al terminar,
+sin cuentas de terceros).
+
+1. **V (197-a):** guardar el perfil de una cuenta de músico ajena cambia los datos y deja una fila
+   en `admin_ediciones`.
+2. **V (197-b):** conectar una ficha suelta con una cuenta: la ficha desaparece y sus eventos salen
+   en el perfil del músico.
+3. **V (197-c):** cambiar la banda principal y el local de un evento; agregar y quitar una banda
+   adicional.
+4. **V (197-d):** un dueño de evento que no es admin sigue igual (sin «Equipo» de más ni bloque de
+   admin).
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs
