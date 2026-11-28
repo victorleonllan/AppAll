@@ -1,6 +1,6 @@
 # Spec 204 — Los números del panel en el dashboard del local y en el perfil del músico
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `tsc` limpio fuera de `supabase/functions`, `expo export --platform web` sin errores y criterios 3 a 7 por `grep`; las pantallas no se abrieron (V 204-a a 204-e). Ver «Bugs encontrados al aplicar».
 > Capa: FRONTEND. `src/components/NumerosPanel.tsx` (nuevo), `src/screens/DashboardLocalScreen.tsx`, `src/screens/PerfilMusicoScreen.tsx`.
 > Depende de: spec 195 (`usePanel`, `armarNumerosPanel`, `etiquetaEstadoVenta`, `tonoEstadoVenta`, `haceTiempo`), spec 173 (`useEstilos`, `useTema`). Comparte `DashboardLocalScreen.tsx` con los specs 199 y 203, y `PerfilMusicoScreen.tsx` con el 203 (ver «Choque con el 199 y el 203»): serializar con ellos.
 > Hermano en la web: `app/(private)/local/page.js` y `app/(private)/local/SolicitudesPendientes.js` (W-330 §1), `app/(private)/musico/page.js` (W-329 §1), `components/panel/Kpi.js` (W-327 §3).
@@ -232,3 +232,15 @@ lo que haya, sin tocar lo de ellos.
 - La pantalla de contactos («Tu público» con cuatro números, W-329 §2 y W-330 §2).
 - Las vendidas dentro de cada `TarjetaEvento` de la lista: es un componente compartido con
   la cartelera.
+
+## Bugs encontrados al aplicar (28-nov-2026)
+
+- **Singulares.** Los textos literales daban «En 1 eventos activos», «De 1 entradas pagadas»
+  y «1 vendidas». Se usa el singular cuando la cuenta es 1, como la web (`plural` en
+  `app/(private)/local/page.js`).
+- **Vendidas sin lectura.** `vendidasPorEvento[id] ?? 0` falla con `vendidasPorEvento` en
+  `null` (no se pudieron leer las ventas). La fila escribe «—», la regla general del §1.
+- **Margen doble en el músico.** El `ScrollView` de `PerfilMusicoScreen` ya tiene
+  `padding: spacing.md`: sumar el margen lateral del componente desalineaba el bloque. El
+  margen lo pone el componente solo en el local; en el músico deja `marginBottom: spacing.md`,
+  como las tarjetas vecinas.

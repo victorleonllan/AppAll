@@ -1119,6 +1119,25 @@ Se cerró con `tsc` y `tsx`: no se probó contra la base ni en un teléfono. Las
 Deuda: `totalesPorMoneda` (`src/lib/panel.ts`) es copia de `formatearTotales`
 (`src/hooks/useAdminPagos.ts`); moverlas a un solo módulo sin imports de Supabase.
 
+## Números del panel en las pantallas 🟢 spec 204 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc`, `expo export --platform web` y `grep`: las pantallas no se abrieron.
+
+1. **V (204-a):** local con una solicitud pendiente de una banda: «Por responder» en 1 y
+   destacado, la solicitud en «Solicitudes de bandas»; «Aceptar» la saca de la lista y en
+   `SolicitudesScreen` figura aceptada.
+2. **V (204-b):** local con ventas en un evento creado por una banda en su local: aparecen en
+   «Ventas recientes» y en «Vendidas por evento».
+3. **V (204-c):** «Cobrado en {mes}» cuenta una venta del último día del mes a las 22:00 en
+   Chile en ese mes, no en el siguiente.
+4. **V (204-d):** músico con un evento pasado sin cerrar: «Próximos shows» no dice «Es hoy».
+5. **V (204-e):** las dos pantallas en tema claro y oscuro.
+
+Falta: el panel del local no vuelve a leer al regresar de otra pantalla (`usePanel` lee al
+montar y al cambiar los eventos; expone `recargar`, que nadie llama). Responder en
+«Solicitudes» y volver deja «Por responder» sin actualizar. El del músico sí relee, porque su
+pantalla se vuelve a montar al recibir el foco.
+
 ## El admin edita como el dueño en la app 🟢 spec 197 aplicado (lógica), falta verificar en dispositivo (28-nov-2026)
 
 Se cerró con `tsc`, `node` y `grep`: no se probó contra la base. Se prueba con las pantallas del
