@@ -1,6 +1,6 @@
 # Spec 196 — Cartelera de la app: conteos por fecha, días con nombre y vacío que sugiere
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `tsc` limpio fuera de `supabase/functions`; script `npx tsx` del criterio 4 OK con `TZ=America/Santiago`, `Pacific/Auckland` y `UTC`. Sin probar en dispositivo (la pantalla es el spec 205).
 > Capa: LÓGICA. `src/lib/cartelera.ts` (nuevo), `src/lib/fechaCartelera.ts`.
 > Depende de: — (spec 119, `fechaCartelera.ts`, ya aplicado).
 > Alimenta: spec 205 (FRONTEND).
