@@ -11,6 +11,7 @@ import TarjetaEvento from '../components/TarjetaEvento';
 import TarjetaPro from '../components/TarjetaPro';
 import { useMiSuscripcionPro } from '../hooks/useMiSuscripcionPro';
 import BotonAdmin from '../components/BotonAdmin';
+import NumerosPanel from '../components/NumerosPanel';
 import { venueEmoji, venueLabel } from '../lib/venues';
 import { spacing, borderRadius, fontSize, Paleta } from '../theme';
 import { useEstilos } from '../hooks/useEstilos';
@@ -57,7 +58,6 @@ export default function DashboardLocalScreen() {
 
   const [musicos, setMusicos] = useState<MusicoPerfil[]>([]);
   const [cargandoMusicos, setCargandoMusicos] = useState(true);
-  const [resumenVentas, setResumenVentas] = useState({ entradas: 0, monto: 0 });
 
   // Busca entre todos los locales, no solo los de type 'cafe': tras el spec 018
   // el dueño puede tener un bar, una sala o un centro cultural.
@@ -69,7 +69,6 @@ export default function DashboardLocalScreen() {
   const misEventos = user
     ? eventos.filter((e) => e.createdBy === user.id || misEventoIds.has(e.id))
     : [];
-  const idsEventos = misEventos.map((e) => e.id).join(',');
 
   // "Músicos disponibles" deja de leer musicosMock: consulta profiles
   // directo. La policy "Perfiles de músicos son públicos" (spec 020) permite
@@ -93,34 +92,6 @@ export default function DashboardLocalScreen() {
       }
     })();
   }, []);
-
-  // tickets_select_event_owner filtra por events.created_by: el local solo
-  // ve las ventas de los eventos que él mismo publicó (ver spec — ampliar a
-  // "dueño del venue" queda fuera de alcance).
-  //
-  // ⚠️ Tras el spec 033, misEventos también trae eventos donde el local entró
-  // como colaborador sin haberlos creado. Para esos, la policy devuelve cero
-  // tickets: la consulta no falla, el total simplemente queda corto. La
-  // corrección es reescribir la policy sobre event_collaborators — otro spec.
-  useEffect(() => {
-    if (misEventos.length === 0) {
-      setResumenVentas({ entradas: 0, monto: 0 });
-      return;
-    }
-    (async () => {
-      const { data, error } = await supabase
-        .from('tickets')
-        .select('cantidad, monto, status')
-        .in('evento_id', misEventos.map((e) => e.id))
-        .eq('status', 'completed');
-      if (!error && data) {
-        const entradas = data.reduce((sum: number, t: any) => sum + (t.cantidad ?? 1), 0);
-        const monto = data.reduce((sum: number, t: any) => sum + (t.monto ?? 0), 0);
-        setResumenVentas({ entradas, monto });
-      }
-    })();
-    // idsEventos (no misEventos) porque el array se recrea en cada render.
-  }, [idsEventos]);
 
   // Spec 169 — la suscripción a Pro para la tarjeta. Antes del return temprano: un
   // hook no puede ir después; sin local, `null` no consulta.
@@ -184,21 +155,16 @@ export default function DashboardLocalScreen() {
             </View>
           </View>
 
-          <Text style={styles.tituloSeccion}>Resumen</Text>
-          <View style={styles.resumenRow}>
-            <View style={styles.resumenCard}>
-              <Text style={styles.resumenNumero}>{misEventos.length}</Text>
-              <Text style={styles.resumenLabel}>Eventos publicados</Text>
-            </View>
-            <View style={styles.resumenCard}>
-              <Text style={styles.resumenNumero}>{resumenVentas.entradas}</Text>
-              <Text style={styles.resumenLabel}>Entradas vendidas</Text>
-            </View>
-            <View style={styles.resumenCard}>
-              <Text style={styles.resumenNumero}>${resumenVentas.monto.toLocaleString()}</Text>
-              <Text style={styles.resumenLabel}>Recaudado</Text>
-            </View>
-          </View>
+          {/* Spec 204 — números, vendidas, solicitudes y ventas recientes. */}
+          <NumerosPanel
+            tipo="venue"
+            tenantId={miVenue.id}
+            pais={miVenue.pais}
+            eventos={misEventos}
+            onVerSolicitudes={() => navigation.navigate('Solicitudes')}
+            onVerContactos={() => navigation.navigate('Contactos', { tipo: 'venue' })}
+            onVerVentas={() => navigation.navigate('Ventas')}
+          />
 
           {/* Spec 154 — Pro informativo, sin precio ni compra: Pro no se vende en la app. */}
           <View style={styles.tarjetaPro}>
@@ -360,21 +326,7 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
     marginTop: spacing.lg,
     marginBottom: spacing.sm,
   },
-  resumenRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginHorizontal: spacing.md,
-  },
   tarjetaPro: { marginHorizontal: spacing.md, marginTop: spacing.md },
-  resumenCard: {
-    flex: 1,
-    backgroundColor: c.cardBackground,
-    borderRadius: borderRadius.md,
-    padding: spacing.sm,
-    alignItems: 'center',
-  },
-  resumenNumero: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.accent },
-  resumenLabel: { fontSize: fontSize.xs, color: c.muted, marginTop: 4, textAlign: 'center' },
   accionesRow: {
     flexDirection: 'row',
     gap: spacing.sm,
