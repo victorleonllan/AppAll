@@ -1,6 +1,6 @@
 # Spec 192 — Leer, calcular y guardar el punto de la portada (lógica)
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `npx tsc --noEmit` limpio fuera de `supabase/functions`; `src/lib/portada.ts` sin imports y probado con `npx tsx` (criterio 3); sin probar contra la base ni en un dispositivo (V 192-a/b/c).
 > Capa: LÓGICA. `src/lib/portada.ts` (nuevo), `src/lib/portadaDatos.ts` (nuevo), `src/lib/profiles.ts`, `src/hooks/useMusicos.ts`.
 > Depende de: W-344 (columnas `portada_x`/`portada_y` en `profiles` y `venues`, y los triggers `profiles_reset_portada_trg`/`venues_reset_portada_trg`), con su migración `20261125120000_spec_w344_punto_de_la_portada.sql` ya en producción.
 > Alimenta: spec 201 (FRONTEND).
