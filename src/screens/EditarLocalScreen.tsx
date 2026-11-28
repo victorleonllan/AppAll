@@ -15,6 +15,8 @@ import GeneroPicker from '../components/GeneroPicker';
 import PaisPicker from '../components/PaisPicker';
 import CampoImagen from '../components/CampoImagen';
 import GestionDirecciones from '../components/GestionDirecciones';
+import UbicacionLocal from '../components/UbicacionLocal';
+import { puntoDeVenue } from '../lib/ubicacion';
 import { crearDireccion } from '../hooks/useDireccionesVenue';
 import { PAIS_POR_DEFECTO, etiquetaPais } from '../constants/paises';
 
@@ -25,7 +27,7 @@ export default function EditarLocalScreen() {
   const { colores } = useTema();
   const navigation = useNavigation();
   const { user } = useAuth();
-  const { allVenues, createVenue, updateVenue, refresh } = useVenues();
+  const { allVenues, createVenue, updateVenue, refresh, guardarUbicacionLocal } = useVenues();
 
   const miVenue = user ? allVenues.find((v) => v.ownerId === user.id) : null;
 
@@ -216,7 +218,25 @@ export default function EditarLocalScreen() {
       <View style={styles.card}>
         <Text style={styles.tituloSeccion}>Dirección</Text>
         {miVenue ? (
-          <GestionDirecciones venueId={miVenue.id} onCambio={refresh} />
+          <>
+            <GestionDirecciones venueId={miVenue.id} onCambio={refresh} />
+            {/* Spec 200 — el pin se guarda solo, sin pasar por «Guardar cambios». */}
+            <Text style={styles.label}>Ubicación en el mapa</Text>
+            <UbicacionLocal
+              key={miVenue.id}
+              direccion={miVenue.address ?? ''}
+              comuna={miVenue.comuna}
+              pais={miVenue.pais}
+              nombre={miVenue.name}
+              tipo={miVenue.type}
+              valor={puntoDeVenue(miVenue)}
+              puedeMover={miVenue.ownerId === user?.id}
+              modo="editar"
+              onConfirmar={async (p) => {
+                if (p) await guardarUbicacionLocal(miVenue.id, p);
+              }}
+            />
+          </>
         ) : (
           <>
             <Text style={styles.ayuda}>

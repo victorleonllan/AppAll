@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ScrollView, Alert, ActivityIndicator, Switch,
@@ -10,6 +10,7 @@ import { VENUE_LABEL, venueEmoji, venueLabel } from '../lib/venues';
 import { ArtistaBreve } from '../lib/artistas';
 import { armarFechaHora, fechaHoraValidas } from '../lib/fecha';
 import { montoDesdePrecio } from '../lib/precio';
+import { Punto, puntoDeVenue } from '../lib/ubicacion';
 import { DatosPago, datosPagoCompletos, guardarDatosPago } from '../lib/datosPago';
 import { crearPreventasDeBorrador } from '../hooks/usePreventas';
 import { crearDireccion } from '../hooks/useDireccionesVenue';
@@ -23,6 +24,7 @@ import PreventasEvento from '../components/PreventasEvento';
 import TicketsEspecialesEvento from '../components/TicketsEspecialesEvento';
 import DatosPagoEvento, { DATOS_PAGO_VACIOS } from '../components/DatosPagoEvento';
 import CampoImagen from '../components/CampoImagen';
+import UbicacionLocal from '../components/UbicacionLocal';
 import { CampoFecha, CampoHora } from '../components/CampoFecha';
 import { PAIS_POR_DEFECTO, etiquetaPais } from '../constants/paises';
 import { spacing, borderRadius, fontSize, Paleta } from '../theme';
@@ -31,6 +33,7 @@ import { useTema } from '../context/TemaContext';
 
 const TIPOS_VENUE = Object.keys(VENUE_LABEL) as VenueType[];
 const MAX_DESCRIPCION = 900;
+const FALTA_UBICACION = 'Confirma la ubicación del local para crear el evento';
 
 /**
  * Spec 136 — pide lo mismo que `FormEvento.js` de la web, en el mismo orden de
@@ -46,7 +49,7 @@ export default function CrearEventoScreen() {
   const { colores } = useTema();
   const navigation = useNavigation();
   const { user, role } = useAuth();
-  const { allVenues, createVenue } = useVenues();
+  const { allVenues, createVenue, guardarUbicacionLocal } = useVenues();
   const { createEvento } = useEventos();
 
   const [artista, setArtista] = useState<ArtistaBreve | null>(null);
@@ -69,6 +72,12 @@ export default function CrearEventoScreen() {
   // crear un segundo local ni una segunda dirección.
   const [localCreado, setLocalCreado] = useState<Venue | null>(null);
   const [direccionCreada, setDireccionCreada] = useState(false);
+  // Spec 200 — pin del local nuevo. `ubicacionResuelta` sin pin es «Continuar sin
+  // ubicación», solo donde no hay mapa.
+  const [ubicacion, setUbicacion] = useState<Punto | null>(null);
+  const [ubicacionResuelta, setUbicacionResuelta] = useState(false);
+  const [buscarUbicacionAl, setBuscarUbicacionAl] = useState(0);
+  const direccionRef = useRef<TextInput>(null);
 
   const [fecha, setFecha] = useState('');
   const [hora, setHora] = useState('');
@@ -131,6 +140,13 @@ export default function CrearEventoScreen() {
     setCreandoLocal(false);
     setLocalCreado(null);
     setDireccionCreada(false);
+    olvidarUbicacion();
+  };
+
+  // Spec 200 — cambiar dirección, comuna o país borra la confirmación del pin.
+  const olvidarUbicacion = () => {
+    setUbicacion(null);
+    setUbicacionResuelta(false);
   };
 
   const localNuevoCompleto = creandoLocal && nuevoNombre.trim() !== '' && nuevaDireccion.trim() !== '';
@@ -138,6 +154,7 @@ export default function CrearEventoScreen() {
   const validar = (): string | null => {
     if (!artista) return 'Elige un artista o crea uno nuevo';
     if (!selectedVenue && !localNuevoCompleto) return 'Elige un local o crea uno nuevo';
+    if (!selectedVenue && !ubicacionResuelta) return FALTA_UBICACION;
     if (!fechaHoraValidas(fecha.trim(), hora.trim())) {
       return 'La fecha va como AAAA-MM-DD y la hora como HH:MM';
     }
@@ -176,11 +193,17 @@ export default function CrearEventoScreen() {
             telefono: nuevoTelefono.trim() || undefined,
             instagram: nuevoInstagram.trim() || undefined,
             ownerId: user.id,
+            ...(ubicacion ? { lat: ubicacion.lat, lng: ubicacion.lng } : {}),
           });
           setLocalCreado(venue);
         }
         if (!direccionCreada) {
-          await crearDireccion(venue.id, { address: nuevaDireccion, comuna: nuevaComuna.trim() || null });
+          await crearDireccion(venue.id, {
+            address: nuevaDireccion,
+            comuna: nuevaComuna.trim() || null,
+            lat: ubicacion?.lat,
+            lng: ubicacion?.lng,
+          });
           setDireccionCreada(true);
         }
       }
@@ -305,6 +328,24 @@ export default function CrearEventoScreen() {
                 ✅ {venueEmoji(selectedVenue.type)} {selectedVenue.name}
               </Text>
             )}
+            {selectedVenue && (puntoDeVenue(selectedVenue) || selectedVenue.ownerId === user?.id) && (
+              <UbicacionLocal
+                key={selectedVenue.id}
+                direccion={selectedVenue.address ?? ''}
+                comuna={selectedVenue.comuna}
+                pais={selectedVenue.pais}
+                nombre={selectedVenue.name}
+                tipo={selectedVenue.type}
+                valor={puntoDeVenue(selectedVenue)}
+                puedeMover={selectedVenue.ownerId === user?.id}
+                modo="crear"
+                onConfirmar={async (p) => {
+                  if (!p) return;
+                  const guardado = await guardarUbicacionLocal(selectedVenue.id, p);
+                  setSelectedVenue((v) => (v?.id === guardado.id ? guardado : v));
+                }}
+              />
+            )}
           </>
         ) : (
           <View style={styles.subform}>
@@ -336,9 +377,11 @@ export default function CrearEventoScreen() {
 
             <Text style={styles.sublabel}>Dirección *</Text>
             <TextInput
+              ref={direccionRef}
               style={styles.input}
               value={nuevaDireccion}
-              onChangeText={setNuevaDireccion}
+              onChangeText={(t) => { setNuevaDireccion(t); olvidarUbicacion(); }}
+              onBlur={() => setBuscarUbicacionAl((n) => n + 1)}
               placeholder="Ej: Av. Italia 1234"
               placeholderTextColor={colores.muted}
             />
@@ -352,7 +395,8 @@ export default function CrearEventoScreen() {
             <TextInput
               style={styles.input}
               value={nuevaComuna}
-              onChangeText={setNuevaComuna}
+              onChangeText={(t) => { setNuevaComuna(t); olvidarUbicacion(); }}
+              onBlur={() => setBuscarUbicacionAl((n) => n + 1)}
               placeholder="Ej: Providencia"
               placeholderTextColor={colores.muted}
             />
@@ -378,6 +422,20 @@ export default function CrearEventoScreen() {
               autoCorrect={false}
             />
 
+            <UbicacionLocal
+              direccion={nuevaDireccion}
+              comuna={nuevaComuna}
+              pais={paisNuevoVenue}
+              nombre={nuevoNombre}
+              tipo={nuevoTipo}
+              valor={ubicacion}
+              puedeMover
+              modo="crear"
+              buscarAl={buscarUbicacionAl}
+              onCorregir={() => direccionRef.current?.focus()}
+              onConfirmar={(p) => { setUbicacion(p); setUbicacionResuelta(true); }}
+            />
+
             <TouchableOpacity onPress={handleCancelarLocalNuevo}>
               <Text style={styles.enlace}>Cancelar, elegir de la lista</Text>
             </TouchableOpacity>
@@ -387,7 +445,11 @@ export default function CrearEventoScreen() {
           visible={pickerPaisVisible}
           onClose={() => setPickerPaisVisible(false)}
           seleccionado={paisNuevoVenue}
-          onCambiar={setPaisNuevoVenue}
+          onCambiar={(p) => {
+            if (p === paisNuevoVenue) return;
+            setPaisNuevoVenue(p);
+            olvidarUbicacion();
+          }}
           titulo="País del local"
         />
 
@@ -506,6 +568,7 @@ export default function CrearEventoScreen() {
             <Text style={styles.textoBoton}>{eventoCreadoId ? 'Evento publicado' : 'Publicar evento'}</Text>
           )}
         </TouchableOpacity>
+        {creandoLocal && !ubicacionResuelta && <Text style={styles.ayuda}>{FALTA_UBICACION}</Text>}
       </View>
     </ScrollView>
   );
