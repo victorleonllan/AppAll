@@ -1,6 +1,6 @@
 # Spec 189 — La app lee y guarda las bandas adicionales del evento, con un título que las junta
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `tsc` limpio fuera de `supabase/functions`; `lineup.ts` probado con `node` (criterio 2); grep del criterio 3 sin resultados y solo llave anónima (criterio 4); sin probar contra la base ni en un dispositivo (V 189-a/b en `PENDIENTES.md`)
 > Capa: LÓGICA. `src/lib/lineup.ts` (nuevo), `src/hooks/useBandasDelEvento.ts` (nuevo).
 > Depende de: spec 188 (tipo `Banda`, `Evento.musicoId`, `bandaDeLaCuenta` y `bandaDeFicha` en `src/lib/cuentaEsBanda.ts`); W-300 y W-347 (tabla `event_artists` con `artist_id` o `musico_id`, ya en producción).
 > Alimenta: spec 198 (formulario y ficha), spec 199 (invitar desde el evento).
