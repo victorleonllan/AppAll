@@ -1185,6 +1185,22 @@ teléfono.
 5. **Deuda:** `signIn` y `signUp` de `AuthContext` ya no tienen llamadores; se pueden quitar
    (anotado en el spec 194, fuera del alcance del 203).
 
+## La confirmación de compra con el talón 🟢 spec 207 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc`, build web, `grep` y `node`: no se probó en un teléfono ni contra la base.
+
+1. **V (207-a):** compra de 1 entrada con sesión (pago de prueba): talón con QR, folio «#001» y
+   «Sin usar», sin saltar a Mis entradas; el escáner lee ese QR. Probar el retorno nativo con
+   `status=success`.
+2. **V (207-b):** pack con un destinatario: solo el talón del comprador y «Enviamos la entrada 2 a …».
+3. **V (207-c):** compra como invitado: sin talones, mensaje de siempre y redirect a los 8 s.
+4. **V (207-d):** evento de México desde un teléfono en Chile: la fecha corta es la del afiche
+   (revisar que Hermes la formatee; si falla queda la línea anterior).
+5. **V (207-e):** tema claro y oscuro: el QR sigue oscuro sobre blanco.
+6. **Pendiente:** anotar en el spec 126 «redirect acotado por el spec 207».
+7. **Riesgo:** `getPackDeTicket` devuelve destinatarios vacíos si falla; en un pack se verían
+   también los QR de los destinatarios.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

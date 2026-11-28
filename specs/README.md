@@ -139,7 +139,7 @@
 | 204 | Números del panel en el dashboard del local y en el perfil del músico (`NumerosPanel`). Requiere 195. Hermano de `w329` y `w330` | Propuesto (27-nov-2026) — paridad con la web W-276→W-356, cadena hacia AppAll 1.0 |
 | 205 | Cartelera: shows por fecha, días con nombre y vacío que sugiere. Requiere 196. Hermano de `w313` | Aplicado (28-nov-2026) — `tsc` limpio fuera de `supabase/functions` y export web sin errores. Sin probar en dispositivo (V 205-a a 205-d) |
 | 206 | El admin edita músicos, fichas, locales y eventos con los formularios del dueño, y cambia bandas y local del evento. Requiere 197. Hermano de `w343`, `w352` y `w355` | Propuesto (27-nov-2026) — paridad con la web W-276→W-356, cadena hacia AppAll 1.0 |
-| 207 | La confirmación de compra muestra la entrada con su QR (`TalonEntrada`). Hermano de `w320` y `w322` | Propuesto (27-nov-2026) — paridad con la web W-276→W-356, cadena hacia AppAll 1.0 |
+| 207 | La confirmación de compra muestra la entrada con su QR (`TalonEntrada`). Hermano de `w320` y `w322` | Aplicado (28-nov-2026) — tsc y build web limpios; pendiente V-207 en dispositivo |
 | 028 | Correo transaccional por Resend (SMTP + plantillas + dominio propio) | Aplicado y confirmado (2026-08-11) — SMTP, límites, plantilla y remitente en `sonopolis.org` (verificado en Resend). El primero con `onboarding@resend.dev` cayó en spam; con dominio propio, confirmado que ya no |
 | 029 | Correo de confirmación de compra | Propuesto — depende del 028 y del 021 |
 | 030 | Dashboard de banda: perfil completo y panel | Implementado y desplegado — falta verificar en runtime |

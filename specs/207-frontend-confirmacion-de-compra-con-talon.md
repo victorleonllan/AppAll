@@ -1,6 +1,6 @@
 # Spec 207 — La confirmación de compra muestra la entrada con su QR
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `tsc` sin errores fuera de `supabase/functions`, `expo export --platform web` limpio, greps de los criterios 3-7 y las dos funciones puras con `node`. Sin probar en dispositivo ni contra la base (V-207). Falta la nota de estado en el spec 126.
 > Capa: FRONTEND. `src/screens/ConfirmacionCompraScreen.tsx`.
 > Depende de: spec 126 (`TalonEntrada.tsx`, `EntradaPropia`/`EventoDeEntrada` de `useMisEntradas.ts`, redirect a Mis entradas), spec 166 (`getPackDeTicket`, destinatarios del pack), spec 177 (tema en la confirmación). Todos aplicados; ninguno se modifica.
 > Hermano en la web: `app/(marketing)/compra/confirmacion/Confirmacion.js` y `page.js`, `components/TalonEntrada.js` (W-322); `getEntradasDeTicket` y `fechaCortaEn` (W-320).
@@ -185,3 +185,22 @@ condicional del §3, y `TalonEntrada.tsx`.
   flyer).
 - `MisEntradasScreen.tsx` y `TalonEntrada.tsx`.
 - Mover `fechaCortaEn` o `leerEntradasDelTicket` a `src/lib/`: solo con un segundo uso.
+
+## Bugs encontrados al aplicar (28-nov-2026)
+
+1. **`success` no significa «entradas emitidas».** La pantalla puede abrirse con
+   `status: 'success'` de la back_url (retorno nativo de Mercado Pago) antes de que
+   `confirm-payment` emita las filas. Con la lectura única del §1, hecha en ese momento, la
+   lista salía vacía y no había talón. Corrección: en ese caso el efecto espera a
+   `pedirConfirmacion({ ticket_id })` y recién lee. `pedirConfirmacion`, `consultarTicket`
+   y el polling no cambian. Si Mercado Pago aún no registra el pago, la lista sale vacía y
+   queda el redirect de respaldo.
+2. **Sin ticket no hay lectura.** Una compra que llega solo con `ref` y cuyo ticket no se
+   puede resolver (invitado) nunca marcaba `entradasLeidas`, así que perdía el redirect que
+   el §4 quiere conservar. Corrección: sin `idTicket` y sin resolución en curso cuenta como
+   «sin talones».
+3. **La sesión puede no estar leída** al abrir la app por el deep link, y la lectura es una
+   sola. Corrección: el efecto espera `loading === false` de `useAuth()`.
+4. **Margen seguro.** Con `ScrollView` y talones, el contenido empieza arriba y la pantalla
+   no tiene header: se suman los `insets` al padding vertical.
+
