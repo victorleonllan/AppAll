@@ -1157,6 +1157,18 @@ Se cerró con `tsc`, `expo export --platform web` y `grep`: la pantalla no se ab
    de {género}».
 4. **V (205-d):** las dos vistas en tema claro y oscuro.
 
+## Próximos eventos y «Cómo llegar» en los perfiles 🟢 spec 193 aplicado (lógica), falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc` y `tsx`: no se probó contra la base ni en un teléfono. Las pantallas son el spec 202.
+
+1. **V (193-a):** `useProximosEventos('musician', id, 3)` de una banda que solo figura como banda
+   adicional (`event_artists`) de un evento futuro lo devuelve.
+2. **V (193-b):** la misma consulta para una banda con cuenta que es `musico_id` de un evento creado
+   por un local lo devuelve.
+
+Deuda: el enlace de Google de `enlacesComoLlegar` (`src/lib/perfil.ts`) duplica `urlComoLlegar`
+(`src/lib/mapa.ts`); unificarlos.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

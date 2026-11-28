@@ -1,6 +1,6 @@
 # Spec 193 — Perfiles: próximos eventos, evento en cartelera, redes y cómo llegar (lógica)
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `npx tsc --noEmit` sin errores fuera de `supabase/functions`; `src/lib/perfil.ts` probado con `npx tsx` (`TZ=America/Santiago`, criterio 3) y solo importa `./precio`; `useProximosEventos` revisado leyendo el código. Sin probar contra la base ni en dispositivo (ver `PENDIENTES.md`).
 > Capa: LÓGICA. `src/lib/perfil.ts` (nuevo), `src/hooks/useProximosEventos.ts` (nuevo).
 > Depende de: spec 188 (`musico_id` en `Evento` y en `mapEventoFromDB`; la consulta de este spec filtra por `events.musico_id` y `event_artists.musico_id`, que ya existen en la base por W-347). Usa `event_artists` (W-300), ya en producción.
 > Alimenta: spec 202 (FRONTEND).
