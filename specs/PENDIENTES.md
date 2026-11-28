@@ -1201,6 +1201,23 @@ Se cerró con `tsc`, build web, `grep` y `node`: no se probó en un teléfono ni
 7. **Riesgo:** `getPackDeTicket` devuelve destinatarios vacíos si falla; en un pack se verían
    también los QR de los destinatarios.
 
+## Spec 200 — Pin del local al crear el evento y al editar el local (28-nov-2026)
+
+Se cerró con `tsc`, `expo export` web y lectura del código: no se probó en un teléfono.
+
+1. **V (200-a):** iPhone: crear un evento con local nuevo, «¿Es aquí?», «Sí, es aquí»; el local
+   aparece en el mapa de Locales en ese punto.
+2. **V (200-b):** Android con clave: «Ajustar pin», arrastrar fuera del círculo → vuelve al borde
+   y sale «El pin solo se mueve hasta 150 m»; «Ubicar a mano» y tocar el mapa pone el pin.
+3. **V (200-c):** «calle 124 #1040», Peñalolén → «Buscamos «calle 124 #1040» y el mapa encontró «…»».
+4. **V (200-d):** dueño de Quintal Clandesta en «Editar local» → «Ajustar pin» → «Ubicar a mano» →
+   guardar; activar después la misma dirección no borra el pin.
+5. **V (200-e):** build web: crear con «Continuar sin ubicación» funciona y el local queda sin pin.
+6. **V (200-f):** «Corregir» y «Corregir dirección» dejan el foco en el campo Dirección (el segundo
+   espera 400 ms a que cierre el modal).
+7. **Riesgo:** si un intento de publicar falla con el local ya creado, cambiar la dirección y
+   confirmar otro pin no actualiza ese local (la dirección ya tenía este comportamiento).
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

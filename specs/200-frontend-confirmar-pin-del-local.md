@@ -1,6 +1,6 @@
 # Spec 200 — Confirmar y ajustar el pin del local al crear el evento y al editar el local (frontend)
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `npx tsc --noEmit` limpio fuera de `supabase/functions`, `npx expo export --platform web` sin errores y criterios 3-6 por `grep`; sin probar en dispositivo ni contra la web (V 200-a…200-f).
 > Capa: FRONTEND. `src/components/MapaPin.tsx` (nuevo), `src/components/MapaPin.web.tsx` (nuevo), `src/components/UbicacionLocal.tsx` (nuevo), `src/screens/CrearEventoScreen.tsx`, `src/screens/EditarLocalScreen.tsx`.
 > Depende de: spec 191 (`buscarUbicacion`, `limitarAlMargen`, `distanciaMetros`, `calleCoincide`, `CENTRO_PAIS`, `puntoDeVenue`, `mensajeErrorBusqueda`, `guardarUbicacionLocal`, `crearDireccion` con `lat`/`lng`), spec 173 (`useEstilos`, `useTema`). `CrearEventoScreen.tsx` también lo tocan 198 y 199, y `EditarLocalScreen.tsx` lo tocan 201 y 206: la cadena los serializa.
 > Hermano en la web: `components/UbicacionLocal.js`, `components/MapaPin.js`, `components/FormEvento.js`, `app/(private)/eventos/[id]/editar/page.js` — W-340.
@@ -220,3 +220,14 @@ muestra solo «Para mover el pin, abre Sonópolis en el celular.»
 - El bloque «Dónde» en `EditarEventoScreen` de la web (lo tocan 199 y 206; el dueño ajusta
   desde «Editar local» o al elegir su local en «Nuevo Evento»).
 - Geocodificar al agregar o activar direcciones en `GestionDirecciones`.
+
+## Bugs encontrados al aplicar (28-nov-2026)
+
+- **El modal no tenía salida en iPhone.** El diseño no define cómo cerrarlo sin guardar y
+  `onRequestClose` solo cubre el atrás de Android. Se agregó un encabezado «Ajustar pin» con
+  «✕», como la hoja de la web. Cerrar no guarda; en un local que ya existe vuelve a «Ajustar pin».
+- **Local que ya existe sin dirección escrita.** El diseño solo cubre «Sin dirección» para el
+  local nuevo; el estado 6 habría dicho «No encontramos «»». Se usa el texto de la web: «El
+  local no tiene dirección escrita» / «Ubica el pin a mano.», sin «Buscar de nuevo».
+- **«Continuar sin ubicación» no es «Ubicación confirmada».** Sin mapa, el estado resuelto sin
+  pin muestra «Sin ubicación», el texto de «El local se crea sin pin…» y «Cambiar».
