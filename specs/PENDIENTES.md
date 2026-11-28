@@ -1071,6 +1071,17 @@ Llega con las pantallas del spec 199.
 2. **V (190-b):** como músico, invitar al dueño de un local que registró — llega el correo con el
    enlace `/invitacion/<token>`.
 
+## Punto de la portada en la app 🟢 spec 192 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc` y `npx tsx`: no se probó en un teléfono ni contra la base.
+
+1. **V (192-a):** `usePerfilMusico` de un músico que ajustó su portada en la web trae
+   `portada` distinto de `50, 50`.
+2. **V (192-b):** `guardarPuntoPortadaLocal` con una cuenta que no es dueña devuelve «Solo el
+   dueño puede ajustar esta portada.».
+3. **V (192-c):** cambiar la foto desde `EditarPerfilBandaScreen` deja el punto en `50, 50`
+   (trigger de W-344 sobre el `upsert`).
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

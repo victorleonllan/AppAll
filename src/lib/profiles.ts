@@ -1,4 +1,5 @@
 import { PerfilMusico, TipoProyecto } from '../types';
+import { PuntoPortada, puntoDeFila } from './portada';
 import { supabase } from './supabase';
 
 /** Etiqueta legible por tipo de proyecto (spec 030 — antes era texto libre). */
@@ -48,6 +49,17 @@ export function mapProfileFromDB(db: any): PerfilMusico {
     // rechazaría el upsert entero).
     sonopolisProHasta: db.sonopolis_pro_hasta ?? null,
   };
+}
+
+/**
+ * Spec 192 — el perfil con el punto de su portada. Subtipo y no un campo de
+ * `PerfilMusico`: todo lo que recibe un `PerfilMusico` acepta uno sin cambios.
+ * `mapProfileToDB` no manda el punto (se guarda solo desde `portadaDatos.ts`).
+ */
+export type PerfilConPortada = PerfilMusico & { portada: PuntoPortada };
+
+export function mapPerfilConPortadaFromDB(db: any): PerfilConPortada {
+  return { ...mapProfileFromDB(db), portada: puntoDeFila(db) };
 }
 
 /**

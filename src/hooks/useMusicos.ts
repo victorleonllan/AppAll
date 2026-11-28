@@ -1,17 +1,16 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { mapProfileFromDB } from '../lib/profiles';
-import { PerfilMusico } from '../types';
+import { mapPerfilConPortadaFromDB, PerfilConPortada } from '../lib/profiles';
 
 interface MusicosState {
-  musicos: PerfilMusico[];
+  musicos: PerfilConPortada[];
   loading: boolean;
   error: string | null;
   refrescar: () => Promise<void>;
 }
 
 interface PerfilMusicoState {
-  musico: PerfilMusico | null;
+  musico: PerfilConPortada | null;
   loading: boolean;
   error: string | null;
 }
@@ -29,7 +28,7 @@ export function useMusicos(opciones?: { pais?: string }): MusicosState {
   // El string y no el objeto: un objeto literal nuevo en cada render volvería
   // a consultar en cada render.
   const pais = opciones?.pais;
-  const [musicos, setMusicos] = useState<PerfilMusico[]>([]);
+  const [musicos, setMusicos] = useState<PerfilConPortada[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +48,7 @@ export function useMusicos(opciones?: { pais?: string }): MusicosState {
     // W-194: quien eligió rol músico y nunca completó el perfil saldría como
     // tarjeta en blanco.
     setMusicos(
-      (data ?? []).map(mapProfileFromDB).filter((m) => (m.nombre ?? '').trim() !== ''),
+      (data ?? []).map(mapPerfilConPortadaFromDB).filter((m) => (m.nombre ?? '').trim() !== ''),
     );
     setLoading(false);
   }, [pais]);
@@ -68,7 +67,7 @@ export function useMusicos(opciones?: { pais?: string }): MusicosState {
  * distinguirlos.
  */
 export function usePerfilMusico(id: string | null): PerfilMusicoState {
-  const [musico, setMusico] = useState<PerfilMusico | null>(null);
+  const [musico, setMusico] = useState<PerfilConPortada | null>(null);
   const [loading, setLoading] = useState(id !== null);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,7 +93,7 @@ export function usePerfilMusico(id: string | null): PerfilMusicoState {
           setMusico(null);
           setError(err.message ?? 'No se pudo cargar el perfil');
         } else {
-          setMusico(data ? mapProfileFromDB(data) : null);
+          setMusico(data ? mapPerfilConPortadaFromDB(data) : null);
         }
         setLoading(false);
       });
