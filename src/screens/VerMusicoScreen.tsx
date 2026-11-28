@@ -2,8 +2,11 @@ import { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Linking, ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
-import { useRoute, RouteProp } from '@react-navigation/native';
+import { useRoute, RouteProp, useNavigation, NavigationProp } from '@react-navigation/native';
 import { usePerfilMusico } from '../hooks/useMusicos';
+import { useProximosEventos } from '../hooks/useProximosEventos';
+import { bloqueFecha, lineaEvento, redesDelPerfil } from '../lib/perfil';
+import { RootTabParamList } from '../navigation/linking';
 import { useAuth } from '../context/AuthContext';
 import { useVenues } from '../context/VenuesContext';
 import { useSolicitudes, contrapartesConSolicitudViva } from '../hooks/useSolicitudes';
@@ -34,6 +37,9 @@ export default function VerMusicoScreen() {
   const { musicoId } = route.params;
   // Spec 122 — el perfil real desde `profiles` (spec 121), no el mock.
   const { musico, loading, error } = usePerfilMusico(musicoId);
+  // Spec 202 — la agenda de la banda; la primera también se destaca sobre el muro.
+  const proximos = useProximosEventos('musician', musico?.id, 3);
+  const navigation = useNavigation();
 
   // Spec 132 — «Solicitar»/«Conectar» desde la ficha: en la app es donde el
   // local decide. Los hooks se llaman siempre; quién mira decide cuál se usa.
@@ -130,6 +136,12 @@ export default function VerMusicoScreen() {
   }
 
   const imagen = musico.foto ?? musico.avatar;
+  const redes = redesDelPerfil(musico, 'musician');
+
+  // Mismo salto que en la ficha del local: `VerMusico` vive en un stack dentro del Tab.
+  const verEvento = (eventoId: string) =>
+    navigation.getParent<NavigationProp<RootTabParamList>>()
+      ?.navigate('Cartelera', { screen: 'DetalleEvento', params: { eventoId } });
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -186,38 +198,53 @@ export default function VerMusicoScreen() {
         {musico.telefono && <Text style={styles.contacto}>📞 {musico.telefono}</Text>}
         {musico.emailContacto && <Text style={styles.contacto}>✉️ {musico.emailContacto}</Text>}
 
-        {musico.instagram && (
-          <TouchableOpacity onPress={() => Linking.openURL(`https://instagram.com/${musico.instagram!.replace('@', '')}`)}>
-            <Text style={styles.enlace}>📷 Instagram: {musico.instagram}</Text>
-          </TouchableOpacity>
-        )}
-
-        {musico.spotify && (
-          <TouchableOpacity onPress={() => Linking.openURL(musico.spotify!)}>
-            <Text style={styles.enlace}>🎵 Spotify: {musico.spotify}</Text>
-          </TouchableOpacity>
-        )}
-
-        {musico.youtube && (
-          <TouchableOpacity onPress={() => Linking.openURL(musico.youtube!)}>
-            <Text style={styles.enlace}>📺 YouTube: {musico.youtube}</Text>
-          </TouchableOpacity>
-        )}
-
-        {musico.tiktok && (
-          <TouchableOpacity onPress={() => Linking.openURL(musico.tiktok!)}>
-            <Text style={styles.enlace}>🎬 TikTok: {musico.tiktok}</Text>
-          </TouchableOpacity>
-        )}
-
-        {musico.sitioWeb && (
-          <TouchableOpacity onPress={() => Linking.openURL(musico.sitioWeb!)}>
-            <Text style={styles.enlace}>🌐 {musico.sitioWeb}</Text>
-          </TouchableOpacity>
+        {redes.length > 0 && (
+          <View style={styles.redes}>
+            <Text style={styles.redesTitulo}>Redes</Text>
+            <View style={styles.redesFila}>
+              {redes.map((red) => (
+                <TouchableOpacity key={red.id} style={styles.pildora} onPress={() => Linking.openURL(red.href)}>
+                  <Text style={styles.textoPildora}>{red.nombre}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
         )}
 
         {botonSolicitud()}
       </View>
+
+      {/* Spec 202 — sin lista (error o vacía) no hay sección: un «sin eventos» falso engaña. */}
+      {proximos.cargando && !proximos.eventos?.length ? (
+        <ActivityIndicator color={colores.accent} style={styles.cargandoProximos} />
+      ) : proximos.eventos?.length ? (
+        <>
+          <Text style={styles.seccion}>Próximos eventos</Text>
+          <View style={styles.proximos}>
+            {proximos.eventos.map((e) => {
+              const fecha = bloqueFecha(e.comienzaAt);
+              const linea = lineaEvento(e);
+              return (
+                <TouchableOpacity key={e.id} style={styles.evento} onPress={() => verEvento(e.id)}>
+                  {fecha && (
+                    <View style={styles.bloqueFecha}>
+                      <Text style={styles.bloqueTexto}>{fecha.dia}</Text>
+                      <Text style={styles.bloqueNumero}>{fecha.num}</Text>
+                      <Text style={styles.bloqueTexto}>{fecha.mes}</Text>
+                    </View>
+                  )}
+                  <View style={styles.eventoDatos}>
+                    <Text style={styles.eventoArtista}>{e.artista}</Text>
+                    {!!e.venueName && <Text style={styles.eventoVenue}>{e.venueName}</Text>}
+                    {!!linea && <Text style={styles.eventoLinea}>{linea}</Text>}
+                  </View>
+                  <Text style={styles.flecha}>›</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </>
+      ) : null}
 
       {/* Spec 187 — el muro de la banda: correos publicados y flyers de eventos pasados. */}
       <Muro
@@ -225,6 +252,8 @@ export default function VerMusicoScreen() {
         id={musico.id}
         nombreTenant={musico.nombre}
         puedeModerar={(!!user && user.id === musico.id) || esAdmin}
+        destacado={proximos.eventos?.[0] ?? null}
+        onVerEvento={verEvento}
       />
 
       {modo && (
@@ -284,12 +313,42 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
   rider: { marginBottom: spacing.md },
   riderTitulo: { fontSize: fontSize.sm, fontWeight: '600', color: c.primary, marginBottom: spacing.xs },
   contacto: { fontSize: fontSize.md, color: c.secondary, marginTop: spacing.xs },
-  enlace: {
-    fontSize: fontSize.md,
-    color: c.accent,
-    textDecorationLine: 'underline',
-    marginTop: spacing.sm,
+  redes: { marginTop: spacing.md },
+  redesTitulo: { fontSize: fontSize.sm, fontWeight: '600', color: c.primary, marginBottom: spacing.xs },
+  redesFila: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  pildora: {
+    borderWidth: 1,
+    borderColor: c.border,
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
   },
+  textoPildora: { fontSize: fontSize.sm, color: c.accent },
+  cargandoProximos: { marginTop: spacing.lg },
+  seccion: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary, marginTop: spacing.lg, marginBottom: spacing.sm },
+  proximos: {
+    backgroundColor: c.cardBackground,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  evento: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm },
+  bloqueFecha: {
+    alignItems: 'center',
+    minWidth: 52,
+    paddingVertical: spacing.xs,
+    backgroundColor: c.highlightBg,
+    borderWidth: 1,
+    borderColor: c.highlightBorder,
+    borderRadius: borderRadius.sm,
+  },
+  bloqueTexto: { fontSize: fontSize.xs, color: c.highlightText },
+  bloqueNumero: { fontSize: fontSize.xl, fontWeight: 'bold', color: c.highlightText },
+  eventoDatos: { flex: 1 },
+  eventoArtista: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary },
+  eventoVenue: { fontSize: fontSize.sm, color: c.secondary },
+  eventoLinea: { fontSize: fontSize.sm, color: c.muted },
+  flecha: { fontSize: fontSize.lg, color: c.muted },
   botonSolicitud: {
     backgroundColor: c.accent,
     borderRadius: borderRadius.sm,
