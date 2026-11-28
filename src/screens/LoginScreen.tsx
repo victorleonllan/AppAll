@@ -1,11 +1,12 @@
 import { useState } from "react";
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { spacing, borderRadius, fontSize, Paleta } from "../theme";
 import { useEstilos } from "../hooks/useEstilos";
 import { useTema } from "../context/TemaContext";
+import { validarCorreo } from "../lib/validacionAuth";
 
 interface Props {
   onSwitchToRegister: () => void;
@@ -22,18 +23,48 @@ export default function LoginScreen({ onSwitchToRegister, onBack }: Props) {
   const [modo, setModo] = useState<"login" | "recuperar" | "enviado">("login");
   const [enviando, setEnviando] = useState(false);
   const [errorRecuperar, setErrorRecuperar] = useState<string | null>(null);
-  const { signIn, signInWithGoogle, pedirEnlaceRecuperacion } = useAuth();
+  // Spec 203 — cada error bajo su campo, o sobre el botón si es de la cuenta.
+  const [errores, setErrores] = useState<{ email?: string; password?: string }>({});
+  const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  const [entrando, setEntrando] = useState(false);
+  const { entrar, signInWithGoogle, pedirEnlaceRecuperacion } = useAuth();
+
+  const limpiarErrores = () => {
+    setErrores({});
+    setErrorGeneral(null);
+  };
+
+  const escribirEnCampo = (campo: "email" | "password", valor: string) => {
+    if (campo === "email") setEmail(valor);
+    else setPassword(valor);
+    setErrores((previos) => ({ ...previos, [campo]: undefined }));
+    setErrorGeneral(null);
+  };
 
   const handleLogin = async () => {
-    const error = await signIn(email, password);
-    if (error) Alert.alert("Error", error);
+    limpiarErrores();
+    const correoValido = validarCorreo(email);
+    const nuevos: { email?: string; password?: string } = {};
+    if (correoValido !== true) nuevos.email = correoValido;
+    if (!password) nuevos.password = "Falta la contraseña";
+    if (nuevos.email || nuevos.password) {
+      setErrores(nuevos);
+      return;
+    }
+    setEntrando(true);
+    const err = await entrar(email.trim(), password);
+    setEntrando(false);
+    if (!err) return;
+    if (err.campo) setErrores({ [err.campo]: err.mensaje });
+    else setErrorGeneral(err.mensaje);
   };
 
   const handleLoginGoogle = async () => {
+    setErrorGeneral(null);
     setCargandoGoogle(true);
     const error = await signInWithGoogle();
     setCargandoGoogle(false);
-    if (error) Alert.alert("Error", error);
+    if (error) setErrorGeneral(error);
   };
 
   const irARecuperar = () => {
@@ -46,11 +77,12 @@ export default function LoginScreen({ onSwitchToRegister, onBack }: Props) {
     setModo("login");
   };
 
-  // Error en un Text y no en Alert, para que también se lea en el build web.
+  // Error en un Text y no en un diálogo, para que también se lea en el build web.
   const handleEnviarEnlace = async () => {
     const correo = email.trim();
-    if (!correo.includes("@")) {
-      setErrorRecuperar("Ingresa un correo válido");
+    const correoValido = validarCorreo(correo);
+    if (correoValido !== true) {
+      setErrorRecuperar(correoValido);
       return;
     }
     setErrorRecuperar(null);
@@ -117,25 +149,41 @@ export default function LoginScreen({ onSwitchToRegister, onBack }: Props) {
       <Text style={styles.titulo}>Iniciar sesión</Text>
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, errores.email && styles.inputConError]}
         placeholder="Correo electrónico"
         placeholderTextColor={colores.muted}
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(valor) => escribirEnCampo("email", valor)}
         autoCapitalize="none"
         keyboardType="email-address"
       />
+      {errores.email && (
+        <Text style={styles.textoError} accessibilityLabel={errores.email}>{errores.email}</Text>
+      )}
       <TextInput
-        style={styles.input}
+        style={[styles.input, errores.password && styles.inputConError]}
         placeholder="Contraseña"
         placeholderTextColor={colores.muted}
         value={password}
-        onChangeText={setPassword}
+        onChangeText={(valor) => escribirEnCampo("password", valor)}
         secureTextEntry
       />
+      {errores.password && (
+        <Text style={styles.textoError} accessibilityLabel={errores.password}>{errores.password}</Text>
+      )}
 
-      <TouchableOpacity style={styles.boton} onPress={handleLogin}>
-        <Text style={styles.textoBoton}>Entrar</Text>
+      {errorGeneral && (
+        <View style={styles.bloqueError}>
+          <Text style={styles.textoBloqueError} accessibilityLabel={errorGeneral}>{errorGeneral}</Text>
+        </View>
+      )}
+
+      <TouchableOpacity
+        style={[styles.boton, entrando && styles.botonDeshabilitado]}
+        onPress={handleLogin}
+        disabled={entrando}
+      >
+        <Text style={styles.textoBoton}>{entrando ? "Un momento…" : "Entrar"}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={irARecuperar}>
@@ -216,6 +264,14 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
     fontSize: fontSize.sm,
     marginBottom: spacing.sm,
   },
+  inputConError: { borderColor: c.danger, borderWidth: 1.5 },
+  bloqueError: {
+    width: "100%",
+    backgroundColor: c.dangerBg,
+    borderRadius: borderRadius.sm,
+    padding: spacing.sm,
+  },
+  textoBloqueError: { color: c.dangerText, fontSize: fontSize.sm },
   divisor: {
     flexDirection: "row",
     alignItems: "center",

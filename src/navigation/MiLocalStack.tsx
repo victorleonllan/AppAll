@@ -78,7 +78,7 @@ export default function MiLocalStack() {
       <Stack.Screen name="Solicitudes" component={SolicitudesScreen} options={{ title: 'Solicitudes' }} />
       <Stack.Screen name="CobrarEvento" component={CobrarEventoScreen} options={{ title: 'Cobrar' }} />
       {/* Spec 155 — la misma pantalla en los dos stacks, como Escaner: cambia el tenant, no el código. */}
-      <Stack.Screen name="Contactos" component={ContactosScreen} options={{ title: 'Contactos' }} />
+      <Stack.Screen name="Contactos" component={ContactosScreen} options={{ title: 'Correo' }} />
       {/* Spec 157 — igual que Contactos: el tenant sale de useTenantRedes, no de la ruta. */}
       <Stack.Screen name="Redes" component={RedesScreen} options={{ title: 'Redes' }} />
       <Stack.Screen name="PublicarRedes" component={PublicarRedesScreen} options={{ title: 'Publicar en redes' }} />

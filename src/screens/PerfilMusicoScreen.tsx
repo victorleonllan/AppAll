@@ -318,7 +318,7 @@ export default function PerfilMusicoScreen() {
           style={styles.botonEscaner}
           onPress={() => (navigation as any).navigate('Contactos', { tipo: 'musician' })}
         >
-          <Text style={styles.textoBotonSecundario}>👥 Contactos</Text>
+          <Text style={styles.textoBotonSecundario}>✉️ Correo</Text>
         </TouchableOpacity>
         {/* Spec 157 — también sin Pro: lleva a la explicación neutra, no a una oferta. */}
         <TouchableOpacity

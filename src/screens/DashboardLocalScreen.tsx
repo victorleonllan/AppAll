@@ -234,7 +234,7 @@ export default function DashboardLocalScreen() {
             style={styles.botonEscaner}
             onPress={() => navigation.navigate('Contactos', { tipo: 'venue' })}
           >
-            <Text style={styles.textoBotonSecundario}>👥 Contactos</Text>
+            <Text style={styles.textoBotonSecundario}>✉️ Correo</Text>
           </TouchableOpacity>
           {/* Spec 157 — también sin Pro: lleva a la explicación neutra, no a una oferta. */}
           <TouchableOpacity style={styles.botonEscaner} onPress={() => navigation.navigate('Redes')}>
