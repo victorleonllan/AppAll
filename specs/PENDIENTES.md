@@ -1144,6 +1144,19 @@ spec 198.
 2. **V (189-b):** crear en la app un evento con una banda adicional: queda la fila en
    `event_artists` y la web la muestra.
 
+## Cartelera: conteos, días con nombre y vacío 🟢 spec 205 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc`, `expo export --platform web` y `grep`: la pantalla no se abrió.
+
+1. **V (205-a):** con eventos hoy y el finde, los números de «Hoy», «Finde» y «Esta semana»
+   coinciden con lo que se ve al tocar cada uno, también con un género elegido.
+2. **V (205-b):** un externo de hoy y uno de mañana muestran las insignias «HOY» y «MAÑANA»,
+   la cantidad por día y la hora en cada tarjeta.
+3. **V (205-c):** «Hoy» + un género sin eventos hoy dice «Hoy no hay {género} en Chile»,
+   «Ver {género} en otras fechas» lleva a «Todos» con el género puesto, y aparece «Lo próximo
+   de {género}».
+4. **V (205-d):** las dos vistas en tema claro y oscuro.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

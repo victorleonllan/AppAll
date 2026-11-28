@@ -1,6 +1,6 @@
 # Spec 205 — Cartelera de la app: cuántos shows trae cada fecha, días con nombre y un vacío que sugiere
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `tsc` limpio fuera de `supabase/functions`, `expo export --platform web` sin errores y `grep` de los criterios 3 a 6. Sin probar en navegador ni en dispositivo (V 205-a a 205-d en `PENDIENTES.md`).
 > Capa: FRONTEND. `src/screens/CarteleraScreen.tsx`, `src/components/TarjetaEventoExterno.tsx`.
 > Depende de: spec 196 (`contarPorFecha`, `agruparPorDia`, `horaCorta`, `mensajeVacio`, `proximosParaVacio`, `rangoFecha` con `ahora`), spec 175 (`limpiarFiltros`, `filtrosActivos`), spec 173 (`useEstilos`, `useTema`).
 > Hermano en la web: `components/Cartelera.js`, `components/cartelera/SelectorFecha.js`, `EncabezadoDia.js`, `VacioCartelera.js`, `components/TarjetaEventoExterno.js` (W-313, solo la parte de comportamiento).

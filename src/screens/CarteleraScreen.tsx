@@ -3,6 +3,7 @@ import {
   View, Text, SectionList, StyleSheet, ActivityIndicator, Platform, TouchableOpacity, Modal,
   TextInput, Switch, RefreshControl,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,8 +17,8 @@ import GeneroPicker from '../components/GeneroPicker';
 import { eventoCoincideConGenero } from '../lib/generos';
 import { useEventosExternos } from '../hooks/useEventosExternos';
 import { getPacksMinimosDeEventos, nombreDeEspecial } from '../lib/especiales';
-import { claveDiaLocal, formatearDiaLargo, rangoFecha, FiltroFecha } from '../lib/fechaCartelera';
-import { EventoExterno } from '../types';
+import { rangoFecha, FiltroFecha } from '../lib/fechaCartelera';
+import { agruparPorDia, contarPorFecha, mensajeVacio, proximosParaVacio } from '../lib/cartelera';
 import { CarteleraStackParamList } from '../navigation/CarteleraStack';
 import { spacing, fontSize, borderRadius, Paleta } from '../theme';
 import { useEstilos } from '../hooks/useEstilos';
@@ -51,6 +52,8 @@ const FILTROS_VACIOS = {
   generoFiltro: null as string | null,
   soloSonopolis: false,
 };
+
+const textoShows = (n: number) => (n === 1 ? '1 show' : `${n} shows`);
 
 /** Un rango nunca incluye eventos sin fecha: no se afirma que caen "hoy". */
 function enRango(iso: string | null | undefined, rango: [Date, Date] | null): boolean {
@@ -129,7 +132,6 @@ export default function CarteleraScreen() {
   const { user } = useAuth();
   // Spec 119 — eventos scrapeados de otras plataformas, del mismo país activo.
   const { externos, error: errorExternos, refrescar } = useEventosExternos(pais);
-  const nombrePaisActivo = PAISES[pais]?.nombre ?? pais;
 
   const [busqueda, setBusqueda] = useState('');
   const [filtroFecha, setFiltroFecha] = useState<FiltroFecha>('todos');
@@ -181,38 +183,41 @@ export default function CarteleraScreen() {
   }, [visibles, externos, soloSonopolis, generoFiltro]);
 
   const texto = busqueda.trim().toLowerCase();
-  const rango = rangoFecha(filtroFecha);
+  // Spec 205 — un solo instante por render: conteo, rango y etiquetas no pueden
+  // discrepar sobre qué es «hoy».
+  const ahora = new Date();
+  const rango = rangoFecha(filtroFecha, ahora);
 
-  // Todos los internos que pasan los filtros van destacados, en el orden del
-  // contexto (por `comienzaAt`) — W-128 supera al W-016, que destacaba uno solo.
-  const destacados = visibles.filter(
+  // Spec 205 — filtrado por todo menos la fecha: de aquí salen los conteos de
+  // los botones y, sumando `enRango`, lo que se ve.
+  const internosSinFecha = visibles.filter(
     (e) =>
       (!texto || `${e.artista} ${e.genero} ${e.venueName}`.toLowerCase().includes(texto)) &&
-      enRango(e.comienzaAt, rango) &&
       eventoCoincideConGenero(e.genero, generoFiltro)
   );
 
   // Los externos casi nunca traen género: con un género elegido quedan fuera,
   // porque no se afirma un dato que no se tiene.
-  const externosFiltrados = soloSonopolis
+  const externosSinFecha = soloSonopolis
     ? []
     : externos.filter(
         (e) =>
           (!texto || `${e.titulo} ${e.venueNombre ?? ''}`.toLowerCase().includes(texto)) &&
-          enRango(e.comienzaAt, rango) &&
           (!generoFiltro || e.genero === generoFiltro)
       );
 
-  // Los externos llegan ordenados por `comienza_at`: el Map conserva ese orden.
-  const porDia = new Map<string, EventoExterno[]>();
-  for (const e of externosFiltrados) {
-    const clave = claveDiaLocal(e.comienzaAt);
-    if (!porDia.has(clave)) porDia.set(clave, []);
-    porDia.get(clave)!.push(e);
-  }
-  const secciones = Array.from(porDia.values()).map((data) => ({
-    title: formatearDiaLargo(data[0].comienzaAt),
-    data,
+  const conteo = contarPorFecha([...internosSinFecha, ...externosSinFecha], ahora);
+
+  // Todos los internos que pasan los filtros van destacados, en el orden del
+  // contexto (por `comienzaAt`) — W-128 supera al W-016, que destacaba uno solo.
+  const destacados = internosSinFecha.filter((e) => enRango(e.comienzaAt, rango));
+  const externosFiltrados = externosSinFecha.filter((e) => enRango(e.comienzaAt, rango));
+
+  // Los externos llegan ordenados por `comienza_at`: la agrupación conserva ese orden.
+  const secciones = agruparPorDia(externosFiltrados, ahora).map((grupo) => ({
+    title: grupo.titulo,
+    etiqueta: grupo.etiqueta,
+    data: grupo.items,
   }));
 
   const total = destacados.length + externosFiltrados.length;
@@ -304,11 +309,14 @@ export default function CarteleraScreen() {
         {FILTROS_FECHA.map((f) => (
           <TouchableOpacity
             key={f.clave}
-            style={[styles.filtro, filtroFecha === f.clave && styles.filtroActivo]}
+            style={[styles.filtro, styles.filtroDeFecha, filtroFecha === f.clave && styles.filtroActivo]}
             onPress={() => setFiltroFecha(f.clave)}
           >
             <Text style={[styles.filtroTexto, filtroFecha === f.clave && styles.filtroTextoActivo]}>
               {f.etiqueta}
+            </Text>
+            <Text style={[styles.filtroConteo, filtroFecha === f.clave && styles.filtroTextoActivo]}>
+              {textoShows(conteo[f.clave])}
             </Text>
           </TouchableOpacity>
         ))}
@@ -358,6 +366,60 @@ export default function CarteleraScreen() {
   // es la diferencia entre "la app está rota" y "acá todavía no llegamos".
   const sinDatos = visibles.length === 0 && externos.length === 0;
 
+  // Spec 205 — el vacío dice por qué, ofrece una salida y sugiere lo próximo.
+  const renderVacio = () => {
+    const vacio = mensajeVacio({
+      fecha: filtroFecha,
+      genero: generoFiltro,
+      nombrePais: PAISES[pais]?.nombre ?? null,
+      paisSinCartelera: sinDatos,
+    });
+    // Sin cartelera en el país no hay internos: la lista sale vacía sola.
+    const sugeridos = proximosParaVacio(visibles, { genero: generoFiltro, ahora });
+
+    return (
+      <View>
+        <View style={styles.bloqueVacio}>
+          <View style={styles.circuloVacio}>
+            <Ionicons name="calendar-outline" size={28} color={colores.highlightText} />
+          </View>
+          <Text style={styles.vacioTitulo}>{vacio.titulo}</Text>
+          <Text style={styles.vacioDetalle}>{vacio.detalle}</Text>
+          {vacio.salidaFecha && (
+            <TouchableOpacity
+              style={styles.botonSalida}
+              onPress={() => setFiltroFecha('todos')}
+              accessibilityRole="button"
+            >
+              <Text style={styles.botonSalidaTexto}>{vacio.salidaFecha}</Text>
+            </TouchableOpacity>
+          )}
+          {filtrosActivos.length > 0 && (
+            <TouchableOpacity style={styles.botonLimpiarVacio} onPress={limpiarFiltros} accessibilityRole="button">
+              <Text style={styles.botonLimpiarVacioTexto}>Limpiar filtros</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {sugeridos.length > 0 && (
+          <View>
+            <Text style={styles.dia}>
+              {generoFiltro ? `Lo próximo de ${generoFiltro}` : 'Lo próximo en Sonópolis'}
+            </Text>
+            {sugeridos.map((e) => (
+              <EventoDestacado
+                key={e.id}
+                evento={e}
+                packEspecial={null}
+                onPress={() => navigation.navigate('DetalleEvento', { eventoId: e.id })}
+              />
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <GeneroPicker
@@ -374,18 +436,21 @@ export default function CarteleraScreen() {
         sections={secciones}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <TarjetaEventoExterno evento={item} />}
-        renderSectionHeader={({ section }) => <Text style={styles.dia}>{section.title}</Text>}
+        renderSectionHeader={({ section }) => (
+          <View style={styles.filaDia}>
+            {section.etiqueta === 'hoy' && (
+              <Text style={[styles.insignia, styles.insigniaHoy]}>HOY</Text>
+            )}
+            {section.etiqueta === 'manana' && (
+              <Text style={[styles.insignia, styles.insigniaManana]}>MAÑANA</Text>
+            )}
+            <Text style={[styles.dia, styles.diaEnFila]}>{section.title}</Text>
+            <Text style={styles.diaConteo}>{textoShows(section.data.length)}</Text>
+          </View>
+        )}
         stickySectionHeadersEnabled={false}
         ListHeaderComponent={encabezado}
-        ListFooterComponent={
-          total === 0 ? (
-            <Text style={styles.vacio}>
-              {sinDatos
-                ? `Todavía no hay eventos en ${nombrePaisActivo}.`
-                : 'Ningún evento calza con estos filtros.'}
-            </Text>
-          ) : null
-        }
+        ListFooterComponent={total === 0 ? renderVacio() : null}
         refreshControl={<RefreshControl refreshing={refrescando} onRefresh={onRefresh} />}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: 30 }}
@@ -410,6 +475,8 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
   filtroTexto: { fontSize: fontSize.sm, color: c.accent, fontWeight: '600' },
   filtroActivo: { backgroundColor: c.accent, borderColor: c.accent },
   filtroTextoActivo: { color: c.onAccent },
+  filtroDeFecha: { alignItems: 'center' },
+  filtroConteo: { fontSize: fontSize.xs, color: c.muted },
   // Spec 175 (W-275) — píldora de acento, mismo tratamiento que la píldora activa.
   limpiar: {
     backgroundColor: c.accent,
@@ -448,6 +515,60 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
     marginTop: spacing.md,
     marginBottom: spacing.xs,
   },
+  filaDia: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  // El título conserva el estilo `dia`; los márgenes los pone la fila.
+  diaEnFila: { flex: 1, marginLeft: 0, marginTop: 0, marginBottom: 0 },
+  diaConteo: { fontSize: fontSize.sm, color: c.muted },
+  insignia: {
+    fontSize: fontSize.xs,
+    fontWeight: 'bold',
+    borderWidth: 1,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.xs,
+    overflow: 'hidden',
+  },
+  insigniaHoy: { backgroundColor: c.accent, borderColor: c.accent, color: c.onAccent },
+  insigniaManana: { backgroundColor: c.background, borderColor: c.border, color: c.primary },
+  bloqueVacio: { alignItems: 'center', padding: spacing.lg, gap: spacing.sm },
+  circuloVacio: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: c.highlightBg,
+    borderWidth: 1,
+    borderColor: c.highlightBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vacioTitulo: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary, textAlign: 'center' },
+  vacioDetalle: { fontSize: fontSize.md, color: c.secondary, textAlign: 'center' },
+  botonSalida: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    backgroundColor: c.accent,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  botonSalidaTexto: { color: c.onAccent, fontWeight: 'bold', textAlign: 'center' },
+  botonLimpiarVacio: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    backgroundColor: c.cardBackground,
+    borderWidth: 1,
+    borderColor: c.border,
+    borderRadius: borderRadius.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  botonLimpiarVacioTexto: { color: c.primary, fontWeight: '600' },
   avisoExternos: { fontSize: fontSize.sm, color: c.muted, marginHorizontal: spacing.md, marginTop: spacing.sm },
   centrado: { justifyContent: 'center', alignItems: 'center' },
   botonReintentar: {
