@@ -3,7 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ScrollView, Alert, ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { VenueType } from '../types';
 import { venueEmoji, venueLabel } from '../lib/venues';
 import { useAuth } from '../context/AuthContext';
@@ -14,7 +14,15 @@ import { useTema } from '../context/TemaContext';
 import GeneroPicker from '../components/GeneroPicker';
 import PaisPicker from '../components/PaisPicker';
 import CampoImagen from '../components/CampoImagen';
+import AvisoEdicionAdmin from '../components/AvisoEdicionAdmin';
+import { useEsAdmin } from '../hooks/useEsAdmin';
+import { decidirEdicion, puedeEditarComoDueno } from '../lib/edicionAdmin';
+import AjustarPortada from '../components/AjustarPortada';
+import { PUNTO_CENTRO } from '../lib/portada';
+import { leerPuntoPortadaLocal, guardarPuntoPortadaLocal } from '../lib/portadaDatos';
 import GestionDirecciones from '../components/GestionDirecciones';
+import UbicacionLocal from '../components/UbicacionLocal';
+import { puntoDeVenue } from '../lib/ubicacion';
 import { crearDireccion } from '../hooks/useDireccionesVenue';
 import { PAIS_POR_DEFECTO, etiquetaPais } from '../constants/paises';
 
@@ -24,10 +32,22 @@ export default function EditarLocalScreen() {
   const styles = useEstilos(crearEstilos);
   const { colores } = useTema();
   const navigation = useNavigation();
-  const { user } = useAuth();
-  const { allVenues, createVenue, updateVenue, refresh } = useVenues();
+  const { user, role } = useAuth();
+  const { allVenues, loading, createVenue, updateVenue, refresh, guardarUbicacionLocal } = useVenues();
+  // Spec 206 (W-352) — con `localId` es el admin abriendo el local de otra cuenta.
+  const localId = (useRoute().params as { localId?: string } | undefined)?.localId;
+  const { esAdmin, cargando: cargandoAdmin } = useEsAdmin();
 
   const miVenue = user ? allVenues.find((v) => v.ownerId === user.id) : null;
+  const venue = localId ? allVenues.find((v) => v.id === localId) : miVenue;
+  const { permitido, comoAdmin } = decidirEdicion({
+    userId: user?.id,
+    rol: role,
+    esAdmin,
+    rolDueno: 'local',
+    objetivoId: localId,
+    duenoId: venue?.ownerId ?? null,
+  });
 
   const [type, setType] = useState<VenueType>('sala');
   const [name, setName] = useState('');
@@ -51,35 +71,57 @@ export default function EditarLocalScreen() {
   const [image, setImage] = useState('');
   const [avatar, setAvatar] = useState('');
   const [guardando, setGuardando] = useState(false);
+  // Spec 201 — el punto de la portada se lee y se guarda aparte del formulario.
+  const [puntoPortada, setPuntoPortada] = useState(PUNTO_CENTRO);
+  const [ajustando, setAjustando] = useState(false);
+  const [portadaGuardada, setPortadaGuardada] = useState(false);
 
   // Precarga si el usuario ya tiene un local — de lo contrario el formulario
   // queda en blanco y el guardado crea uno nuevo.
   useEffect(() => {
-    if (!miVenue) return;
-    setType(miVenue.type);
-    setName(miVenue.name ?? '');
-    setPais(miVenue.pais ?? PAIS_POR_DEFECTO);
-    setAforo(miVenue.aforo != null ? String(miVenue.aforo) : '');
-    setDescription(miVenue.description ?? '');
+    if (!venue) return;
+    setType(venue.type);
+    setName(venue.name ?? '');
+    setPais(venue.pais ?? PAIS_POR_DEFECTO);
+    setAforo(venue.aforo != null ? String(venue.aforo) : '');
+    setDescription(venue.description ?? '');
     // Spec 134 — mismo separador que la web: venues.estilo es texto "A, B".
-    setEstilos(miVenue.estilo ? miVenue.estilo.split(', ').filter(Boolean) : []);
-    setHorarios(miVenue.horarios ?? '');
-    setTieneEscenario(!!miVenue.tieneEscenario);
-    setTieneSonido(!!miVenue.tieneSonido);
-    setTieneBackline(!!miVenue.tieneBackline);
-    setTelefono(miVenue.telefono ?? '');
-    setEmailContacto(miVenue.emailContacto ?? '');
-    setInstagram(miVenue.instagram ?? '');
-    setSitioWeb(miVenue.sitioWeb ?? '');
-    setImage(miVenue.image ?? '');
-    setAvatar(miVenue.avatar ?? '');
-  }, [miVenue?.id]);
+    setEstilos(venue.estilo ? venue.estilo.split(', ').filter(Boolean) : []);
+    setHorarios(venue.horarios ?? '');
+    setTieneEscenario(!!venue.tieneEscenario);
+    setTieneSonido(!!venue.tieneSonido);
+    setTieneBackline(!!venue.tieneBackline);
+    setTelefono(venue.telefono ?? '');
+    setEmailContacto(venue.emailContacto ?? '');
+    setInstagram(venue.instagram ?? '');
+    setSitioWeb(venue.sitioWeb ?? '');
+    setImage(venue.image ?? '');
+    setAvatar(venue.avatar ?? '');
+  }, [venue?.id]);
+
+  useEffect(() => {
+    setPuntoPortada(PUNTO_CENTRO);
+    setPortadaGuardada(false);
+    if (!venue) return;
+    let vigente = true;
+    leerPuntoPortadaLocal(venue.id)
+      .then((punto) => {
+        if (vigente) setPuntoPortada(punto);
+      })
+      // Sin el punto, el botón igual se ofrece desde el centro.
+      .catch((error) => console.warn('[portada] no se pudo leer el punto del local', error));
+    return () => {
+      vigente = false;
+    };
+  }, [venue?.id]);
 
   const handleGuardar = async () => {
     if (!user) {
       Alert.alert('Error', 'Debes iniciar sesión para editar tu local');
       return;
     }
+    // Con `localId` nunca se entra al modo crear.
+    if (localId && (!venue || !permitido)) return;
     if (!name.trim()) {
       Alert.alert('Falta el nombre', 'El local necesita un nombre');
       return;
@@ -113,8 +155,8 @@ export default function EditarLocalScreen() {
 
     setGuardando(true);
     try {
-      if (miVenue) {
-        await updateVenue(miVenue.id, campos);
+      if (venue) {
+        await updateVenue(venue.id, campos);
       } else {
         const nuevo = await createVenue({ ...campos, ownerId: user.id });
         if (address.trim()) {
@@ -150,10 +192,39 @@ export default function EditarLocalScreen() {
     }
   };
 
+  if (localId) {
+    // `loading` también se enciende al refrescar: con el local ya a la vista no se
+    // desmonta el formulario.
+    if ((loading && !venue) || cargandoAdmin) {
+      return (
+        <View style={styles.container}>
+          <ActivityIndicator size="large" color={colores.accent} />
+        </View>
+      );
+    }
+    if (!venue || !permitido) {
+      return (
+        <View style={styles.container}>
+          <Text style={styles.sinAcceso}>{venue ? 'No puedes editar este local.' : 'Ese local no existe.'}</Text>
+        </View>
+      );
+    }
+  }
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {comoAdmin && venue && (
+        <AvisoEdicionAdmin
+          tipo="local"
+          nombre={venue.name}
+          onVerFicha={() =>
+            (navigation as any).navigate('Locales', { screen: 'DetalleLocal', params: { venueId: venue.id } })
+          }
+        />
+      )}
+
       <View style={styles.card}>
-        <Text style={styles.titulo}>{miVenue ? 'Editar local' : 'Registrar local'}</Text>
+        <Text style={styles.titulo}>{venue ? 'Editar local' : 'Registrar local'}</Text>
 
         <Text style={styles.label}>Tipo de local *</Text>
         <View style={styles.tiposRow}>
@@ -195,8 +266,8 @@ export default function EditarLocalScreen() {
         {/* Al crear, el venue aún no tiene id: se sube a pendientes/<user.id>/
             (spec 062), igual que la web. */}
         <CampoImagen
-          carpeta={miVenue ? 'locales' : 'pendientes'}
-          id={miVenue ? miVenue.id : user?.id}
+          carpeta={venue ? 'locales' : 'pendientes'}
+          id={venue ? venue.id : user?.id}
           valor={avatar}
           onCambiar={setAvatar}
           aspecto={[1, 1]}
@@ -205,18 +276,65 @@ export default function EditarLocalScreen() {
 
         <Text style={styles.label}>Foto del local</Text>
         <CampoImagen
-          carpeta={miVenue ? 'locales' : 'pendientes'}
-          id={miVenue ? miVenue.id : user?.id}
+          carpeta={venue ? 'locales' : 'pendientes'}
+          id={venue ? venue.id : user?.id}
           valor={image}
           onCambiar={setImage}
           ayuda="Es lo primero que ve un músico en tu ficha."
         />
+        {/* Spec 201 — con la foto sin guardar no se ajusta: el trigger de W-344 vuelve el
+            punto al centro cuando cambia la foto. */}
+        {venue && !!image && (image === venue.image ? (
+          <>
+            <TouchableOpacity
+              style={styles.botonPortada}
+              onPress={() => {
+                setPortadaGuardada(false);
+                setAjustando(true);
+              }}
+            >
+              <Text style={styles.textoBotonPortada}>Ajustar portada</Text>
+            </TouchableOpacity>
+            {portadaGuardada && <Text style={styles.portadaGuardada}>Portada guardada</Text>}
+            <AjustarPortada
+              visible={ajustando}
+              uri={image}
+              puntoInicial={puntoPortada}
+              proporcion={390 / 250} // la franja de la ficha web en el celular (W-344)
+              onGuardar={async (punto) => {
+                setPuntoPortada(await guardarPuntoPortadaLocal(venue.id, punto));
+                setPortadaGuardada(true);
+              }}
+              onCerrar={() => setAjustando(false)}
+            />
+          </>
+        ) : (
+          <Text style={styles.avisoPortada}>Guarda la foto nueva para ajustar su encuadre.</Text>
+        ))}
       </View>
 
       <View style={styles.card}>
         <Text style={styles.tituloSeccion}>Dirección</Text>
-        {miVenue ? (
-          <GestionDirecciones venueId={miVenue.id} onCambio={refresh} />
+        {venue ? (
+          <>
+            <GestionDirecciones venueId={venue.id} onCambio={refresh} />
+            {/* Spec 200 — el pin se guarda solo, sin pasar por «Guardar cambios». */}
+            <Text style={styles.label}>Ubicación en el mapa</Text>
+            <UbicacionLocal
+              key={venue.id}
+              direccion={venue.address ?? ''}
+              comuna={venue.comuna}
+              pais={venue.pais}
+              nombre={venue.name}
+              tipo={venue.type}
+              valor={puntoDeVenue(venue)}
+              puedeMover={puedeEditarComoDueno({ userId: user?.id, duenoId: venue.ownerId, esAdmin })}
+              modo="editar"
+              onConfirmar={async (p) => {
+                if (p) await guardarUbicacionLocal(venue.id, p);
+              }}
+            />
+          </>
         ) : (
           <>
             <Text style={styles.ayuda}>
@@ -344,6 +462,7 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
     marginBottom: spacing.sm,
   },
   ayuda: { fontSize: fontSize.xs, color: c.muted, marginBottom: spacing.xs },
+  sinAcceso: { fontSize: fontSize.md, color: c.muted, textAlign: 'center', marginTop: spacing.xl },
   label: {
     fontSize: fontSize.sm,
     fontWeight: '600',
@@ -382,6 +501,16 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.lg,
   },
+  botonPortada: {
+    backgroundColor: c.accentLight,
+    padding: 12,
+    borderRadius: borderRadius.sm,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  textoBotonPortada: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  portadaGuardada: { fontSize: fontSize.sm, color: c.success, marginTop: spacing.xs },
+  avisoPortada: { fontSize: fontSize.sm, color: c.muted, marginTop: spacing.sm },
   botonDesactivado: { opacity: 0.6 },
   textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
 });

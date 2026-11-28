@@ -5,6 +5,9 @@
 
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, RefreshControl, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { AdminParamList } from '../navigation/pantallasAdmin';
 import { useAdminLocales, filtrarLocales, type LocalAdmin } from '../hooks/useAdminLocales';
 import { fechaCorta } from '../components/BotonesPro';
 import { venueLabel } from '../lib/venues';
@@ -85,6 +88,7 @@ function TarjetaLocal({
 }) {
   const styles = useEstilos(crearEstilos);
   const { colores } = useTema();
+  const navigation = useNavigation<NativeStackNavigationProp<AdminParamList, 'AdminLocales'>>();
   const [abierto, setAbierto] = useState(false);
   const [aviso, setAviso] = useState<Aviso | null>(null);
   const [ocupado, setOcupado] = useState(false);
@@ -164,6 +168,24 @@ function TarjetaLocal({
             : `Invitación a ${inv.correo} creada, sin enviar`}
         </Text>
       )}
+
+      {/* Spec 206 — el formulario del dueño, abierto por el admin. */}
+      <View style={styles.acciones}>
+        <TouchableOpacity
+          style={styles.boton}
+          onPress={() => navigation.navigate('AdminEditarLocal', { localId: local.venueId, nombre: local.nombre })}
+        >
+          <Text style={styles.botonTexto}>Editar perfil</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.boton}
+          onPress={() =>
+            (navigation as any).navigate('Locales', { screen: 'DetalleLocal', params: { venueId: local.venueId } })
+          }
+        >
+          <Text style={styles.botonTexto}>Ver ficha pública</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.acciones}>
         {inv ? (

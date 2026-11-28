@@ -11,6 +11,11 @@ import AdminCrmScreen from '../screens/AdminCrmScreen';
 import AdminTenantScreen from '../screens/AdminTenantScreen';
 import AdminLocalesScreen from '../screens/AdminLocalesScreen';
 import AdminVisitasScreen from '../screens/AdminVisitasScreen';
+import AdminMusicosScreen from '../screens/AdminMusicosScreen';
+import AdminFichaBandaScreen from '../screens/AdminFichaBandaScreen';
+import EditarPerfilBandaScreen from '../screens/EditarPerfilBandaScreen';
+import EditarLocalScreen from '../screens/EditarLocalScreen';
+import EditarEventoScreen from '../screens/EditarEventoScreen';
 import type { TipoTenant } from '../lib/adminPro';
 
 export type AdminParamList = {
@@ -23,6 +28,13 @@ export type AdminParamList = {
   AdminLocales: undefined;
   // Spec 172 — visitantes de la web por cartelera de país.
   AdminVisitas: undefined;
+  // Spec 206 — las tres últimas son los formularios del dueño con nombre de ruta propio:
+  // `MusicoStack` y `MiLocalStack` ya tienen los suyos y `PerfilStack` no tiene ninguno.
+  AdminMusicos: undefined;
+  AdminFichaBanda: { fichaId: string; nombre: string };
+  AdminEditarPerfilBanda: { cuentaId: string; nombre: string };
+  AdminEditarLocal: { localId: string; nombre: string };
+  AdminEditarEvento: { eventoId: string };
 };
 
 /**
@@ -49,6 +61,15 @@ export function pantallasAdmin(Stack: { Group: any; Screen: any }) {
         options={({ route }: { route: { params: AdminParamList['AdminTenant'] } }) => ({ title: route.params.nombre })}
       />
       <Stack.Screen name="AdminLocales" component={AdminLocalesScreen} options={{ title: 'Locales' }} />
+      <Stack.Screen name="AdminMusicos" component={AdminMusicosScreen} options={{ title: 'Músicos' }} />
+      <Stack.Screen
+        name="AdminFichaBanda"
+        component={AdminFichaBandaScreen}
+        options={({ route }: { route: { params: AdminParamList['AdminFichaBanda'] } }) => ({ title: route.params.nombre })}
+      />
+      <Stack.Screen name="AdminEditarPerfilBanda" component={EditarPerfilBandaScreen} options={{ title: 'Editar perfil' }} />
+      <Stack.Screen name="AdminEditarLocal" component={EditarLocalScreen} options={{ title: 'Editar local' }} />
+      <Stack.Screen name="AdminEditarEvento" component={EditarEventoScreen} options={{ title: 'Editar evento' }} />
     </Stack.Group>
   );
 }

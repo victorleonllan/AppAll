@@ -1,14 +1,17 @@
 import { useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, Alert,
+  StyleSheet,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { spacing, borderRadius, fontSize, Paleta } from "../theme";
 import { useEstilos } from "../hooks/useEstilos";
 import { useTema } from "../context/TemaContext";
+import { validarCorreo } from "../lib/validacionAuth";
 
 type RoleOption = "musician" | "local";
+type Campo = "nombre" | "email" | "password";
+type Errores = Partial<Record<Campo, string>>;
 
 interface Props {
   preselectedRole: RoleOption;
@@ -27,20 +30,54 @@ export default function RegisterScreen({
   const [password, setPassword] = useState("");
   const [nombre, setNombre] = useState("");
   const [role, setRole] = useState<RoleOption>(preselectedRole);
-  const { signUp } = useAuth();
+  // Spec 203 — cada error bajo su campo, o sobre el botón si es de la cuenta.
+  const [errores, setErrores] = useState<Errores>({});
+  const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  const [creando, setCreando] = useState(false);
+  const [correoEnviado, setCorreoEnviado] = useState(false);
+  const { crearCuenta } = useAuth();
+
+  const escribirEnCampo = (campo: Campo, valor: string) => {
+    const guardar = { nombre: setNombre, email: setEmail, password: setPassword }[campo];
+    guardar(valor);
+    setErrores((previos) => ({ ...previos, [campo]: undefined }));
+  };
 
   const handleRegister = async () => {
-    if (!nombre.trim()) {
-      Alert.alert("Error", "Ingresa tu nombre o el nombre de tu proyecto");
+    setErrores({});
+    setErrorGeneral(null);
+    const correoValido = validarCorreo(email);
+    const nuevos: Errores = {};
+    if (!nombre.trim()) nuevos.nombre = "Falta el nombre";
+    if (correoValido !== true) nuevos.email = correoValido;
+    if (!password) nuevos.password = "Falta la contraseña";
+    if (nuevos.nombre || nuevos.email || nuevos.password) {
+      setErrores(nuevos);
       return;
     }
-    const error = await signUp(email, password, role, nombre);
+    setCreando(true);
+    const { error, sesion } = await crearCuenta(email.trim(), password, role, nombre);
+    setCreando(false);
     if (error) {
-      Alert.alert("Error", error);
-    } else {
-      Alert.alert("Listo", "Revisa tu correo para confirmar la cuenta");
+      if (error.campo) setErrores({ [error.campo]: error.mensaje });
+      else setErrorGeneral(error.mensaje);
+      return;
     }
+    if (!sesion) setCorreoEnviado(true);
   };
+
+  if (correoEnviado) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.icono}>🎸</Text>
+        <Text style={styles.titulo}>Crear cuenta</Text>
+        <Text style={styles.texto}>Revisa tu correo para confirmar la cuenta.</Text>
+        <TouchableOpacity onPress={onSwitchToLogin}>
+          <Text style={styles.link}>¿Ya tienes cuenta? Inicia sesión</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -52,29 +89,38 @@ export default function RegisterScreen({
       <Text style={styles.titulo}>Crear cuenta</Text>
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, errores.nombre && styles.inputConError]}
         placeholder="Nombre / Nombre del proyecto"
         placeholderTextColor={colores.muted}
         value={nombre}
-        onChangeText={setNombre}
+        onChangeText={(valor) => escribirEnCampo("nombre", valor)}
       />
+      {errores.nombre && (
+        <Text style={styles.textoError} accessibilityLabel={errores.nombre}>{errores.nombre}</Text>
+      )}
       <TextInput
-        style={styles.input}
+        style={[styles.input, errores.email && styles.inputConError]}
         placeholder="Correo electrónico"
         placeholderTextColor={colores.muted}
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(valor) => escribirEnCampo("email", valor)}
         autoCapitalize="none"
         keyboardType="email-address"
       />
+      {errores.email && (
+        <Text style={styles.textoError} accessibilityLabel={errores.email}>{errores.email}</Text>
+      )}
       <TextInput
-        style={styles.input}
+        style={[styles.input, errores.password && styles.inputConError]}
         placeholder="Contraseña (mín. 6 caracteres)"
         placeholderTextColor={colores.muted}
         value={password}
-        onChangeText={setPassword}
+        onChangeText={(valor) => escribirEnCampo("password", valor)}
         secureTextEntry
       />
+      {errores.password && (
+        <Text style={styles.textoError} accessibilityLabel={errores.password}>{errores.password}</Text>
+      )}
 
       <Text style={styles.label}>Soy...</Text>
       <View style={styles.roles}>
@@ -100,8 +146,18 @@ export default function RegisterScreen({
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.boton} onPress={handleRegister}>
-        <Text style={styles.textoBoton}>Crear cuenta</Text>
+      {errorGeneral && (
+        <View style={styles.bloqueError}>
+          <Text style={styles.textoBloqueError} accessibilityLabel={errorGeneral}>{errorGeneral}</Text>
+        </View>
+      )}
+
+      <TouchableOpacity
+        style={[styles.boton, creando && styles.botonDeshabilitado]}
+        onPress={handleRegister}
+        disabled={creando}
+      >
+        <Text style={styles.textoBoton}>{creando ? "Un momento…" : "Crear cuenta"}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={onSwitchToLogin}>
@@ -168,6 +224,27 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
     marginTop: spacing.sm,
   },
   textoBoton: { color: c.onAccent, fontWeight: "bold", fontSize: fontSize.md },
+  botonDeshabilitado: { opacity: 0.6 },
+  texto: {
+    color: c.primary,
+    fontSize: fontSize.md,
+    textAlign: "center",
+    marginBottom: spacing.md,
+  },
+  textoError: {
+    alignSelf: "flex-start",
+    color: c.danger,
+    fontSize: fontSize.sm,
+    marginBottom: spacing.sm,
+  },
+  inputConError: { borderColor: c.danger, borderWidth: 1.5 },
+  bloqueError: {
+    width: "100%",
+    backgroundColor: c.dangerBg,
+    borderRadius: borderRadius.sm,
+    padding: spacing.sm,
+  },
+  textoBloqueError: { color: c.dangerText, fontSize: fontSize.sm },
   link: {
     color: c.accent,
     marginTop: spacing.md,

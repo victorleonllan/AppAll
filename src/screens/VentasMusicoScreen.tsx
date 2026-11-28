@@ -4,6 +4,7 @@ import {
   StyleSheet, ScrollView, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { supabase } from '../lib/supabase';
+import { eventosDeLaCuenta } from '../lib/artistas';
 import { useAuth } from '../context/AuthContext';
 import { spacing, borderRadius, fontSize, Paleta } from '../theme';
 import { useEstilos } from '../hooks/useEstilos';
@@ -41,17 +42,11 @@ export default function VentasMusicoScreen() {
   const cargarVentas = async () => {
     if (!user) return;
     try {
-      // Traer eventos del músico
-      const { data: evData, error: evError } = await supabase
-        .from('events')
-        .select('*')
-        .eq('created_by', user.id)
-        .order('fecha', { ascending: false });
-
-      if (evError) throw evError;
+      // Spec 188 — los eventos que creó y los que toca como banda principal o adicional.
+      const evData = await eventosDeLaCuenta(user.id);
 
       // Traer tickets de esos eventos
-      const eventoIds = (evData || []).map((e: any) => e.id);
+      const eventoIds = evData.map((e: any) => e.id);
       let ticketsData: any[] = [];
       if (eventoIds.length > 0) {
         const { data: tData, error: tError } = await supabase
@@ -63,7 +58,7 @@ export default function VentasMusicoScreen() {
       }
 
       // Agrupar tickets por evento
-      const eventosConTickets: EventoConTickets[] = (evData || []).map((ev: any) => ({
+      const eventosConTickets: EventoConTickets[] = evData.map((ev: any) => ({
         id: ev.id,
         artist_name: ev.artist_name,
         venue_name: ev.venue_name,

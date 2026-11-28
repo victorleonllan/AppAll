@@ -1,29 +1,35 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { ArtistaBreve, buscarArtistas, crearArtista } from '../lib/artistas';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import { buscarBandas, crearFichaSuelta } from '../lib/artistas';
+import { bandaDeLaCuenta } from '../lib/cuentaEsBanda';
+import type { Banda } from '../types';
 import { spacing, borderRadius, fontSize, Paleta } from '../theme';
 import { useEstilos } from '../hooks/useEstilos';
 import { useTema } from '../context/TemaContext';
 
 /**
- * Spec 136 — equivalente de `ArtistaSelect.js` de la web. Busca y crea en la
- * tabla `artists` (no en `profiles`): `events.artist_id` apunta ahí desde el
- * spec 061, y mandar un id de `profiles` violaba la FK (23503).
+ * Spec 136 — equivalente de `ArtistaSelect.js` de la web.
+ *
+ * Spec 198 — entrega una `Banda`: una cuenta de músico (va a `events.musico_id`) o
+ * una ficha de `artists` (va a `events.artist_id`). Quien lo usa no debe mezclarlas:
+ * un id de `profiles` en `artist_id` viola la FK (23503).
  *
  * Los errores van en un `Text` rojo y no en `Alert.alert`: en el build web de
  * Expo `Alert.alert` no hace nada (`src/lib/confirm.ts`).
  */
 interface ArtistaSelectorProps {
   userId: string;
-  value: ArtistaBreve | null;
-  onChange: (a: ArtistaBreve | null) => void;
+  value: Banda | null;
+  onChange: (b: Banda | null) => void;
+  /** Solo si quien crea es músico: habilita «Soy yo» (su propia cuenta). */
+  yo?: { nombre: string; foto: string | null } | null;
 }
 
-export default function ArtistaSelector({ userId, value, onChange }: ArtistaSelectorProps) {
+export default function ArtistaSelector({ userId, value, onChange, yo }: ArtistaSelectorProps) {
   const styles = useEstilos(crearEstilos);
   const { colores } = useTema();
   const [texto, setTexto] = useState('');
-  const [resultados, setResultados] = useState<ArtistaBreve[]>([]);
+  const [resultados, setResultados] = useState<Banda[]>([]);
   const [mostrarContacto, setMostrarContacto] = useState(false);
   const [contacto, setContacto] = useState('');
   const [instagram, setInstagram] = useState('');
@@ -39,7 +45,7 @@ export default function ArtistaSelector({ userId, value, onChange }: ArtistaSele
     let cancelado = false;
     const timeout = setTimeout(async () => {
       try {
-        const encontrados = await buscarArtistas(texto);
+        const encontrados = await buscarBandas(texto);
         if (!cancelado) {
           setResultados(encontrados);
           setError(null);
@@ -58,8 +64,8 @@ export default function ArtistaSelector({ userId, value, onChange }: ArtistaSele
   const hayExacto = resultados.some((a) => a.nombre.toLowerCase() === limpio.toLowerCase());
   const puedeCrear = limpio.length >= 2 && !hayExacto;
 
-  const elegir = (artista: ArtistaBreve) => {
-    onChange(artista);
+  const elegir = (banda: Banda) => {
+    onChange(banda);
     setResultados([]);
     setError(null);
   };
@@ -68,7 +74,7 @@ export default function ArtistaSelector({ userId, value, onChange }: ArtistaSele
     setCreando(true);
     setError(null);
     try {
-      const nuevo = await crearArtista({ nombre: limpio, contacto, instagram, creadoPor: userId });
+      const nuevo = await crearFichaSuelta({ nombre: limpio, contacto, instagram, creadoPor: userId });
       setMostrarContacto(false);
       setContacto('');
       setInstagram('');
@@ -88,7 +94,10 @@ export default function ArtistaSelector({ userId, value, onChange }: ArtistaSele
   if (value) {
     return (
       <View style={styles.elegido}>
-        <Text style={styles.elegidoTexto}>🎤 {value.nombre}</Text>
+        <View style={styles.elegidoBanda}>
+          <Text style={styles.elegidoTexto}>🎤 {value.nombre}</Text>
+          {value.tipo === 'cuenta' && <Text style={styles.enSonopolis}>En Sonópolis</Text>}
+        </View>
         <TouchableOpacity onPress={handleCambiar}>
           <Text style={styles.enlace}>Cambiar</Text>
         </TouchableOpacity>
@@ -105,11 +114,38 @@ export default function ArtistaSelector({ userId, value, onChange }: ArtistaSele
         placeholder="Buscar o escribir el artista..."
         placeholderTextColor={colores.muted}
       />
+      {/* «Soy yo» es la propia cuenta: no se busca ni se crea nada. */}
+      {yo && (
+        <TouchableOpacity
+          style={[styles.soyYo, !yo.nombre && styles.soyYoOff]}
+          onPress={() => elegir(bandaDeLaCuenta({ id: userId, nombre: yo.nombre, foto: yo.foto }))}
+          disabled={!yo.nombre}
+        >
+          <Text style={styles.soyYoTexto}>
+            {yo.nombre ? `Soy yo: ${yo.nombre}` : 'Soy yo (pon el nombre de tu banda en tu perfil)'}
+          </Text>
+        </TouchableOpacity>
+      )}
       {(resultados.length > 0 || puedeCrear) && (
         <View style={styles.lista}>
-          {resultados.map((a) => (
-            <TouchableOpacity key={a.id} style={styles.item} onPress={() => elegir(a)}>
-              <Text style={styles.itemTexto}>🎤 {a.nombre}</Text>
+          {resultados.map((b) => (
+            <TouchableOpacity
+              key={`${b.tipo}:${b.id}`}
+              style={[styles.item, styles.itemBanda]}
+              onPress={() => elegir(b)}
+            >
+              {b.tipo === 'cuenta' &&
+                (b.foto ? (
+                  <Image source={{ uri: b.foto }} style={styles.foto} />
+                ) : (
+                  <View style={[styles.foto, styles.sinFoto]}>
+                    <Text style={styles.inicial}>{b.nombre.charAt(0).toUpperCase()}</Text>
+                  </View>
+                ))}
+              <Text style={[styles.itemTexto, styles.itemNombre]}>{b.nombre}</Text>
+              <Text style={b.tipo === 'cuenta' ? styles.enSonopolis : styles.sinCuenta}>
+                {b.tipo === 'cuenta' ? 'En Sonópolis' : 'Sin cuenta'}
+              </Text>
             </TouchableOpacity>
           ))}
           {puedeCrear && (
@@ -184,6 +220,22 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
     borderBottomColor: c.border,
   },
   itemNuevo: { backgroundColor: c.accentLight },
+  itemBanda: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  itemNombre: { flex: 1 },
+  foto: { width: 24, height: 24, borderRadius: 12 },
+  sinFoto: { backgroundColor: c.border, alignItems: 'center', justifyContent: 'center' },
+  inicial: { fontSize: fontSize.xs, color: c.secondary, fontWeight: '600' },
+  enSonopolis: { fontSize: fontSize.xs, color: c.success, fontWeight: '600' },
+  sinCuenta: { fontSize: fontSize.xs, color: c.muted },
+  soyYo: {
+    padding: 12,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: c.border,
+    marginTop: spacing.xs,
+  },
+  soyYoOff: { opacity: 0.5 },
+  soyYoTexto: { fontSize: fontSize.sm, color: c.primary, fontWeight: '600' },
   itemTexto: { fontSize: fontSize.md, color: c.primary, fontWeight: '500' },
   elegido: {
     flexDirection: 'row',
@@ -194,6 +246,7 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
     borderWidth: 1,
     borderColor: c.border,
   },
+  elegidoBanda: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexShrink: 1 },
   elegidoTexto: { fontSize: fontSize.md, color: c.primary, fontWeight: '600', flexShrink: 1 },
   enlace: { fontSize: fontSize.sm, color: c.accent, fontWeight: '600', marginTop: spacing.xs },
   error: { fontSize: fontSize.sm, color: c.danger, marginTop: spacing.xs },

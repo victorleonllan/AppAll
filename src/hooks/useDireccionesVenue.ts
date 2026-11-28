@@ -17,6 +17,9 @@ export interface DatosDireccion {
   address: string;
   comuna?: string | null;
   ciudad?: string | null;
+  // Spec 191 — el pin va completo o no va.
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export const MAXIMO_DIRECCIONES = 3;
@@ -57,11 +60,16 @@ export async function getDireccionesVenue(venueId: string): Promise<DireccionVen
  * Spec 133 — la primera dirección nace activa sola; desde la segunda, activar
  * es un paso aparte (igual que la web, venueAddresses.js:17-22). El tope de 3
  * lo pone el trigger venue_addresses_limite y su mensaje se relanza tal cual.
- * No manda lat/lng: los llena la geocodificación aparte (W-027).
+ * Spec 191 — manda lat/lng solo si vienen los dos: la primera dirección nace activa
+ * y el trigger de sync copia sus coordenadas a venues, así que una fila sin pin
+ * borraría el que se acaba de guardar en el local.
  */
 export async function crearDireccion(venueId: string, datos: DatosDireccion): Promise<DireccionVenue> {
   const address = datos.address.trim();
   if (!address) throw new Error('Escribe la dirección.');
+
+  const pin =
+    datos.lat != null && datos.lng != null ? { lat: datos.lat, lng: datos.lng } : {};
 
   const existentes = await getDireccionesVenue(venueId);
   const { data, error } = await supabase
@@ -71,6 +79,7 @@ export async function crearDireccion(venueId: string, datos: DatosDireccion): Pr
       address,
       comuna: datos.comuna ?? null,
       ciudad: datos.ciudad ?? null,
+      ...pin,
       activa: existentes.length === 0,
     })
     .select()

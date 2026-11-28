@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, ReactNode, use
 import { supabase } from '../lib/supabase';
 import { Venue } from '../types';
 import { usePais } from './PaisContext';
+import type { Punto } from '../lib/ubicacion';
 
 interface VenuesState {
   // Spec 096 — `allVenues` son todos los países ("mi local" y el resto de las
@@ -14,6 +15,7 @@ interface VenuesState {
   refresh: () => Promise<void>;
   createVenue: (venue: Omit<Venue, 'id'> & { ownerId: string }) => Promise<Venue>;
   updateVenue: (id: string, updates: Partial<Omit<Venue, 'id'>>) => Promise<Venue>;
+  guardarUbicacionLocal: (venueId: string, punto: Punto) => Promise<Venue>;
 }
 
 const VenuesContext = createContext<VenuesState>({} as VenuesState);
@@ -154,8 +156,52 @@ export function VenuesProvider({ children }: { children: ReactNode }) {
     return updated;
   }, []);
 
+  // Spec 191 — guarda el pin en el local y lo copia a su dirección activa. Sin esa
+  // copia, el trigger venue_addresses_sync_activa (W-062) vuelve a pisar el pin con
+  // las coordenadas de la fila la próxima vez que la fila cambie.
+  const guardarUbicacionLocal = useCallback(async (venueId: string, punto: Punto): Promise<Venue> => {
+    const { lat, lng } = punto;
+    const { data, error } = await supabase
+      .from('venues')
+      .update({ lat, lng, updated_at: new Date().toISOString() })
+      .eq('id', venueId)
+      .select()
+      .single();
+    if (error) {
+      // PGRST116: RLS filtró la fila (venues_update exige ser el dueño).
+      if (error.code === 'PGRST116') {
+        throw new Error('Solo el dueño del local puede mover su ubicación');
+      }
+      throw error;
+    }
+    const updated = mapVenueFromDB(data);
+    setAllVenues((prev) => prev.map((v) => (v.id === venueId ? updated : v)));
+
+    // No se lanza: el pin ya quedó en `venues`.
+    const { error: errorDireccion } = await supabase
+      .from('venue_addresses')
+      .update({ lat, lng })
+      .eq('venue_id', venueId)
+      .eq('activa', true);
+    if (errorDireccion) {
+      console.warn('[VenuesContext] pin sin copiar a la dirección activa', errorDireccion);
+    }
+    return updated;
+  }, []);
+
   return (
-    <VenuesContext.Provider value={{ allVenues, venuesDelPais, loading, error, refresh, createVenue, updateVenue }}>
+    <VenuesContext.Provider
+      value={{
+        allVenues,
+        venuesDelPais,
+        loading,
+        error,
+        refresh,
+        createVenue,
+        updateVenue,
+        guardarUbicacionLocal,
+      }}
+    >
       {children}
     </VenuesContext.Provider>
   );

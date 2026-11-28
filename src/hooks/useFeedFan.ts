@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { mapEventoFromDB } from '../context/EventosContext';
+import { musicoAutorDelEvento } from '../lib/cuentaEsBanda';
 import { ItemFeed, PerfilMusico, VenueSeguido } from '../types';
 
 interface FeedFanState {
@@ -18,10 +19,10 @@ interface FeedFanState {
  * que la web (que trae todos los eventos y filtra en memoria), consulta solo
  * los eventos de quien sigo: no hay servidor que cargue la cartelera entera.
  *
- * El autor sale como en `cuentasDelEvento` de la web: primero la cuenta que
- * reclamó el registro de banda (`artists.profile_id`), después `created_by`,
- * al final el local. Nunca `events.artist_id` contra el id del músico: desde
- * el spec 061 apunta a `artists`, no a `profiles` (bug del W-195).
+ * Spec 188 (W-348) — un músico está en un evento como banda principal
+ * (`events.musico_id`), como banda adicional (`event_artists.musico_id`) o como
+ * creador, y el autor sale en ese orden; al final el local. `events.artist_id` no
+ * se mira: es una ficha de banda sin cuenta y nadie la sigue.
  */
 export function useFeedFan(musicos: PerfilMusico[], venues: VenueSeguido[]): FeedFanState {
   // Los ids unidos y no los arreglos: un arreglo nuevo en cada render volvería
@@ -44,21 +45,26 @@ export function useFeedFan(musicos: PerfilMusico[], venues: VenueSeguido[]): Fee
     setLoading(true);
     setError(null);
     try {
-      const perfilPorArtista = new Map<string, string>();
+      // Solo las cuentas seguidas: eventId → músicos adicionales, en su orden.
+      const adicionales = new Map<string, string[]>();
       if (idsMusicos.length > 0) {
         const { data, error: err } = await supabase
-          .from('artists')
-          .select('id, profile_id')
-          .in('profile_id', idsMusicos);
+          .from('event_artists')
+          .select('event_id, musico_id')
+          .in('musico_id', idsMusicos)
+          .order('orden', { ascending: true });
         if (err) throw err;
-        for (const a of (data ?? []) as any[]) perfilPorArtista.set(a.id, a.profile_id);
+        for (const fila of (data ?? []) as any[]) {
+          adicionales.set(fila.event_id, [...(adicionales.get(fila.event_id) ?? []), fila.musico_id]);
+        }
       }
 
-      const artistIds = [...perfilPorArtista.keys()];
+      const eventIds = [...adicionales.keys()];
       const clausulas = [
-        artistIds.length > 0 ? `artist_id.in.(${artistIds.join(',')})` : null,
+        idsMusicos.length > 0 ? `musico_id.in.(${idsMusicos.join(',')})` : null,
         idsMusicos.length > 0 ? `created_by.in.(${idsMusicos.join(',')})` : null,
         idsVenues.length > 0 ? `venue_id.in.(${idsVenues.join(',')})` : null,
+        eventIds.length > 0 ? `id.in.(${eventIds.join(',')})` : null,
       ].filter((c): c is string => c !== null);
 
       const { data, error: err } = await supabase
@@ -72,13 +78,13 @@ export function useFeedFan(musicos: PerfilMusico[], venues: VenueSeguido[]): Fee
 
       const musicoPorId = new Map(musicos.map((m) => [m.id, m]));
       const venuePorId = new Map(venues.map((v) => [v.id, v]));
+      const seguidos = new Set(musicoPorId.keys());
       const items: ItemFeed[] = [];
       for (const evento of (data ?? []).map(mapEventoFromDB)) {
         // Con músico y local seguidos en el mismo evento gana el músico:
         // «publicó» se lee más personal que «programó» (criterio de la web).
-        const reclamado = evento.artistId ? perfilPorArtista.get(evento.artistId) : undefined;
-        const musico =
-          (reclamado ? musicoPorId.get(reclamado) : undefined) ?? musicoPorId.get(evento.createdBy);
+        const autorId = musicoAutorDelEvento(evento, adicionales.get(evento.id) ?? [], seguidos);
+        const musico = autorId ? musicoPorId.get(autorId) : undefined;
         if (musico) {
           items.push({ evento, autor: { tipo: 'musico', id: musico.id, nombre: musico.nombre } });
           continue;

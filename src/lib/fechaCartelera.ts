@@ -30,9 +30,8 @@ export function formatearDiaLargo(iso: string): string {
 }
 
 /** [inicio, fin) en hora local, o null para "todos". Copia de `Cartelera.js:77`:
- * "hoy" depende de quién mira la pantalla. */
-export function rangoFecha(filtro: FiltroFecha): [Date, Date] | null {
-  const ahora = new Date();
+ * "hoy" depende de quién mira la pantalla. `ahora` se puede fijar (spec 196). */
+export function rangoFecha(filtro: FiltroFecha, ahora: Date = new Date()): [Date, Date] | null {
   const inicioHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
 
   if (filtro === 'hoy') {

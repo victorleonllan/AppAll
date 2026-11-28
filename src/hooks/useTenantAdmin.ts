@@ -3,7 +3,8 @@ import { supabase } from '../lib/supabase';
 import { llamarApiWeb } from '../lib/apiWeb';
 import { esPro, esProSinVencimiento } from '../lib/pro';
 import type { TipoTenant } from '../lib/adminPro';
-import { cargarEventosYReglas, esEventoActivo, tenantDeEvento, type EventoDeTenant } from './useAdminCrm';
+import { tenantsDeEvento } from '../lib/cuentaEsBanda';
+import { cargarEventosYReglas, esEventoActivo, type EventoDeTenant } from './useAdminCrm';
 import type { ContactoCrm } from './useContactosCrm';
 import type { EstadoCorreo } from './useCorreoCrm';
 
@@ -86,10 +87,9 @@ async function cargarPrincipal(tipo: TipoTenant, id: string, filaTenant: Promise
       sinVencimiento: esProSinVencimiento(conPro),
     },
     contactos: ((contactos.data ?? []) as any[]).map(mapContactoCrmFromDB),
-    eventosActivos: eventos.filter((e) => {
-      const t = tenantDeEvento(e, reglas);
-      return t?.type === tipo && t.id === id && esEventoActivo(e, ahora);
-    }),
+    eventosActivos: eventos.filter(
+      (e) => tenantsDeEvento(e, reglas).some((t) => t.type === tipo && t.id === id) && esEventoActivo(e, ahora)
+    ),
   };
 }
 

@@ -14,6 +14,8 @@ import type { TipoTenant } from '../hooks/useTenantCrm';
 import { MAX_COMENTARIO, type EntradaMuro } from '../lib/muro';
 import { confirmar } from '../lib/confirm';
 import { formatearFechaEs, separarFechaHora } from '../lib/fecha';
+import { cuandoCorto, lineaEvento, quitarEventoDelMuro } from '../lib/perfil';
+import type { Evento } from '../types';
 import { spacing, borderRadius, fontSize, Paleta } from '../theme';
 import { useEstilos } from '../hooks/useEstilos';
 import { useTema } from '../context/TemaContext';
@@ -23,6 +25,9 @@ interface Props {
   id: string;
   nombreTenant: string;
   puedeModerar: boolean;
+  /** Spec 202 — el próximo evento en cartelera, destacado arriba del muro. */
+  destacado?: Evento | null;
+  onVerEvento?: (eventoId: string) => void;
 }
 
 /** Comentarios que se ven sin desplegar: los más recientes. */
@@ -37,20 +42,23 @@ function fechaCorta(iso: string): string {
   return fechaISO ? formatearFechaEs(fechaISO) : '';
 }
 
-export default function Muro({ tipo, id, nombreTenant, puedeModerar }: Props) {
+export default function Muro({ tipo, id, nombreTenant, puedeModerar, destacado, onVerEvento }: Props) {
   const styles = useEstilos(crearEstilos);
   const { colores } = useTema();
   const { user } = useAuth();
   const muro = useMuro(tipo, id);
+  // Un evento de hoy que ya empezó vuelve como pasado: no se dibuja dos veces.
+  const entradas =
+    muro.entradas && destacado ? quitarEventoDelMuro(muro.entradas, destacado.id) : muro.entradas;
 
   let contenido: ReactNode;
-  if (muro.entradas === null) {
+  if (entradas === null) {
     contenido = muro.cargando ? (
       <ActivityIndicator color={colores.accent} />
     ) : (
       <Text style={styles.error}>No pudimos cargar el muro. Vuelve a intentarlo en un momento.</Text>
     );
-  } else if (muro.entradas.length === 0) {
+  } else if (entradas.length === 0) {
     contenido = (
       <Text style={styles.vacio}>
         {nombreTenant} todavía no tiene publicaciones. Cuando le escriba a su público o pase un evento con
@@ -58,7 +66,7 @@ export default function Muro({ tipo, id, nombreTenant, puedeModerar }: Props) {
       </Text>
     );
   } else {
-    contenido = muro.entradas.map((entrada) => (
+    contenido = entradas.map((entrada) => (
       <TarjetaEntrada
         key={entrada.clave}
         entrada={entrada}
@@ -75,7 +83,47 @@ export default function Muro({ tipo, id, nombreTenant, puedeModerar }: Props) {
   return (
     <View>
       <Text style={styles.seccion}>Muro</Text>
+      {destacado && <TarjetaDestacada evento={destacado} tipo={tipo} onVerEvento={onVerEvento} />}
       {contenido}
+    </View>
+  );
+}
+
+interface DestacadaProps {
+  evento: Evento;
+  tipo: TipoTenant;
+  onVerEvento?: (eventoId: string) => void;
+}
+
+/** Spec 202 (W-309) — el evento en cartelera. Sin comentarios: `muro_comentar` solo
+ * acepta eventos pasados (spec 185). */
+function TarjetaDestacada({ evento, tipo, onVerEvento }: DestacadaProps) {
+  const styles = useEstilos(crearEstilos);
+  const linea = lineaEvento(evento);
+
+  return (
+    <View style={styles.destacada}>
+      <Text style={styles.sello}>
+        {evento.comienzaAt
+          ? `● En cartelera · ${cuandoCorto(evento.comienzaAt, new Date())}`
+          : '● En cartelera'}
+      </Text>
+      <Text style={styles.tituloEntrada}>{evento.artista}</Text>
+      {tipo === 'musician' && !!evento.venueName && <Text style={styles.cuerpo}>{evento.venueName}</Text>}
+      {!!linea && <Text style={styles.lineaDestacada}>{linea}</Text>}
+      {!!evento.imagen && (
+        <Image
+          source={{ uri: evento.imagen }}
+          style={[styles.flyer, styles.flyerDestacado]}
+          resizeMode="cover"
+          accessibilityLabel={`Flyer de ${evento.artista}`}
+        />
+      )}
+      {onVerEvento && (
+        <TouchableOpacity style={[styles.boton, styles.botonVerEvento]} onPress={() => onVerEvento(evento.id)}>
+          <Text style={styles.botonTexto}>Ver evento</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -251,6 +299,18 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
     padding: spacing.md,
     marginBottom: spacing.md,
   },
+  destacada: {
+    backgroundColor: c.highlightBg,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: c.highlightBorder,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  sello: { fontSize: fontSize.sm, fontWeight: 'bold', color: c.highlightText, marginBottom: spacing.xs },
+  lineaDestacada: { fontSize: fontSize.sm, color: c.secondary, marginTop: spacing.xs },
+  flyerDestacado: { marginTop: spacing.sm, marginBottom: 0 },
+  botonVerEvento: { alignSelf: 'flex-start', marginTop: spacing.sm },
   cabecera: { fontSize: fontSize.sm, color: c.secondary, marginBottom: spacing.xs },
   negrita: { fontWeight: 'bold', color: c.primary },
   tituloEntrada: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary, marginBottom: spacing.xs },

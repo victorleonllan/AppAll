@@ -4,6 +4,8 @@ import * as WebBrowser from 'expo-web-browser';
 import { supabase } from '../lib/supabase';
 import { createClient, Session, User } from '@supabase/supabase-js';
 import { URL_WEB } from '../constants/web';
+import { mensajeDeErrorAuth, MENSAJE_CUENTA_EXISTENTE } from '../lib/contrasena';
+import { campoDeErrorAuth, CampoAuth } from '../lib/validacionAuth';
 
 export type UserRole = 'fan' | 'musician' | 'local' | null;
 
@@ -17,13 +19,21 @@ export function normalizarRol(valor: unknown): UserRole {
   return null;
 }
 
+export interface ErrorAuth { mensaje: string; campo: CampoAuth }
+
 interface AuthState {
   session: Session | null;
   user: User | null;
   role: UserRole;
   loading: boolean;
+  /** @deprecated Spec 194 — usar entrar / crearCuenta; sin llamadores desde el spec 203. */
   signUp: (email: string, password: string, role: UserRole, nombre: string) => Promise<string | null>;
+  /** @deprecated Spec 194 — usar entrar / crearCuenta; sin llamadores desde el spec 203. */
   signIn: (email: string, password: string) => Promise<string | null>;
+  entrar: (email: string, password: string) => Promise<ErrorAuth | null>;
+  crearCuenta: (
+    email: string, password: string, role: UserRole, nombre: string
+  ) => Promise<{ error: ErrorAuth | null; sesion: boolean }>;
   signInOtp: (email: string) => Promise<string | null>;
   pedirEnlaceRecuperacion: (email: string) => Promise<string | null>;
   signInWithGoogle: () => Promise<string | null>;
@@ -69,6 +79,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string): Promise<string | null> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return error ? error.message : null;
+  };
+
+  // Spec 194 — como signIn / signUp, pero el error vuelve en español y con su campo.
+  const aErrorAuth = (error: { code?: string; message?: string }, password: string): ErrorAuth => ({
+    mensaje: mensajeDeErrorAuth(error, password),
+    campo: campoDeErrorAuth(error),
+  });
+
+  const entrar = async (email: string, password: string): Promise<ErrorAuth | null> => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return error ? aErrorAuth(error, password) : null;
+  };
+
+  const crearCuenta = async (
+    email: string, password: string, role: UserRole, nombre: string
+  ): Promise<{ error: ErrorAuth | null; sesion: boolean }> => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { role, nombre },
+      },
+    });
+    if (error) return { error: aErrorAuth(error, password), sesion: false };
+    // W-227: con confirmación de correo activa, un correo que ya tiene cuenta no da
+    // error ni manda nada; solo llega sin identidades.
+    if (data.user?.identities && data.user.identities.length === 0) {
+      return { error: { mensaje: MENSAJE_CUENTA_EXISTENTE, campo: null }, sesion: false };
+    }
+    return { error: null, sesion: Boolean(data.session) };
   };
 
   const signInOtp = async (email: string): Promise<string | null> => {
@@ -164,7 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, user, role, loading, signUp, signIn, signInOtp, pedirEnlaceRecuperacion, signInWithGoogle, signOut }}
+      value={{ session, user, role, loading, signUp, signIn, entrar, crearCuenta, signInOtp, pedirEnlaceRecuperacion, signInWithGoogle, signOut }}
     >
       {children}
     </AuthContext.Provider>

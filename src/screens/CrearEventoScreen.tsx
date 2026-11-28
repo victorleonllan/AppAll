@@ -1,15 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ScrollView, Alert, ActivityIndicator, Switch,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { BorradorPreventa, TipoPrecio, Venue, VenueType } from '../types';
+import { Banda, BorradorPreventa, TipoPrecio, Venue, VenueType } from '../types';
 import { BorradorEspecial, crearEspecialesDeBorrador } from '../lib/especiales';
 import { VENUE_LABEL, venueEmoji, venueLabel } from '../lib/venues';
-import { ArtistaBreve } from '../lib/artistas';
+import { mismaBanda, tituloDelLineup } from '../lib/lineup';
+import { agregarBandasAdicionales } from '../hooks/useBandasDelEvento';
+import { enviarInvitacionSonopolis, mensajeErrorInvitacion } from '../lib/invitacionesSonopolis';
+import { invitarDuenoLocalDelEvento } from '../lib/invitacionLocal';
+import { usePerfilMusico } from '../hooks/useMusicos';
 import { armarFechaHora, fechaHoraValidas } from '../lib/fecha';
 import { montoDesdePrecio } from '../lib/precio';
+import { Punto, puntoDeVenue } from '../lib/ubicacion';
 import { DatosPago, datosPagoCompletos, guardarDatosPago } from '../lib/datosPago';
 import { crearPreventasDeBorrador } from '../hooks/usePreventas';
 import { crearDireccion } from '../hooks/useDireccionesVenue';
@@ -23,6 +28,7 @@ import PreventasEvento from '../components/PreventasEvento';
 import TicketsEspecialesEvento from '../components/TicketsEspecialesEvento';
 import DatosPagoEvento, { DATOS_PAGO_VACIOS } from '../components/DatosPagoEvento';
 import CampoImagen from '../components/CampoImagen';
+import UbicacionLocal from '../components/UbicacionLocal';
 import { CampoFecha, CampoHora } from '../components/CampoFecha';
 import { PAIS_POR_DEFECTO, etiquetaPais } from '../constants/paises';
 import { spacing, borderRadius, fontSize, Paleta } from '../theme';
@@ -31,6 +37,8 @@ import { useTema } from '../context/TemaContext';
 
 const TIPOS_VENUE = Object.keys(VENUE_LABEL) as VenueType[];
 const MAX_DESCRIPCION = 900;
+const FALTA_UBICACION = 'Confirma la ubicación del local para crear el evento';
+const claveBanda = (b: Banda) => `${b.tipo}:${b.id}`;
 
 /**
  * Spec 136 — pide lo mismo que `FormEvento.js` de la web, en el mismo orden de
@@ -46,10 +54,19 @@ export default function CrearEventoScreen() {
   const { colores } = useTema();
   const navigation = useNavigation();
   const { user, role } = useAuth();
-  const { allVenues, createVenue } = useVenues();
+  const { allVenues, createVenue, guardarUbicacionLocal } = useVenues();
   const { createEvento } = useEventos();
 
-  const [artista, setArtista] = useState<ArtistaBreve | null>(null);
+  const [artista, setArtista] = useState<Banda | null>(null);
+  const [otrasBandas, setOtrasBandas] = useState<Banda[]>([]);
+  // `key` del segundo selector: cambiarla lo vacía tras cada banda agregada.
+  const [selectorOtra, setSelectorOtra] = useState(0);
+  // Spec 199 — correos para invitar al publicar: bandas sin cuenta (por `tipo:id`) y local nuevo.
+  const [correosBandas, setCorreosBandas] = useState<Record<string, string>>({});
+  const [correoLocal, setCorreoLocal] = useState('');
+  // Spec 198 — «Soy yo» (W-338): un músico puede ser la principal o una adicional.
+  const { musico: miPerfil } = usePerfilMusico(role === 'musician' && user ? user.id : null);
+  const yo = role === 'musician' ? { nombre: miPerfil?.nombre ?? '', foto: miPerfil?.foto ?? null } : null;
 
   const [venueQuery, setVenueQuery] = useState('');
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
@@ -69,6 +86,12 @@ export default function CrearEventoScreen() {
   // crear un segundo local ni una segunda dirección.
   const [localCreado, setLocalCreado] = useState<Venue | null>(null);
   const [direccionCreada, setDireccionCreada] = useState(false);
+  // Spec 200 — pin del local nuevo. `ubicacionResuelta` sin pin es «Continuar sin
+  // ubicación», solo donde no hay mapa.
+  const [ubicacion, setUbicacion] = useState<Punto | null>(null);
+  const [ubicacionResuelta, setUbicacionResuelta] = useState(false);
+  const [buscarUbicacionAl, setBuscarUbicacionAl] = useState(0);
+  const direccionRef = useRef<TextInput>(null);
 
   const [fecha, setFecha] = useState('');
   const [hora, setHora] = useState('');
@@ -115,6 +138,30 @@ export default function CrearEventoScreen() {
     }
   }, [role, user, allVenues, selectedVenue]);
 
+  const agregarOtraBanda = (banda: Banda | null) => {
+    if (!banda) return;
+    // Actualizador funcional: «Crear … como artista nuevo» llega después de un await.
+    if (!mismaBanda(banda, artista)) {
+      setOtrasBandas((lista) => (lista.some((b) => mismaBanda(b, banda)) ? lista : [...lista, banda]));
+    }
+    setSelectorOtra((n) => n + 1);
+  };
+
+  // Spec 199 — solo una ficha suelta pide correo: una cuenta ya está en Sonópolis (W-349).
+  const campoCorreoBanda = (b: Banda) => (
+    <TextInput
+      style={[styles.input, styles.inputCorreo]}
+      value={correosBandas[claveBanda(b)] ?? ''}
+      onChangeText={(t) => setCorreosBandas((m) => ({ ...m, [claveBanda(b)]: t }))}
+      placeholder={`Correo de ${b.nombre} para invitarla (opcional)`}
+      accessibilityLabel={`Correo de ${b.nombre} para invitarla`}
+      placeholderTextColor={colores.muted}
+      keyboardType="email-address"
+      autoCapitalize="none"
+      autoCorrect={false}
+    />
+  );
+
   const handleSelectVenue = (venue: Venue) => {
     setSelectedVenue(venue);
     setVenueQuery(venue.name);
@@ -131,6 +178,13 @@ export default function CrearEventoScreen() {
     setCreandoLocal(false);
     setLocalCreado(null);
     setDireccionCreada(false);
+    olvidarUbicacion();
+  };
+
+  // Spec 200 — cambiar dirección, comuna o país borra la confirmación del pin.
+  const olvidarUbicacion = () => {
+    setUbicacion(null);
+    setUbicacionResuelta(false);
   };
 
   const localNuevoCompleto = creandoLocal && nuevoNombre.trim() !== '' && nuevaDireccion.trim() !== '';
@@ -138,6 +192,7 @@ export default function CrearEventoScreen() {
   const validar = (): string | null => {
     if (!artista) return 'Elige un artista o crea uno nuevo';
     if (!selectedVenue && !localNuevoCompleto) return 'Elige un local o crea uno nuevo';
+    if (!selectedVenue && !ubicacionResuelta) return FALTA_UBICACION;
     if (!fechaHoraValidas(fecha.trim(), hora.trim())) {
       return 'La fecha va como AAAA-MM-DD y la hora como HH:MM';
     }
@@ -176,19 +231,27 @@ export default function CrearEventoScreen() {
             telefono: nuevoTelefono.trim() || undefined,
             instagram: nuevoInstagram.trim() || undefined,
             ownerId: user.id,
+            ...(ubicacion ? { lat: ubicacion.lat, lng: ubicacion.lng } : {}),
           });
           setLocalCreado(venue);
         }
         if (!direccionCreada) {
-          await crearDireccion(venue.id, { address: nuevaDireccion, comuna: nuevaComuna.trim() || null });
+          await crearDireccion(venue.id, {
+            address: nuevaDireccion,
+            comuna: nuevaComuna.trim() || null,
+            lat: ubicacion?.lat,
+            lng: ubicacion?.lng,
+          });
           setDireccionCreada(true);
         }
       }
 
       const { fecha: fechaTexto, hora: horaTexto, comienzaAt } = armarFechaHora(fecha.trim(), hora.trim());
+      const titulo = tituloDelLineup([artista.nombre, ...otrasBandas.map((b) => b.nombre)]);
       const creado = await createEvento({
-        artista: artista.nombre,
-        artistId: artista.id,
+        artista: titulo,
+        // Una cuenta va a `musico_id` y una ficha a `artist_id`, nunca los dos.
+        ...(artista.tipo === 'cuenta' ? { musicoId: artista.id } : { artistId: artista.id }),
         venueId: venue.id,
         venueName: venue.name,
         pais: venue.pais,
@@ -215,6 +278,12 @@ export default function CrearEventoScreen() {
       } catch (err: any) {
         fallos.push(`El evento se publicó, pero no se guardaron los datos bancarios: ${err?.message ?? 'error desconocido'}. Complétalo desde Editar.`);
       }
+      // Spec 198 — después de crear: `event_artists` exige `can_edit_event`.
+      try {
+        await agregarBandasAdicionales(creado.id, artista, otrasBandas);
+      } catch (err: any) {
+        fallos.push(`El evento se publicó, pero no se guardaron las otras bandas: ${err?.message ?? 'error desconocido'}.`);
+      }
       if (preventaOn && preventas.length > 0) {
         try {
           await crearPreventasDeBorrador(creado.id, preventas);
@@ -231,13 +300,43 @@ export default function CrearEventoScreen() {
           fallos.push(`El evento se publicó, pero no se guardaron los packs del ticket especial: ${err?.message ?? 'error desconocido'}. Complétalo desde Editar.`);
         }
       }
+      // Spec 199 — invitaciones con el evento ya creado (W-338 §4). Cada una resuelve
+      // a `null` o al texto de su fallo: ninguna rechaza.
+      const invitaciones: Promise<string | null>[] = [];
+      const invitar = (nombre: string, envio: Promise<{ emailError?: string }>) =>
+        invitaciones.push(
+          envio.then(
+            (r) => (r.emailError ? `${nombre}: ${r.emailError}` : null),
+            (err) => `${nombre}: ${mensajeErrorInvitacion(err)}`
+          )
+        );
+      // Por clave: la principal puede estar repetida en «Otras bandas».
+      const bandas = new Map([artista, ...otrasBandas].map((b) => [claveBanda(b), b]));
+      bandas.forEach((b, clave) => {
+        const email = correosBandas[clave]?.trim();
+        if (b.tipo === 'ficha' && email) {
+          invitar(b.nombre, enviarInvitacionSonopolis({ email, artistId: b.id, eventId: creado.id }));
+        }
+      });
+      // Solo el local creado en este formulario.
+      if (!selectedVenue && correoLocal.trim()) {
+        invitar(venue.name, invitarDuenoLocalDelEvento({ email: correoLocal.trim(), venueId: venue.id }));
+      }
+      const noSalieron = (await Promise.all(invitaciones)).filter((f): f is string => f !== null);
+      if (noSalieron.length > 0) {
+        fallos.push(`Evento creado, pero no salió alguna invitación — ${noSalieron.join(' · ')}`);
+      }
+      const lineaInvitaciones =
+        noSalieron.length === 0 && invitaciones.length > 0
+          ? `\n${invitaciones.length === 1 ? 'Invitación enviada' : 'Invitaciones enviadas'}`
+          : '';
       if (fallos.length > 0) setError(fallos.join('\n'));
 
       // Spec 039 — un evento recién publicado tiene 0 entradas, y eso es justo
       // lo que hay que mostrar: le dice al organizador dónde está el dashboard.
       Alert.alert(
         'Evento publicado',
-        `"${artista.nombre}" en ${venue.name} el ${fechaTexto}`,
+        `"${titulo}" en ${venue.name} el ${fechaTexto}${lineaInvitaciones}`,
         [
           { text: 'Editar evento', onPress: () =>
               (navigation as any).navigate('EditarEvento', { eventoId: creado.id }) },
@@ -261,9 +360,41 @@ export default function CrearEventoScreen() {
         <Text style={styles.titulo}>Nuevo Evento</Text>
 
         <Text style={styles.label}>Artista *</Text>
-        {user && <ArtistaSelector userId={user.id} value={artista} onChange={setArtista} />}
+        {user && <ArtistaSelector userId={user.id} value={artista} onChange={setArtista} yo={yo} />}
+        {artista?.tipo === 'ficha' && campoCorreoBanda(artista)}
         <Text style={styles.ayuda}>
-          Si el artista tiene cuenta en Sonópolis y ya reclamó su perfil, entra al equipo del evento
+          Si la banda está en Sonópolis, elígela de la lista: entra al equipo del evento.
+        </Text>
+
+        <Text style={styles.label}>Otras bandas (opcional)</Text>
+        {otrasBandas.map((b) => (
+          <View key={claveBanda(b)} style={styles.otraBandaBloque}>
+            <View style={styles.otraBanda}>
+              <View style={styles.otraBandaDatos}>
+                <Text style={styles.otraBandaNombre}>{b.nombre}</Text>
+                {b.tipo === 'cuenta' && <Text style={styles.enSonopolis}>En Sonópolis</Text>}
+              </View>
+              <TouchableOpacity
+                onPress={() => setOtrasBandas((lista) => lista.filter((x) => !mismaBanda(x, b)))}
+              >
+                <Text style={styles.enlace}>Quitar</Text>
+              </TouchableOpacity>
+            </View>
+            {b.tipo === 'ficha' && campoCorreoBanda(b)}
+          </View>
+        ))}
+        {user && (
+          <ArtistaSelector
+            key={selectorOtra}
+            userId={user.id}
+            value={null}
+            onChange={agregarOtraBanda}
+            yo={yo}
+          />
+        )}
+        <Text style={styles.ayuda}>
+          Si tocan dos o más bandas, agrégalas aquí. Si una no está en Sonópolis, deja su correo y le
+          llega la invitación al crear el evento.
         </Text>
 
         <Text style={styles.label}>Local (venue) *</Text>
@@ -305,6 +436,24 @@ export default function CrearEventoScreen() {
                 ✅ {venueEmoji(selectedVenue.type)} {selectedVenue.name}
               </Text>
             )}
+            {selectedVenue && (puntoDeVenue(selectedVenue) || selectedVenue.ownerId === user?.id) && (
+              <UbicacionLocal
+                key={selectedVenue.id}
+                direccion={selectedVenue.address ?? ''}
+                comuna={selectedVenue.comuna}
+                pais={selectedVenue.pais}
+                nombre={selectedVenue.name}
+                tipo={selectedVenue.type}
+                valor={puntoDeVenue(selectedVenue)}
+                puedeMover={selectedVenue.ownerId === user?.id}
+                modo="crear"
+                onConfirmar={async (p) => {
+                  if (!p) return;
+                  const guardado = await guardarUbicacionLocal(selectedVenue.id, p);
+                  setSelectedVenue((v) => (v?.id === guardado.id ? guardado : v));
+                }}
+              />
+            )}
           </>
         ) : (
           <View style={styles.subform}>
@@ -336,9 +485,11 @@ export default function CrearEventoScreen() {
 
             <Text style={styles.sublabel}>Dirección *</Text>
             <TextInput
+              ref={direccionRef}
               style={styles.input}
               value={nuevaDireccion}
-              onChangeText={setNuevaDireccion}
+              onChangeText={(t) => { setNuevaDireccion(t); olvidarUbicacion(); }}
+              onBlur={() => setBuscarUbicacionAl((n) => n + 1)}
               placeholder="Ej: Av. Italia 1234"
               placeholderTextColor={colores.muted}
             />
@@ -352,7 +503,8 @@ export default function CrearEventoScreen() {
             <TextInput
               style={styles.input}
               value={nuevaComuna}
-              onChangeText={setNuevaComuna}
+              onChangeText={(t) => { setNuevaComuna(t); olvidarUbicacion(); }}
+              onBlur={() => setBuscarUbicacionAl((n) => n + 1)}
               placeholder="Ej: Providencia"
               placeholderTextColor={colores.muted}
             />
@@ -378,6 +530,32 @@ export default function CrearEventoScreen() {
               autoCorrect={false}
             />
 
+            <TextInput
+              style={[styles.input, styles.inputCorreoLocal]}
+              value={correoLocal}
+              onChangeText={setCorreoLocal}
+              placeholder="Correo del local para invitarlo a Sonópolis (opcional)"
+              accessibilityLabel="Correo del local para invitarlo a Sonópolis"
+              placeholderTextColor={colores.muted}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
+            <UbicacionLocal
+              direccion={nuevaDireccion}
+              comuna={nuevaComuna}
+              pais={paisNuevoVenue}
+              nombre={nuevoNombre}
+              tipo={nuevoTipo}
+              valor={ubicacion}
+              puedeMover
+              modo="crear"
+              buscarAl={buscarUbicacionAl}
+              onCorregir={() => direccionRef.current?.focus()}
+              onConfirmar={(p) => { setUbicacion(p); setUbicacionResuelta(true); }}
+            />
+
             <TouchableOpacity onPress={handleCancelarLocalNuevo}>
               <Text style={styles.enlace}>Cancelar, elegir de la lista</Text>
             </TouchableOpacity>
@@ -387,7 +565,11 @@ export default function CrearEventoScreen() {
           visible={pickerPaisVisible}
           onClose={() => setPickerPaisVisible(false)}
           seleccionado={paisNuevoVenue}
-          onCambiar={setPaisNuevoVenue}
+          onCambiar={(p) => {
+            if (p === paisNuevoVenue) return;
+            setPaisNuevoVenue(p);
+            olvidarUbicacion();
+          }}
           titulo="País del local"
         />
 
@@ -506,6 +688,7 @@ export default function CrearEventoScreen() {
             <Text style={styles.textoBoton}>{eventoCreadoId ? 'Evento publicado' : 'Publicar evento'}</Text>
           )}
         </TouchableOpacity>
+        {creandoLocal && !ubicacionResuelta && <Text style={styles.ayuda}>{FALTA_UBICACION}</Text>}
       </View>
     </ScrollView>
   );
@@ -555,6 +738,18 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
   inputPlaceholder: { fontSize: fontSize.md, color: c.muted },
   ayuda: { fontSize: fontSize.xs, color: c.muted, marginTop: spacing.xs },
   aviso: { fontSize: fontSize.xs, color: c.warning, marginTop: spacing.xs },
+  otraBandaBloque: { marginBottom: spacing.xs },
+  otraBanda: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  inputCorreo: { marginTop: spacing.xs },
+  inputCorreoLocal: { marginTop: spacing.sm },
+  otraBandaDatos: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexShrink: 1 },
+  otraBandaNombre: { fontSize: fontSize.md, color: c.primary, flexShrink: 1 },
+  enSonopolis: { fontSize: fontSize.xs, color: c.success, fontWeight: '600' },
   enlace: { fontSize: fontSize.sm, color: c.accent, fontWeight: '600', marginTop: spacing.sm },
   error: { fontSize: fontSize.sm, color: c.danger, marginTop: spacing.md },
   subform: {

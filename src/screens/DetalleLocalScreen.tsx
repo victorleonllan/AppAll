@@ -1,17 +1,20 @@
+import { useState } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Linking,
+  View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Linking, Modal, Pressable, Platform,
 } from 'react-native';
 import { useRoute, RouteProp, useNavigation, NavigationProp } from '@react-navigation/native';
 import { useVenues } from '../context/VenuesContext';
 import { useAuth } from '../context/AuthContext';
 import { useEventosDelLocal } from '../hooks/useEventosDelLocal';
+import { useProximosEventos } from '../hooks/useProximosEventos';
+import { enlacesComoLlegar } from '../lib/perfil';
 import BotonSeguir from '../components/BotonSeguir';
 import OptInWhatsApp from '../components/OptInWhatsApp';
 import { useTelefonoPropio } from '../hooks/useOptInWhatsApp';
 import MapaLocales from '../components/MapaLocales';
 import Muro from '../components/Muro';
 import { useEsAdmin } from '../hooks/useEsAdmin';
-import { mapaDisponible, puntosDeVenues, urlComoLlegar } from '../lib/mapa';
+import { mapaDisponible, puntosDeVenues } from '../lib/mapa';
 import { venueEmoji, venueLabel } from '../lib/venues';
 import { LocalesStackParamList } from '../navigation/LocalesStack';
 import { RootTabParamList } from '../navigation/linking';
@@ -44,6 +47,9 @@ export default function DetalleLocalScreen() {
   const fechas = useEventosDelLocal(venue?.id);
   const telefonoPropio = useTelefonoPropio();
   const { esAdmin } = useEsAdmin();
+  // Spec 202 — el evento en cartelera que se destaca sobre el muro.
+  const destacado = useProximosEventos('venue', venue?.id, 1);
+  const [hojaMapas, setHojaMapas] = useState(false);
 
   if (loading) {
     return (
@@ -61,7 +67,20 @@ export default function DetalleLocalScreen() {
   }
 
   const puntos = puntosDeVenues([venue]);
-  const comoLlegar = urlComoLlegar(venue);
+  const enlaces = enlacesComoLlegar(venue);
+  const opcionesMapa = enlaces
+    ? [
+        { nombre: 'Google Maps', detalle: 'Ruta desde donde estás', url: enlaces.google },
+        { nombre: 'Waze', detalle: 'Si lo tienes instalado', url: enlaces.waze },
+        ...(Platform.OS === 'ios'
+          ? [{ nombre: 'Mapas de Apple', detalle: 'Solo en iPhone', url: enlaces.apple }]
+          : []),
+      ]
+    : [];
+  const abrirMapa = (url: string) => {
+    setHojaMapas(false);
+    Linking.openURL(url);
+  };
   // Seguir tu propio local no tiene sentido (misma regla que la web).
   const mostrarSeguir = !!user && user.id !== venue.ownerId;
   const equipamiento = [
@@ -113,10 +132,39 @@ export default function DetalleLocalScreen() {
           <MapaLocales puntos={puntos} interactivo={false} deltaMinimo={0.008} />
         </View>
       ) : null}
-      {comoLlegar && (
-        <TouchableOpacity style={styles.boton} onPress={() => Linking.openURL(comoLlegar)}>
-          <Text style={styles.textoBoton}>Cómo llegar</Text>
-        </TouchableOpacity>
+      {enlaces && (
+        <>
+          <TouchableOpacity style={styles.boton} onPress={() => setHojaMapas(true)}>
+            <Text style={styles.textoBoton}>Cómo llegar</Text>
+          </TouchableOpacity>
+          <Modal visible={hojaMapas} transparent animationType="slide" onRequestClose={() => setHojaMapas(false)}>
+            <View style={styles.fondoHoja}>
+              <Pressable
+                style={styles.atenuado}
+                onPress={() => setHojaMapas(false)}
+                accessibilityLabel="Cerrar"
+              />
+              <View style={styles.hoja}>
+                <Text style={styles.tituloHoja}>Cómo llegar a {venue.name}</Text>
+                {!!enlaces.direccion && (
+                  <Text style={styles.textoSuave} selectable>{enlaces.direccion}</Text>
+                )}
+                {opcionesMapa.map((o) => (
+                  <TouchableOpacity key={o.nombre} style={styles.opcionMapa} onPress={() => abrirMapa(o.url)}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.artista}>{o.nombre}</Text>
+                      <Text style={styles.detalleMapa}>{o.detalle}</Text>
+                    </View>
+                    <Text style={styles.detalleMapa}>↗</Text>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity style={styles.cancelarHoja} onPress={() => setHojaMapas(false)}>
+                  <Text style={styles.enlace}>Cancelar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        </>
       )}
 
       {(!!venue.description || filas.length > 0 || equipamiento.length > 0) && (
@@ -174,6 +222,8 @@ export default function DetalleLocalScreen() {
         id={venue.id}
         nombreTenant={venue.name}
         puedeModerar={(!!user && user.id === venue.ownerId) || esAdmin}
+        destacado={destacado.eventos?.[0] ?? null}
+        onVerEvento={verEvento}
       />
       {/* `rating` no se muestra: los valores se cargaron a mano, no salen de
           reseñas (spec 031). */}
@@ -194,6 +244,22 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
   miniMapa: { height: 180, borderRadius: borderRadius.md, overflow: 'hidden', marginVertical: spacing.sm },
   boton: { alignSelf: 'flex-start', backgroundColor: c.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: borderRadius.sm, marginTop: spacing.sm },
   textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.sm },
+  fondoHoja: { flex: 1, justifyContent: 'flex-end' },
+  atenuado: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: c.block, opacity: 0.5 },
+  hoja: {
+    backgroundColor: c.cardBackground,
+    borderTopLeftRadius: borderRadius.lg,
+    borderTopRightRadius: borderRadius.lg,
+    padding: spacing.lg,
+    paddingBottom: spacing.xl,
+  },
+  tituloHoja: { fontSize: fontSize.lg, fontWeight: 'bold', color: c.primary, marginBottom: spacing.xs },
+  opcionMapa: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: c.border,
+  },
+  detalleMapa: { fontSize: fontSize.sm, color: c.muted },
+  cancelarHoja: { alignItems: 'center', marginTop: spacing.sm },
   fila: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: c.border },
   etiqueta: { fontSize: fontSize.sm, color: c.secondary },
   valor: { fontSize: fontSize.sm, color: c.primary, fontWeight: '600', flexShrink: 1, textAlign: 'right', marginLeft: spacing.sm },

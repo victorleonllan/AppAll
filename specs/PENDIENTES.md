@@ -1052,6 +1052,274 @@ Se cerró con `tsc` y `expo export`: no se probó en un teléfono ni contra la b
 2. **V (187-b):** con sesión de fan — comentar, ver el comentario con su nombre y borrarlo.
 3. **V (187-c):** con sesión del dueño — borrar un comentario ajeno y quitar un correo del muro.
 
+## Géneros en español y errores de cuenta 🟢 spec 194 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc` y `node`: no se probó en un teléfono ni contra Supabase.
+
+1. **V (194-a):** al crear o editar un evento y un perfil de banda, el selector de géneros
+   muestra «Metal», «Pop Latino», «Urbano», y buscar «romantico» encuentra «Romántico».
+2. **V (194-b):** con las pantallas del spec 203 — crear cuenta con un correo que ya existe
+   muestra el mensaje de cuenta existente y no «revisa tu correo».
+3. **Deuda:** quitar `signIn` y `signUp` de `AuthContext` (marcados `@deprecated`) cuando
+   queden sin llamadores, desde el spec 203.
+
+## Invitaciones a Sonópolis desde la app 🟡 spec 190 aplicado (lógica), falta verificar en dispositivo (28-nov-2026)
+
+Llega con las pantallas del spec 199.
+
+1. **V (190-a):** invitar una banda desde la app — llega el correo con el enlace `/unete/<token>`.
+2. **V (190-b):** como músico, invitar al dueño de un local que registró — llega el correo con el
+   enlace `/invitacion/<token>`.
+
+## Pantallas de invitación a Sonópolis 🟢 spec 199 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc`, `expo export` web y `grep`: no se probó en navegador, en teléfono ni contra las
+rutas de invitación.
+
+1. **V (199-a):** como local, crear un evento con una banda nueva (ficha) y su correo: llega el
+   correo con `/unete/<token>`, y en la edición la banda sale «Invitada: <correo>» con Reenviar /
+   Cambiar correo / Cancelar.
+2. **V (199-b):** como músico, crear un evento en un local nuevo con el correo del local: llega el
+   correo con `/invitacion/<token>`; en la edición aparece «Invita a <local> a Sonópolis».
+3. **V (199-c):** panel del local: «Enviar invitación a Sonópolis» manda la invitación y la lista
+   la muestra «Pendiente»; «Cancelar» la saca.
+4. **V (199-d):** en el build web de Expo, el modal abre y cierra y los mensajes se ven.
+
+Hueco: la línea «Invitación enviada» va en el `Alert` «Evento publicado», que en el build web no
+se muestra (los fallos sí, en texto rojo sobre el botón). Si se quiere ver en web, es spec nuevo.
+
+## Punto de la portada en la app 🟢 spec 192 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc` y `npx tsx`: no se probó en un teléfono ni contra la base.
+
+1. **V (192-a):** `usePerfilMusico` de un músico que ajustó su portada en la web trae
+   `portada` distinto de `50, 50`.
+2. **V (192-b):** `guardarPuntoPortadaLocal` con una cuenta que no es dueña devuelve «Solo el
+   dueño puede ajustar esta portada.».
+3. **V (192-c):** cambiar la foto desde `EditarPerfilBandaScreen` deja el punto en `50, 50`
+   (trigger de W-344 sobre el `upsert`).
+
+## Ubicación del local con pin 🟢 spec 191 aplicado (lógica), falta verificar en runtime (28-nov-2026)
+
+Se cerró con `tsc` y `tsx`: no se probó contra la web, la base ni un teléfono. La pantalla es el spec 200.
+
+1. **V (191-a):** con sesión, `buscarUbicacion` contra la web de producción devuelve un punto para
+   una dirección real y `coincide: false` para «calle 124 #1040, Peñalolén».
+2. **V (191-b):** crear un local nuevo con pin desde la app (spec 200): después de `crearDireccion`,
+   `venues.lat`/`lng` y la fila activa de `venue_addresses` tienen el mismo pin.
+3. **V (191-c):** `guardarUbicacionLocal` con una cuenta que no es dueña del local devuelve «Solo el
+   dueño del local puede mover su ubicación».
+
+## La banda como cuenta de músico en la app 🟢 spec 188 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc` y `node`: no se probó en un teléfono ni contra la base.
+
+1. **V (188-a):** fan que sigue a una banda con cuenta (p. ej. Felio Saud) ve en su feed un evento
+   donde es `musico_id` y otro donde es banda adicional.
+2. **V (188-b):** comprar una entrada de un evento con `musico_id`, sin local y con Pro: el opt-in
+   sale a nombre de la banda.
+3. **V (188-c):** Admin → CRM: los eventos activos de una banda con cuenta cuentan aquellos donde
+   es principal o adicional.
+4. **V (188-d):** músico con un evento creado por un local donde es banda: aparece en «Ventas» con
+   sus entradas.
+
+Deuda: borrar `buscarArtistas`, `crearArtista` y `ArtistaBreve` (`@deprecated` en
+`src/lib/artistas.ts`): con el spec 198 aplicado (28-nov-2026) ya nadie los usa.
+
+## Números del panel en la app 🟢 spec 195 aplicado (lógica), falta verificar contra la base (28-nov-2026)
+
+Se cerró con `tsc` y `tsx`: no se probó contra la base ni en un teléfono. Las pantallas son el spec 204.
+
+1. **V (195-a):** con la sesión de un local con eventos de colaboración (creados por una banda en
+   su local), las ventas de esos eventos sí aparecen (`tickets_select_event_team`).
+
+Deuda: `totalesPorMoneda` (`src/lib/panel.ts`) es copia de `formatearTotales`
+(`src/hooks/useAdminPagos.ts`); moverlas a un solo módulo sin imports de Supabase.
+
+## Números del panel en las pantallas 🟢 spec 204 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc`, `expo export --platform web` y `grep`: las pantallas no se abrieron.
+
+1. **V (204-a):** local con una solicitud pendiente de una banda: «Por responder» en 1 y
+   destacado, la solicitud en «Solicitudes de bandas»; «Aceptar» la saca de la lista y en
+   `SolicitudesScreen` figura aceptada.
+2. **V (204-b):** local con ventas en un evento creado por una banda en su local: aparecen en
+   «Ventas recientes» y en «Vendidas por evento».
+3. **V (204-c):** «Cobrado en {mes}» cuenta una venta del último día del mes a las 22:00 en
+   Chile en ese mes, no en el siguiente.
+4. **V (204-d):** músico con un evento pasado sin cerrar: «Próximos shows» no dice «Es hoy».
+5. **V (204-e):** las dos pantallas en tema claro y oscuro.
+
+Falta: el panel del local no vuelve a leer al regresar de otra pantalla (`usePanel` lee al
+montar y al cambiar los eventos; expone `recargar`, que nadie llama). Responder en
+«Solicitudes» y volver deja «Por responder» sin actualizar. El del músico sí relee, porque su
+pantalla se vuelve a montar al recibir el foco.
+
+## El admin edita como el dueño en la app 🟢 spec 197 aplicado (lógica), falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc`, `node` y `grep`: no se probó contra la base. Se prueba con las pantallas del
+spec 206 (sesión del admin, eventos y fichas de prueba, logout con `scope: 'local'` al terminar,
+sin cuentas de terceros).
+
+1. **V (197-a):** guardar el perfil de una cuenta de músico ajena cambia los datos y deja una fila
+   en `admin_ediciones`.
+2. **V (197-b):** conectar una ficha suelta con una cuenta: la ficha desaparece y sus eventos salen
+   en el perfil del músico.
+3. **V (197-c):** cambiar la banda principal y el local de un evento; agregar y quitar una banda
+   adicional.
+4. **V (197-d):** un dueño de evento que no es admin sigue igual (sin «Equipo» de más ni bloque de
+   admin).
+
+## Bandas adicionales del evento en la app 🟢 spec 189 aplicado (lógica), falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc`, `node` y `grep`: no se probó contra la base. Llega con las pantallas del
+spec 198.
+
+1. **V (189-a):** abrir en la app un evento creado en la web con dos bandas y ver las dos en la
+   ficha.
+2. **V (189-b):** crear en la app un evento con una banda adicional: queda la fila en
+   `event_artists` y la web la muestra.
+
+## Cartelera: conteos, días con nombre y vacío 🟢 spec 205 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc`, `expo export --platform web` y `grep`: la pantalla no se abrió.
+
+1. **V (205-a):** con eventos hoy y el finde, los números de «Hoy», «Finde» y «Esta semana»
+   coinciden con lo que se ve al tocar cada uno, también con un género elegido.
+2. **V (205-b):** un externo de hoy y uno de mañana muestran las insignias «HOY» y «MAÑANA»,
+   la cantidad por día y la hora en cada tarjeta.
+3. **V (205-c):** «Hoy» + un género sin eventos hoy dice «Hoy no hay {género} en Chile»,
+   «Ver {género} en otras fechas» lleva a «Todos» con el género puesto, y aparece «Lo próximo
+   de {género}».
+4. **V (205-d):** las dos vistas en tema claro y oscuro.
+
+## Próximos eventos y «Cómo llegar» en los perfiles 🟢 spec 193 aplicado (lógica), falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc` y `tsx`: no se probó contra la base ni en un teléfono. Las pantallas son el spec 202.
+
+1. **V (193-a):** `useProximosEventos('musician', id, 3)` de una banda que solo figura como banda
+   adicional (`event_artists`) de un evento futuro lo devuelve.
+2. **V (193-b):** la misma consulta para una banda con cuenta que es `musico_id` de un evento creado
+   por un local lo devuelve.
+
+Deuda: el enlace de Google de `enlacesComoLlegar` (`src/lib/perfil.ts`) duplica `urlComoLlegar`
+(`src/lib/mapa.ts`); unificarlos.
+
+## Errores bajo el campo y «Correo» 🟡 spec 203 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc`, `expo export` y `grep`. Probar en la web de la app (export servido) y en un
+teléfono.
+
+1. **V (203-a):** entrar con `ana.rojas@gmail` muestra el error bajo el correo, sin llamar a la
+   base; con contraseña incorrecta, «Correo o contraseña incorrectos» bajo la contraseña.
+2. **V (203-b):** crear cuenta sin nombre muestra «Falta el nombre»; con un correo que ya tiene
+   cuenta, el aviso sobre el botón (cubre V 194-b); con un correo nuevo, «Revisa tu correo para
+   confirmar la cuenta.» en lugar del formulario.
+3. **V (203-c):** «¿Olvidaste tu contraseña?» con `ana@` muestra el error nuevo bajo el campo.
+4. **V (203-d):** en el panel del local y del músico, el botón «✉️ Correo» abre la pantalla
+   titulada «Correo».
+5. **Deuda:** `signIn` y `signUp` de `AuthContext` ya no tienen llamadores; se pueden quitar
+   (anotado en el spec 194, fuera del alcance del 203).
+
+## La confirmación de compra con el talón 🟢 spec 207 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc`, build web, `grep` y `node`: no se probó en un teléfono ni contra la base.
+
+1. **V (207-a):** compra de 1 entrada con sesión (pago de prueba): talón con QR, folio «#001» y
+   «Sin usar», sin saltar a Mis entradas; el escáner lee ese QR. Probar el retorno nativo con
+   `status=success`.
+2. **V (207-b):** pack con un destinatario: solo el talón del comprador y «Enviamos la entrada 2 a …».
+3. **V (207-c):** compra como invitado: sin talones, mensaje de siempre y redirect a los 8 s.
+4. **V (207-d):** evento de México desde un teléfono en Chile: la fecha corta es la del afiche
+   (revisar que Hermes la formatee; si falla queda la línea anterior).
+5. **V (207-e):** tema claro y oscuro: el QR sigue oscuro sobre blanco.
+6. **Pendiente:** anotar en el spec 126 «redirect acotado por el spec 207».
+7. **Riesgo:** `getPackDeTicket` devuelve destinatarios vacíos si falla; en un pack se verían
+   también los QR de los destinatarios.
+
+## Spec 200 — Pin del local al crear el evento y al editar el local (28-nov-2026)
+
+Se cerró con `tsc`, `expo export` web y lectura del código: no se probó en un teléfono.
+
+1. **V (200-a):** iPhone: crear un evento con local nuevo, «¿Es aquí?», «Sí, es aquí»; el local
+   aparece en el mapa de Locales en ese punto.
+2. **V (200-b):** Android con clave: «Ajustar pin», arrastrar fuera del círculo → vuelve al borde
+   y sale «El pin solo se mueve hasta 150 m»; «Ubicar a mano» y tocar el mapa pone el pin.
+3. **V (200-c):** «calle 124 #1040», Peñalolén → «Buscamos «calle 124 #1040» y el mapa encontró «…»».
+4. **V (200-d):** dueño de Quintal Clandesta en «Editar local» → «Ajustar pin» → «Ubicar a mano» →
+   guardar; activar después la misma dirección no borra el pin.
+5. **V (200-e):** build web: crear con «Continuar sin ubicación» funciona y el local queda sin pin.
+6. **V (200-f):** «Corregir» y «Corregir dirección» dejan el foco en el campo Dirección (el segundo
+   espera 400 ms a que cierre el modal).
+7. **Riesgo:** si un intento de publicar falla con el local ya creado, cambiar la dirección y
+   confirmar otro pin no actualiza ese local (la dirección ya tenía este comportamiento).
+
+## Bandas al crear el evento y enlaces a su perfil 🟢 spec 198 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc`, `expo export --platform web` y `grep`: las pantallas no se abrieron.
+
+1. **V (198-a):** como local, crear un evento con «Felio Saud» (cuenta) de principal y una banda
+   nueva de adicional: Felio sale con «En Sonópolis», el título es «Felio Saud + <banda nueva>», el
+   evento aparece en el perfil de Felio y Felio queda admin.
+2. **V (198-b):** como músico con nombre en su perfil, «Soy yo» en «Artista» y en «Otras bandas»;
+   con el nombre vacío, el botón desactivado.
+3. **V (198-c):** ficha de un evento con dos bandas: «Tocan» con un chip por banda (legible en claro
+   y en oscuro); tocar la cuenta abre su perfil en la pestaña Locales.
+4. **V (198-d):** ficha de un evento con una sola banda con cuenta: fila «Banda» antes de «Lugar».
+5. **V (198-e):** tarjeta de un evento con `musicoId` en el panel del local, del músico y del fan:
+   «Ver banda ›» abre el perfil sin abrir además la ficha.
+
+Hueco: la Cartelera dibuja `EventoDestacado`, no `TarjetaEvento`, así que ahí no sale «Ver banda ›».
+Si se quiere, es spec nuevo.
+
+## Spec 201 — Respetar el punto de la portada y «Ajustar portada» (28-nov-2026)
+
+Se cerró con `tsc`, `expo export` web y lectura del código: no se probó en navegador ni en teléfono.
+
+1. **V (201-a):** ficha de un músico con portada ajustada en la web (Felio Saud): la app muestra el
+   mismo encuadre que la web; el directorio también.
+2. **V (201-b):** cuenta del músico: «Ajustar portada», arrastrar la foto hacia abajo → se ve más de
+   arriba; «Guardar» → la ficha muestra el nuevo encuadre al volver.
+3. **V (201-c):** cambiar la foto sin guardar → «Guarda la foto nueva para ajustar su encuadre.»;
+   guardar el formulario → la ficha centra la foto nueva.
+4. **V (201-d):** dueño de un local: ajustar y guardar; la ficha web en el celular muestra ese punto.
+5. **V (201-e):** build web en computador: el marco del modal usa todo el ancho, así que en una
+   ventana ancha puede quedar tan alto que «Guardar» no se vea (el modal no tiene scroll).
+
+## Spec 202 — Próximos eventos, evento en cartelera sobre el muro y «Cómo llegar» (28-nov-2026)
+
+Se cerró con `tsc`, `expo export` web y lectura del código: no se probó en navegador ni en teléfono.
+
+1. **V (202-a):** ficha de una banda con eventos futuros (también uno donde es banda adicional): se
+   ven en «Próximos eventos» con el bloque de fecha y el más próximo destacado sobre el muro con
+   «● En cartelera · …»; tocar «Ver evento» abre la ficha del evento.
+2. **V (202-b):** ficha de un local con un evento hoy que ya empezó: aparece destacado y no se
+   repite como flyer en el muro.
+3. **V (202-c):** iPhone: «Cómo llegar» muestra las tres opciones; Android y web, sin «Mapas de
+   Apple»; Waze abre la app si está instalada.
+4. **V (202-d):** una banda sin eventos futuros: no aparecen ni la sección ni la tarjeta destacada.
+
+## Spec 206 — El admin edita como el dueño: pantallas (28-nov-2026)
+
+Se cerró con `tsc`, `expo export` web y `grep`: no se abrió ninguna pantalla ni se probó contra la
+base. Recorrido con la sesión del admin, sobre cuentas, fichas y eventos de prueba, logout con
+`scope: 'local'` al terminar, sin cuentas de terceros. Cubre también V (197-a) a (197-d).
+
+1. **V (206-a):** Admin → CRM → una cuenta de músico → «Editar perfil»: aviso de admin, cambiar bio y
+   avatar, guardar; la ficha pública muestra lo nuevo.
+2. **V (206-b):** Admin → Locales → «Editar perfil»: cambiar horario, agregar y activar una
+   dirección; la ficha pública la muestra.
+3. **V (206-c):** Admin → Músicos: «Conectar» desde una sugerencia y desde la ficha; unir dos fichas
+   de prueba.
+4. **V (206-d):** Admin → Eventos → «Editar» en un evento ajeno: cambiar banda principal (guardar no
+   pisa el nombre), agregar y quitar una adicional, cambiar el local.
+5. **V (206-e):** cuenta de músico normal: «Editar perfil» y «Editar local» iguales, sin bloque
+   «Bandas y local».
+
+Detectado al aplicar (addenda del spec 206): el texto «no se pueden cambiar desde acá» también lo ve
+el admin; un borrador ajeno puede abrir como «Evento no encontrado»; la lista «Eventos» del admin no
+relee al volver.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

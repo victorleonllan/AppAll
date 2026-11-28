@@ -1,5 +1,6 @@
 import { View, Text, Image, TouchableOpacity, StyleSheet, Linking } from 'react-native';
 import { EventoExterno } from '../types';
+import { horaCorta } from '../lib/cartelera';
 import { spacing, borderRadius, Paleta } from '../theme';
 import { useEstilos } from '../hooks/useEstilos';
 
@@ -22,6 +23,8 @@ export default function TarjetaEventoExterno({ evento }: Props) {
   };
 
   const lugar = [evento.venueNombre, evento.comuna].filter(Boolean).join(' · ');
+  // Spec 205 — solo la hora: el día ya está en el encabezado de la sección.
+  const hora = horaCorta(evento.comienzaAt);
 
   return (
     <TouchableOpacity onPress={abrir} activeOpacity={0.7} style={styles.tarjeta}>
@@ -32,6 +35,7 @@ export default function TarjetaEventoExterno({ evento }: Props) {
         <Text style={styles.titulo} numberOfLines={2}>
           {evento.titulo}
         </Text>
+        {hora ? <Text style={styles.hora}>{hora}</Text> : null}
         {evento.venueNombre ? <Text style={styles.detalle}>📍 {lugar}</Text> : null}
         <Text style={styles.fuente}>vía {evento.fuenteNombre} ↗</Text>
         <Text style={styles.entradas}>Entradas en la fuente</Text>
@@ -54,6 +58,7 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
   },
   flyer: { width: 72, height: 96, borderRadius: borderRadius.sm },
   titulo: { fontSize: 15, fontWeight: '600', color: c.primary },
+  hora: { fontSize: 13, fontWeight: 'bold', color: c.primary, marginTop: 4 },
   detalle: { fontSize: 12, color: c.secondary, marginTop: 4 },
   fuente: { fontSize: 12, color: c.muted, marginTop: 4 },
   entradas: { fontSize: 11, color: c.muted, marginTop: 2 },

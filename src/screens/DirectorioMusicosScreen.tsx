@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Image,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList,
   ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -8,9 +8,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMusicos } from '../hooks/useMusicos';
 import { usePais } from '../context/PaisContext';
 import { PAISES, banderaPais } from '../constants/paises';
-import { TIPO_PROYECTO_LABEL } from '../lib/profiles';
+import { TIPO_PROYECTO_LABEL, PerfilConPortada } from '../lib/profiles';
 import BotonSeguir from '../components/BotonSeguir';
-import { PerfilMusico } from '../types';
+import PortadaEncuadrada from '../components/PortadaEncuadrada';
+import { PUNTO_CENTRO } from '../lib/portada';
 import { spacing, borderRadius, fontSize, Paleta } from '../theme';
 import { useEstilos } from '../hooks/useEstilos';
 import { useTema } from '../context/TemaContext';
@@ -112,7 +113,7 @@ export default function DirectorioMusicosScreen() {
   );
 }
 
-function TarjetaMusico({ musico, onPress }: { musico: PerfilMusico; onPress: () => void }) {
+function TarjetaMusico({ musico, onPress }: { musico: PerfilConPortada; onPress: () => void }) {
   const styles = useEstilos(crearEstilos);
   const imagen = musico.foto ?? musico.avatar;
   const tipo = musico.tipoProyecto ? TIPO_PROYECTO_LABEL[musico.tipoProyecto] : null;
@@ -122,7 +123,7 @@ function TarjetaMusico({ musico, onPress }: { musico: PerfilMusico; onPress: () 
   return (
     <TouchableOpacity style={styles.tarjeta} onPress={onPress}>
       {imagen ? (
-        <Image source={{ uri: imagen }} style={styles.imagen} resizeMode="cover" />
+        <PortadaEncuadrada uri={imagen} punto={musico.foto ? musico.portada : PUNTO_CENTRO} style={styles.imagen} />
       ) : (
         <View style={[styles.imagen, styles.sinFoto]}>
           <Text style={styles.sinFotoIcono}>👤</Text>

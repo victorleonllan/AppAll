@@ -46,10 +46,24 @@ export type EventoStatus = 'draft' | 'published' | 'cancelled';
  * lo que se vende antes son preventas (spec 135, `usePreventas`). */
 export type TipoPrecio = 'general' | 'puerta';
 
+/** Spec 188 (W-348) — una banda del evento. Con `tipo: 'cuenta'`, `id` es de `profiles`
+ * (una cuenta de músico); con `'ficha'`, de `artists` (una banda sin cuenta). Dos bandas son
+ * la misma solo si coinciden `tipo` e `id`. */
+export interface Banda {
+  tipo: 'cuenta' | 'ficha';
+  id: string;
+  nombre: string;
+  foto: string | null;
+  orden?: number; // 0 = principal; 1, 2, … = adicionales (event_artists.orden). Solo al leer un lineup.
+}
+
 export interface Evento {
   id: string;
   artista: string;
-  artistId?: string | null;   // Spec 033 — FK opcional a profiles (role='musician')
+  // Ficha de banda sin cuenta (`artists`, spec 061). Un evento tiene `musicoId` o
+  // `artistId`, nunca los dos (check `events_una_banda_principal`).
+  artistId?: string | null;
+  musicoId?: string | null;   // Spec 188 — events.musico_id (W-347): la cuenta de músico que es la banda principal
   venueId: string;
   venueName: string;
   pais: string;               // Spec 095 — copia denormalizada de venue.pais (spec 080)

@@ -42,6 +42,7 @@ export function mapEventoFromDB(db: any): Evento {
     id: db.id,
     artista: db.artist_name,
     artistId: db.artist_id ?? null,
+    musicoId: db.musico_id ?? null,
     venueId: db.venue_id,
     venueName: db.venue_name,
     pais: db.pais,
@@ -71,6 +72,7 @@ function mapEventoToDB(evento: Omit<Evento, 'id'>): any {
   return {
     artist_name: evento.artista,
     artist_id: evento.artistId ?? null,
+    musico_id: evento.musicoId ?? null,
     venue_id: evento.venueId,
     venue_name: evento.venueName,
     pais: evento.pais,
@@ -191,6 +193,11 @@ export function EventosProvider({ children }: { children: ReactNode }) {
   // Ahora el error se lanza sin try/catch propio: quien llama decide qué mostrar,
   // igual que deleteEvento y createVenue.
   const createEvento = useCallback(async (evento: Omit<Evento, 'id'>): Promise<Evento> => {
+    // Spec 188 (W-348) — el check `events_una_banda_principal` lo rechazaría igual,
+    // pero con un mensaje en inglés.
+    if (evento.artistId && evento.musicoId) {
+      throw new Error('Un evento tiene una sola banda principal: una cuenta o una ficha, no las dos');
+    }
     const { data, error } = await supabase
       .from('events')
       .insert(mapEventoToDB(evento))

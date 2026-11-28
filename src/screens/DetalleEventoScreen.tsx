@@ -11,6 +11,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { useEventos } from '../context/EventosContext';
 import { useEventoPermisos } from '../hooks/useEventoPermisos';
+import { useBandasDelEvento } from '../hooks/useBandasDelEvento';
 import { useEstadoEventoEnVivo } from '../hooks/useEstadoEventoEnVivo';
 import { usePrecioVigente } from '../hooks/usePrecioVigente';
 import { useEspecialesVigentes } from '../hooks/useEspecialesVigentes';
@@ -62,6 +63,7 @@ export default function DetalleEventoScreen() {
 
   const evento = eventos.find((e) => e.id === route.params.eventoId);
   const permisos = useEventoPermisos(evento?.id);
+  const { bandas } = useBandasDelEvento(evento);
 
   // Spec 120 — los hooks nuevos van antes del return temprano: un hook después
   // de un return cambia el número de hooks entre renders y React lo rompe.
@@ -535,6 +537,13 @@ export default function DetalleEventoScreen() {
     }
   };
 
+  // `VerMusico` vive en la pestaña Locales, no en `CarteleraStack` (patrón del spec 114).
+  const verMusico = (id: string) =>
+    navigation.getParent()?.navigate('Locales', { screen: 'VerMusico', params: { musicoId: id } });
+  // Spec 198 — con `bandas === null` (cargando o error) la ficha queda solo con el título.
+  const lineup = bandas && bandas.length > 1 ? bandas : null;
+  const bandaUnica = bandas?.length === 1 && bandas[0].tipo === 'cuenta' ? bandas[0] : null;
+
   // ────────────── RENDER ──────────────
 
   return (
@@ -553,7 +562,40 @@ export default function DetalleEventoScreen() {
         </View>
         <Text style={styles.genero}>{evento.genero}</Text>
 
+        {lineup && (
+          <View style={styles.filaTocan}>
+            <Text style={styles.tocan}>Tocan</Text>
+            {lineup.map((b) =>
+              b.tipo === 'cuenta' ? (
+                <TouchableOpacity
+                  key={`${b.tipo}:${b.id}`}
+                  style={styles.chipBanda}
+                  onPress={() => verMusico(b.id)}
+                  accessibilityRole="link"
+                >
+                  <Text style={[styles.chipBandaTexto, styles.chipBandaEnlace]}>{b.nombre}</Text>
+                </TouchableOpacity>
+              ) : (
+                <View key={`${b.tipo}:${b.id}`} style={styles.chipBanda}>
+                  <Text style={styles.chipBandaTexto}>{b.nombre}</Text>
+                </View>
+              )
+            )}
+          </View>
+        )}
+
         <View style={styles.divisor} />
+
+        {bandaUnica && (
+          <TouchableOpacity
+            style={styles.infoRow}
+            onPress={() => verMusico(bandaUnica.id)}
+            accessibilityRole="link"
+          >
+            <Text style={styles.infoLabel}>Banda</Text>
+            <Text style={[styles.infoValor, styles.infoValorEnlace]}>{bandaUnica.nombre} ›</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Spec 114 — el lugar lleva al detalle del local. */}
         <TouchableOpacity
@@ -715,7 +757,9 @@ export default function DetalleEventoScreen() {
       {permisos.puedeEditar && (
         <View style={styles.card}>
           <Text style={styles.tituloGestion}>Gestión del evento</Text>
-          <Text style={styles.rolActual}>Tu rol: {permisos.rol}</Text>
+          <Text style={styles.rolActual}>
+            {permisos.rol ? `Tu rol: ${permisos.rol}` : 'Editas como admin de Sonópolis'}
+          </Text>
           <View style={styles.filaGestion}>
             {/* Spec 034 — cualquier rol del equipo edita, igual que puedeEditar ya
                 gatilla toda esta card; no hace falta otro chequeo de permiso acá. */}
@@ -805,6 +849,25 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
     color: c.secondary,
     marginTop: spacing.xs,
   },
+  filaTocan: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+  },
+  tocan: { fontSize: fontSize.sm, fontWeight: 'bold', color: c.secondary },
+  chipBanda: {
+    backgroundColor: c.block,
+    borderWidth: 1,
+    borderColor: c.border,
+    borderRadius: 999,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+  },
+  // `block` es oscuro en las dos paletas: el texto encima va en `white`.
+  chipBandaTexto: { fontSize: fontSize.sm, fontWeight: 'bold', color: c.white },
+  chipBandaEnlace: { textDecorationLine: 'underline' },
   divisor: {
     height: 1,
     backgroundColor: c.border,

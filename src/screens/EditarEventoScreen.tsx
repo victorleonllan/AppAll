@@ -7,6 +7,8 @@ import { ParamListBase, useNavigation, useRoute } from '@react-navigation/native
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { TipoPrecio } from '../types';
 import { useEventos } from '../context/EventosContext';
+import { useAuth } from '../context/AuthContext';
+import { useVenues } from '../context/VenuesContext';
 import { useEventoPermisos } from '../hooks/useEventoPermisos';
 import { armarFechaHora, fechaHoraValidas, separarFechaHora } from '../lib/fecha';
 import { montoDesdePrecio } from '../lib/precio';
@@ -20,6 +22,10 @@ import DatosPagoEvento, { DATOS_PAGO_VACIOS } from '../components/DatosPagoEvent
 import CampoImagen from '../components/CampoImagen';
 import { CampoFecha, CampoHora } from '../components/CampoFecha';
 import AccionesEvento from '../components/AccionesEvento';
+import InvitarBandasDelEvento from '../components/InvitarBandasDelEvento';
+import InvitarLocalDelEvento from '../components/InvitarLocalDelEvento';
+import AvisoEdicionAdmin from '../components/AvisoEdicionAdmin';
+import BandasYLocalAdmin from '../components/BandasYLocalAdmin';
 import { PAIS_POR_DEFECTO, etiquetaPais } from '../constants/paises';
 import { spacing, borderRadius, fontSize, Paleta } from '../theme';
 import { useEstilos } from '../hooks/useEstilos';
@@ -55,9 +61,11 @@ export default function EditarEventoScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const route = useRoute();
   const { eventoId } = route.params as { eventoId: string };
-  const { eventos, updateEvento } = useEventos();
+  const { eventos, updateEvento, refresh } = useEventos();
   const permisos = useEventoPermisos(eventoId);
   const { esOwner } = permisos;
+  const { user, role } = useAuth();
+  const { allVenues } = useVenues();
 
   const evento = eventos.find((e) => e.id === eventoId);
   const inicial = separarFechaHora(evento?.comienzaAt);
@@ -185,9 +193,30 @@ export default function EditarEventoScreen() {
   };
 
   const sinMonto = precio.trim() !== '' && montoDesdePrecio(precio) <= 0;
+  const local = allVenues.find((v) => v.id === evento.venueId);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Spec 206 (W-352, W-355) */}
+      {permisos.comoAdmin && (
+        <AvisoEdicionAdmin
+          tipo="evento"
+          nombre={evento.venueName ? `${artista} en ${evento.venueName}` : artista}
+          onVerFicha={() =>
+            (navigation as any).navigate('Cartelera', { screen: 'DetalleEvento', params: { eventoId: evento.id } })
+          }
+        />
+      )}
+      {permisos.esAdmin && (
+        <BandasYLocalAdmin
+          eventoId={evento.id}
+          local={evento.venueId ? { id: evento.venueId, nombre: evento.venueName } : null}
+          onCambio={refresh}
+          // Sin esto, guardar el formulario pisaría el nombre nuevo con el viejo.
+          onCambioPrincipal={setArtista}
+        />
+      )}
+
       <View style={styles.card}>
         <Text style={styles.titulo}>Editar evento</Text>
 
@@ -347,6 +376,13 @@ export default function EditarEventoScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Spec 199 — el equipo invita a las bandas sin cuenta; el músico, además, al
+          dueño del local que él registró (W-306, W-338). */}
+      {evento && permisos.puedeEditar && <InvitarBandasDelEvento evento={evento} />}
+      {role === 'musician' && user && local && local.ownerId === user.id && (
+        <InvitarLocalDelEvento venueId={local.id} nombre={local.name} />
+      )}
 
       <AccionesEvento
         evento={evento}

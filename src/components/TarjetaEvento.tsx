@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useNavigation, NavigationProp, ParamListBase } from '@react-navigation/native';
 import { Evento } from '../types';
 import PrecioEvento from './PrecioEvento';
 import { spacing, borderRadius, Paleta } from '../theme';
@@ -12,6 +13,7 @@ interface Props {
 
 export default function TarjetaEvento({ evento, onPress, onComprar }: Props) {
   const styles = useEstilos(crearEstilos);
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const contenido = (
     <View style={styles.tarjeta}>
       <View style={{ flex: 1 }}>
@@ -20,6 +22,19 @@ export default function TarjetaEvento({ evento, onPress, onComprar }: Props) {
         <Text style={styles.detalle}>
           📍 {evento.venueName} · {evento.fecha} · {evento.hora}
         </Text>
+        {/* Spec 198 — la acción sube por los navegadores hasta la pestaña Locales. */}
+        {evento.musicoId ? (
+          <TouchableOpacity
+            style={styles.verBanda}
+            onPress={() =>
+              navigation.navigate('Locales', { screen: 'VerMusico', params: { musicoId: evento.musicoId } })
+            }
+            accessibilityRole="link"
+            accessibilityLabel="Ver el perfil de la banda"
+          >
+            <Text style={styles.verBandaTexto}>🎤 Ver banda ›</Text>
+          </TouchableOpacity>
+        ) : null}
         {/* Spec 119 — precio en la moneda del evento. Sin consulta de preventa:
             esta tarjeta la usan DashboardLocal y PerfilMusico, donde N llamadas
             al RPC no aportan. */}
@@ -57,6 +72,8 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
   artista: { fontSize: 16, fontWeight: '600', color: c.primary },
   genero: { fontSize: 13, color: c.secondary, marginTop: 2 },
   detalle: { fontSize: 12, color: c.muted, marginTop: 4 },
+  verBanda: { alignSelf: 'flex-start', marginTop: 4 },
+  verBandaTexto: { fontSize: 12, color: c.accent, fontWeight: '600' },
   boton: { backgroundColor: c.accent, paddingHorizontal: 14, paddingVertical: 8, borderRadius: borderRadius.sm, marginLeft: 12 },
   textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: 13 },
 });

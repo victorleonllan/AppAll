@@ -3,13 +3,20 @@ import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ScrollView, Alert, ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { TipoProyecto } from '../types';
 import { mapProfileFromDB, mapProfileToDB, TIPO_PROYECTO_LABEL, TIPOS_PROYECTO } from '../lib/profiles';
 import GeneroPicker from '../components/GeneroPicker';
 import CampoImagen from '../components/CampoImagen';
+import AvisoEdicionAdmin from '../components/AvisoEdicionAdmin';
+import { useEsAdmin } from '../hooks/useEsAdmin';
+import { decidirEdicion } from '../lib/edicionAdmin';
+import { guardarPerfilMusicoComoAdmin } from '../lib/adminEdicion';
+import AjustarPortada from '../components/AjustarPortada';
+import { PUNTO_CENTRO, puntoDeFila } from '../lib/portada';
+import { guardarPuntoPortadaMusico } from '../lib/portadaDatos';
 import { etiquetaPais, nombrePais } from '../constants/paises';
 import { spacing, borderRadius, fontSize, Paleta } from '../theme';
 import { useEstilos } from '../hooks/useEstilos';
@@ -19,7 +26,24 @@ export default function EditarPerfilBandaScreen() {
   const styles = useEstilos(crearEstilos);
   const { colores } = useTema();
   const navigation = useNavigation();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  // Spec 206 (W-352) — con `cuentaId` es el admin abriendo el perfil de otra cuenta.
+  const params = useRoute().params as { cuentaId?: string; nombre?: string } | undefined;
+  const cuentaId = params?.cuentaId;
+  const { esAdmin, cargando: cargandoAdmin } = useEsAdmin();
+  const { permitido, comoAdmin } = decidirEdicion({
+    userId: user?.id,
+    rol: role,
+    esAdmin,
+    rolDueno: 'musician',
+    objetivoId: cuentaId,
+    duenoId: cuentaId,
+  });
+  const objetivoId = cuentaId ?? user?.id;
+  // Con `cuentaId` no se lee nada hasta saber si se puede: leer antes dejaría dos cargas
+  // cruzadas, la primera sin la regla del admin.
+  const esperandoPermiso = Boolean(cuentaId) && (cargandoAdmin || !permitido);
+  const [noEsMusico, setNoEsMusico] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [cargaFallida, setCargaFallida] = useState(false);
   const [guardando, setGuardando] = useState(false);
@@ -45,11 +69,17 @@ export default function EditarPerfilBandaScreen() {
   const [pais, setPais] = useState('');
   const [avatar, setAvatar] = useState('');
   const [paises, setPaises] = useState<string[]>([]);
+  // Spec 201 — el punto de la portada se guarda aparte del formulario.
+  const [fotoGuardada, setFotoGuardada] = useState('');
+  const [puntoPortada, setPuntoPortada] = useState(PUNTO_CENTRO);
+  const [ajustando, setAjustando] = useState(false);
+  const [portadaGuardada, setPortadaGuardada] = useState(false);
 
   const cargarPerfil = useCallback(async () => {
-    if (!user) return;
+    if (!objetivoId || esperandoPermiso) return;
     setCargando(true);
     setCargaFallida(false);
+    setNoEsMusico(false);
     // Spec 130 — el catálogo de países se pide junto al perfil, no después:
     // si el perfil todavía no existe, el `throw` de abajo dejaría los chips vacíos.
     const consultaPaises = supabase.from('paises_cobro').select('pais');
@@ -57,7 +87,7 @@ export default function EditarPerfilBandaScreen() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', objetivoId)
         .single();
       const { data: filasPaises, error: errorPaises } = await consultaPaises;
       // Si el catálogo falla, queda solo el país actual: el músico guarda el
@@ -74,6 +104,11 @@ export default function EditarPerfilBandaScreen() {
         );
       }
       if (error) throw error;
+      // El admin no crea perfiles ni convierte en músico una cuenta que no lo es.
+      if (comoAdmin && data?.role !== 'musician') {
+        setNoEsMusico(true);
+        return;
+      }
       const p = mapProfileFromDB(data);
       setNombre(p.nombre);
       setTipoProyecto(p.tipoProyecto);
@@ -91,10 +126,14 @@ export default function EditarPerfilBandaScreen() {
       setTiktok(p.tiktok ?? '');
       setSitioWeb(p.sitioWeb ?? '');
       setFoto(p.foto ?? '');
+      setFotoGuardada(p.foto ?? '');
+      setPuntoPortada(puntoDeFila(data));
       setPais(p.pais ?? '');
       setAvatar(p.avatar ?? '');
     } catch (err: any) {
-      if (err?.code === 'PGRST116') {
+      if (err?.code === 'PGRST116' && comoAdmin) {
+        setNoEsMusico(true);
+      } else if (err?.code === 'PGRST116') {
         // .single() sin filas: perfil todavía no existe. Formulario en
         // blanco a propósito — el guardado hace upsert y lo crea.
       } else {
@@ -108,14 +147,14 @@ export default function EditarPerfilBandaScreen() {
     } finally {
       setCargando(false);
     }
-  }, [user]);
+  }, [user, objetivoId, comoAdmin, esperandoPermiso]);
 
   useEffect(() => {
     cargarPerfil();
   }, [cargarPerfil]);
 
   const handleGuardar = async () => {
-    if (!user) return;
+    if (!objetivoId || (cuentaId && !permitido)) return;
 
     // Antes: `integrantes ? parseInt(integrantes, 10) : undefined` mandaba
     // NaN al upsert si el texto no era numérico (ej. pegado o dictado).
@@ -134,9 +173,8 @@ export default function EditarPerfilBandaScreen() {
 
     setGuardando(true);
     try {
-      const { error } = await supabase.from('profiles').upsert(
-        mapProfileToDB({
-          userId: user.id,
+      const fila = mapProfileToDB({
+          userId: objetivoId,
           nombre,
           tipoProyecto,
           generos,
@@ -156,9 +194,13 @@ export default function EditarPerfilBandaScreen() {
           avatar,
           // Vacío → el mapper no manda `pais` y la fila conserva el suyo.
           pais: pais || undefined,
-        })
-      );
-      if (error) throw error;
+        });
+      if (comoAdmin) {
+        await guardarPerfilMusicoComoAdmin(objetivoId, fila);
+      } else {
+        const { error } = await supabase.from('profiles').upsert(fila);
+        if (error) throw error;
+      }
       navigation.goBack();
     } catch (err: any) {
       // Antes las dos ramas del try/catch decían "Guardado" (spec 030,
@@ -169,7 +211,18 @@ export default function EditarPerfilBandaScreen() {
     }
   };
 
-  if (!user || cargando) {
+  if (cuentaId && !cargandoAdmin && !permitido) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.aviso}>No puedes editar este perfil.</Text>
+        <TouchableOpacity style={styles.boton} onPress={() => navigation.goBack()}>
+          <Text style={styles.textoBoton}>Volver</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!user || !objetivoId || cargando || (cuentaId && cargandoAdmin)) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color={colores.accent} />
@@ -191,8 +244,26 @@ export default function EditarPerfilBandaScreen() {
     );
   }
 
+  if (noEsMusico) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.aviso}>Esa cuenta no es de músico.</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {comoAdmin && (
+        <AvisoEdicionAdmin
+          tipo="musico"
+          nombre={nombre || params?.nombre || ''}
+          onVerFicha={() =>
+            (navigation as any).navigate('Locales', { screen: 'VerMusico', params: { musicoId: objetivoId } })
+          }
+        />
+      )}
+
       <View style={styles.card}>
         <Text style={styles.tituloSeccion}>Identidad</Text>
 
@@ -202,7 +273,7 @@ export default function EditarPerfilBandaScreen() {
         <Text style={styles.label}>Avatar (logo)</Text>
         <CampoImagen
           carpeta="perfiles"
-          id={user.id}
+          id={objetivoId}
           valor={avatar}
           onCambiar={setAvatar}
           aspecto={[1, 1]}
@@ -252,11 +323,40 @@ export default function EditarPerfilBandaScreen() {
         <Text style={styles.label}>Foto</Text>
         <CampoImagen
           carpeta="perfiles"
-          id={user.id}
+          id={objetivoId}
           valor={foto}
           onCambiar={setFoto}
           ayuda="La foto grande de tu ficha pública — banda, escenario, lo que quieras mostrar en tamaño completo."
         />
+        {/* Spec 201 — con la foto sin guardar no se ajusta: el trigger de W-344 vuelve el
+            punto al centro cuando cambia la foto. */}
+        {!!foto && (foto === fotoGuardada ? (
+          <>
+            <TouchableOpacity
+              style={styles.botonPortada}
+              onPress={() => {
+                setPortadaGuardada(false);
+                setAjustando(true);
+              }}
+            >
+              <Text style={styles.textoBotonPortada}>Ajustar portada</Text>
+            </TouchableOpacity>
+            {portadaGuardada && <Text style={styles.portadaGuardada}>Portada guardada</Text>}
+            <AjustarPortada
+              visible={ajustando}
+              uri={foto}
+              puntoInicial={puntoPortada}
+              proporcion={4 / 3} // el marco de VerMusicoScreen
+              onGuardar={async (punto) => {
+                setPuntoPortada(await guardarPuntoPortadaMusico(objetivoId, punto));
+                setPortadaGuardada(true);
+              }}
+              onCerrar={() => setAjustando(false)}
+            />
+          </>
+        ) : (
+          <Text style={styles.avisoPortada}>Guarda la foto nueva para ajustar su encuadre.</Text>
+        ))}
       </View>
 
       <View style={styles.card}>
@@ -421,6 +521,16 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.sm,
   },
+  botonPortada: {
+    backgroundColor: c.accentLight,
+    padding: 12,
+    borderRadius: borderRadius.sm,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  textoBotonPortada: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  portadaGuardada: { fontSize: fontSize.sm, color: c.success, marginTop: spacing.xs },
+  avisoPortada: { fontSize: fontSize.sm, color: c.muted, marginTop: spacing.sm },
   botonDesactivado: { opacity: 0.6 },
   textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
 });
