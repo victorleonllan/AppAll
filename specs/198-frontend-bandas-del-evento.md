@@ -1,6 +1,6 @@
 # Spec 198 — Al crear un evento aparecen las cuentas de músico, «Soy yo» y «Otras bandas»; la ficha enlaza a cada banda
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `tsc` limpio fuera de `supabase/functions`, `expo export --platform web` sin errores, criterios 3 a 8 con `git`/`grep`; no probado en dispositivo ni contra la base (V 198-a/e). Ver «Bugs encontrados al aplicar».
 > Capa: FRONTEND. `src/components/ArtistaSelector.tsx`, `src/screens/CrearEventoScreen.tsx`, `src/screens/DetalleEventoScreen.tsx`, `src/components/TarjetaEvento.tsx`.
 > Depende de: spec 188 (`Banda`, `buscarBandas`, `crearFichaSuelta`, `bandaDeLaCuenta`, `Evento.musicoId`, `createEvento` con `musicoId`), spec 189 (`tituloDelLineup`, `mismaBanda`, `agregarBandasAdicionales`, `useBandasDelEvento`), spec 173 (`useEstilos`, `useTema`).
 > Alimenta: spec 199 (correos de invitación en el mismo formulario).
@@ -153,3 +153,15 @@ interface ArtistaSelectorProps {
   en la pestaña Locales.
 - Tarjeta de un evento con `musicoId` en la cartelera y en el panel del local: «Ver banda ›» abre
   el perfil.
+
+## Bugs encontrados al aplicar (28-nov-2026)
+
+1. **`borderRadius.full` no existe** en `src/theme` (solo `sm`, `md`, `lg`). El «radio completo» del
+   chip se escribió como `borderRadius: 999`, igual que `CarteleraScreen` y `SelectorTipoEntrada`.
+2. **Texto del chip sobre `block`.** El spec pide fondo `block` sin fijar el color del texto. En la
+   paleta clara `block` (marrón oscuro) es el mismo color que `primary`: el texto habría quedado
+   invisible. Se usó `white`, como las otras superficies `block` de la app.
+3. **La Cartelera no usa `TarjetaEvento`.** Dibuja `EventoDestacado` (y `TarjetaEventoExterno`).
+   «Ver banda ›» sale en el panel del local, el del músico y el del fan, no en la cartelera. No se
+   tocó `EventoDestacado`: no está en la capa de este spec y decidirlo es diseño (spec nuevo). La
+   V-candidata «Tarjeta de un evento con `musicoId` en la cartelera» no se puede cumplir así.
