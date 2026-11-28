@@ -1299,6 +1299,27 @@ Se cerró con `tsc`, `expo export` web y lectura del código: no se probó en na
    Apple»; Waze abre la app si está instalada.
 4. **V (202-d):** una banda sin eventos futuros: no aparecen ni la sección ni la tarjeta destacada.
 
+## Spec 206 — El admin edita como el dueño: pantallas (28-nov-2026)
+
+Se cerró con `tsc`, `expo export` web y `grep`: no se abrió ninguna pantalla ni se probó contra la
+base. Recorrido con la sesión del admin, sobre cuentas, fichas y eventos de prueba, logout con
+`scope: 'local'` al terminar, sin cuentas de terceros. Cubre también V (197-a) a (197-d).
+
+1. **V (206-a):** Admin → CRM → una cuenta de músico → «Editar perfil»: aviso de admin, cambiar bio y
+   avatar, guardar; la ficha pública muestra lo nuevo.
+2. **V (206-b):** Admin → Locales → «Editar perfil»: cambiar horario, agregar y activar una
+   dirección; la ficha pública la muestra.
+3. **V (206-c):** Admin → Músicos: «Conectar» desde una sugerencia y desde la ficha; unir dos fichas
+   de prueba.
+4. **V (206-d):** Admin → Eventos → «Editar» en un evento ajeno: cambiar banda principal (guardar no
+   pisa el nombre), agregar y quitar una adicional, cambiar el local.
+5. **V (206-e):** cuenta de músico normal: «Editar perfil» y «Editar local» iguales, sin bloque
+   «Bandas y local».
+
+Detectado al aplicar (addenda del spec 206): el texto «no se pueden cambiar desde acá» también lo ve
+el admin; un borrador ajeno puede abrir como «Evento no encontrado»; la lista «Eventos» del admin no
+relee al volver.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

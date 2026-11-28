@@ -1,6 +1,6 @@
 # Spec 206 — El admin edita músicos, fichas, locales y eventos con los formularios del dueño, y cambia bandas y local del evento
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `tsc` limpio fuera de `supabase/functions`, `expo export --platform web` sin errores y criterios 3 a 8 revisados con `grep`/`git`. Sin probar en navegador, dispositivo ni contra la base (V 206-a a 206-e).
 > Capa: FRONTEND. `src/navigation/pantallasAdmin.tsx`, `src/screens/AdminScreen.tsx`, `src/screens/AdminMusicosScreen.tsx` (nuevo), `src/screens/AdminFichaBandaScreen.tsx` (nuevo), `src/components/SelectorBandaAdmin.tsx` (nuevo), `src/components/AvisoEdicionAdmin.tsx` (nuevo), `src/components/BandasYLocalAdmin.tsx` (nuevo), `src/screens/AdminTenantScreen.tsx`, `src/screens/AdminLocalesScreen.tsx`, `src/screens/AdminEventosScreen.tsx`, `src/screens/EditarPerfilBandaScreen.tsx`, `src/screens/EditarLocalScreen.tsx`, `src/screens/EditarEventoScreen.tsx`, `src/screens/DetalleEventoScreen.tsx`.
 > Depende de: spec 197 (`src/lib/bandas.ts`, `src/lib/edicionAdmin.ts`, `src/lib/adminEdicion.ts`, `useEventoPermisos` con `esAdmin`/`comoAdmin`), spec 173 (`useEstilos`, `useTema`), spec 152 (`useEsAdmin`). **Va al final de la cadena**: comparte `DetalleEventoScreen.tsx` con el 198, `EditarEventoScreen.tsx` con el 199, `EditarLocalScreen.tsx` con el 200 y el 201, y `EditarPerfilBandaScreen.tsx` con el 201; se aplica después de los cuatro y ubica cada cambio por contenido, no por número de línea.
 > Hermano en la web: `app/(private)/admin/crm/ventanas/` (W-343, W-349), `components/AvisoEdicionAdmin.js`, `musico/perfil/editar/page.js`, `local/editar/page.js`, `eventos/[id]/editar/page.js` (W-352), `components/BandasYLocalAdmin.js` (W-355).
@@ -311,3 +311,15 @@ Recorrido con la sesión del admin, sobre cuentas, fichas y eventos de prueba, l
 - «Entradas» desde `AdminEventosScreen`.
 - Crear fichas o locales desde el admin, reordenar bandas adicionales, pagos del evento
   ajeno, editar cuentas de fan.
+
+## Bugs encontrados al aplicar (28-nov-2026)
+
+No se corrigieron: el diseño no los pide.
+
+1. `EditarEventoScreen` sigue diciendo «El local (…) y el artista vinculado no se pueden cambiar
+   desde acá.» también al admin, que los cambia en el bloque «Bandas y local» de la misma pantalla.
+2. `EditarEventoScreen` busca el evento en `EventosContext`, que carga una sola vez al montar la app.
+   Si el admin inició sesión después, un borrador ajeno que sí sale en «Eventos» puede abrir como
+   «Evento no encontrado» hasta recargar la cartelera.
+3. `useAdminEventos` no relee al volver del formulario: la fila muestra los datos anteriores hasta
+   tirar hacia abajo.
