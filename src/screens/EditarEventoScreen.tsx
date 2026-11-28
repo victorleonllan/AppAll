@@ -24,6 +24,8 @@ import { CampoFecha, CampoHora } from '../components/CampoFecha';
 import AccionesEvento from '../components/AccionesEvento';
 import InvitarBandasDelEvento from '../components/InvitarBandasDelEvento';
 import InvitarLocalDelEvento from '../components/InvitarLocalDelEvento';
+import AvisoEdicionAdmin from '../components/AvisoEdicionAdmin';
+import BandasYLocalAdmin from '../components/BandasYLocalAdmin';
 import { PAIS_POR_DEFECTO, etiquetaPais } from '../constants/paises';
 import { spacing, borderRadius, fontSize, Paleta } from '../theme';
 import { useEstilos } from '../hooks/useEstilos';
@@ -59,7 +61,7 @@ export default function EditarEventoScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const route = useRoute();
   const { eventoId } = route.params as { eventoId: string };
-  const { eventos, updateEvento } = useEventos();
+  const { eventos, updateEvento, refresh } = useEventos();
   const permisos = useEventoPermisos(eventoId);
   const { esOwner } = permisos;
   const { user, role } = useAuth();
@@ -195,6 +197,26 @@ export default function EditarEventoScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Spec 206 (W-352, W-355) */}
+      {permisos.comoAdmin && (
+        <AvisoEdicionAdmin
+          tipo="evento"
+          nombre={evento.venueName ? `${artista} en ${evento.venueName}` : artista}
+          onVerFicha={() =>
+            (navigation as any).navigate('Cartelera', { screen: 'DetalleEvento', params: { eventoId: evento.id } })
+          }
+        />
+      )}
+      {permisos.esAdmin && (
+        <BandasYLocalAdmin
+          eventoId={evento.id}
+          local={evento.venueId ? { id: evento.venueId, nombre: evento.venueName } : null}
+          onCambio={refresh}
+          // Sin esto, guardar el formulario pisaría el nombre nuevo con el viejo.
+          onCambioPrincipal={setArtista}
+        />
+      )}
+
       <View style={styles.card}>
         <Text style={styles.titulo}>Editar evento</Text>
 

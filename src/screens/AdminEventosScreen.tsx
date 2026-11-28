@@ -1,10 +1,12 @@
 // Spec 158 — Eventos del admin de Sonópolis: port de `admin/eventos/page.js` de la web
-// (W-092, W-172, W-175). La lógica vive en `useAdminEventos` (spec 152). «Editar» y
-// «Entradas» de cada fila quedan fuera (ver el spec): `useEventoPermisos` todavía no
-// reconoce al admin de plataforma.
+// (W-092, W-172, W-175). La lógica vive en `useAdminEventos` (spec 152). «Editar» de
+// cada fila lo suma el spec 206; «Entradas» sigue fuera.
 
 import { ReactNode } from 'react';
-import { View, Text, ScrollView, RefreshControl, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, RefreshControl, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { AdminParamList } from '../navigation/pantallasAdmin';
 import { useAdminEventos, EventoAdmin } from '../hooks/useAdminEventos';
 import BotonCerrarEvento from '../components/BotonCerrarEvento';
 import { formatearDiaLargo } from '../lib/fechaCartelera';
@@ -53,6 +55,7 @@ function EtiquetaEstado({ status }: { status: EventoAdmin['status'] }) {
  * pinta en gris con la fecha en pasado para no confundirlo con uno activo. */
 function Fila({ evento, conBoton, onCerrado }: { evento: EventoAdmin; conBoton?: boolean; onCerrado: () => void }) {
   const styles = useEstilos(crearEstilos);
+  const navigation = useNavigation<NativeStackNavigationProp<AdminParamList, 'AdminEventos'>>();
   const cerrado = Boolean(evento.cerradoAt);
 
   return (
@@ -77,6 +80,12 @@ function Fila({ evento, conBoton, onCerrado }: { evento: EventoAdmin; conBoton?:
           {[textoFecha(evento), evento.venueName].filter(Boolean).join(' · ')}
         </Text>
       )}
+      <TouchableOpacity
+        style={styles.editar}
+        onPress={() => navigation.navigate('AdminEditarEvento', { eventoId: evento.id })}
+      >
+        <Text style={styles.editarTexto}>Editar</Text>
+      </TouchableOpacity>
       {conBoton && (
         <View style={styles.accion}>
           <BotonCerrarEvento
@@ -171,4 +180,14 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
   etiqueta: { fontSize: 11, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 0.7 },
   detalle: { fontSize: fontSize.sm, color: c.secondary, marginTop: 2 },
   accion: { marginTop: spacing.sm },
+  editar: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: c.border,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    marginTop: spacing.sm,
+  },
+  editarTexto: { fontSize: fontSize.xs, fontWeight: '600', color: c.primary },
 });
