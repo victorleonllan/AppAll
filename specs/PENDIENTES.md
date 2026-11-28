@@ -1106,8 +1106,8 @@ Se cerró con `tsc` y `node`: no se probó en un teléfono ni contra la base.
 4. **V (188-d):** músico con un evento creado por un local donde es banda: aparece en «Ventas» con
    sus entradas.
 
-Deuda: borrar `buscarArtistas`, `crearArtista` y `ArtistaBreve` (`@deprecated`) cuando el spec 198
-esté aplicado y nadie los use.
+Deuda: borrar `buscarArtistas`, `crearArtista` y `ArtistaBreve` (`@deprecated` en
+`src/lib/artistas.ts`): con el spec 198 aplicado (28-nov-2026) ya nadie los usa.
 
 ## Números del panel en la app 🟢 spec 195 aplicado (lógica), falta verificar contra la base (28-nov-2026)
 
@@ -1217,6 +1217,24 @@ Se cerró con `tsc`, `expo export` web y lectura del código: no se probó en un
    espera 400 ms a que cierre el modal).
 7. **Riesgo:** si un intento de publicar falla con el local ya creado, cambiar la dirección y
    confirmar otro pin no actualiza ese local (la dirección ya tenía este comportamiento).
+
+## Bandas al crear el evento y enlaces a su perfil 🟢 spec 198 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc`, `expo export --platform web` y `grep`: las pantallas no se abrieron.
+
+1. **V (198-a):** como local, crear un evento con «Felio Saud» (cuenta) de principal y una banda
+   nueva de adicional: Felio sale con «En Sonópolis», el título es «Felio Saud + <banda nueva>», el
+   evento aparece en el perfil de Felio y Felio queda admin.
+2. **V (198-b):** como músico con nombre en su perfil, «Soy yo» en «Artista» y en «Otras bandas»;
+   con el nombre vacío, el botón desactivado.
+3. **V (198-c):** ficha de un evento con dos bandas: «Tocan» con un chip por banda (legible en claro
+   y en oscuro); tocar la cuenta abre su perfil en la pestaña Locales.
+4. **V (198-d):** ficha de un evento con una sola banda con cuenta: fila «Banda» antes de «Lugar».
+5. **V (198-e):** tarjeta de un evento con `musicoId` en el panel del local, del músico y del fan:
+   «Ver banda ›» abre el perfil sin abrir además la ficha.
+
+Hueco: la Cartelera dibuja `EventoDestacado`, no `TarjetaEvento`, así que ahí no sale «Ver banda ›».
+Si se quiere, es spec nuevo.
 
 ## Cosas menores, anotadas para no perderlas
 
