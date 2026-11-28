@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, Image, Switch,
   StyleSheet, ScrollView, ActivityIndicator, Alert,
@@ -17,6 +17,8 @@ import TarjetaEvento from '../components/TarjetaEvento';
 import TarjetaPro from '../components/TarjetaPro';
 import { useMiSuscripcionPro } from '../hooks/useMiSuscripcionPro';
 import BotonAdmin from '../components/BotonAdmin';
+import NumerosPanel from '../components/NumerosPanel';
+import { PAIS_POR_DEFECTO } from '../constants/paises';
 import { spacing, borderRadius, fontSize, Paleta } from '../theme';
 import { useEstilos } from '../hooks/useEstilos';
 import { useTema } from '../context/TemaContext';
@@ -31,7 +33,6 @@ export default function PerfilMusicoScreen() {
   const [esMock, setEsMock] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [creando, setCreando] = useState(false);
-  const [ventas, setVentas] = useState({ entradas: 0, monto: 0 });
 
   const cargarPerfil = useCallback(async () => {
     if (!user) return;
@@ -79,37 +80,6 @@ export default function PerfilMusicoScreen() {
   const misEventos = user
     ? eventos.filter((e) => e.createdBy === user.id || misEventoIds.has(e.id))
     : [];
-  // Clave estable por contenido, no por tamaño: dependían de `.length`, así
-  // que borrar un evento y crear otro en la misma sesión dejaba el mismo
-  // conteo pero IDs distintos, y el efecto no volvía a correr — la consulta
-  // de abajo quedaba pegada a los eventos viejos.
-  const idsEventos = misEventos.map((e) => e.id).join(',');
-
-  useEffect(() => {
-    if (misEventos.length === 0) {
-      setVentas({ entradas: 0, monto: 0 });
-      return;
-    }
-    (async () => {
-      try {
-        const { data, error } = await supabase
-          .from('tickets')
-          .select('cantidad, monto, status, evento_id')
-          .in('evento_id', misEventos.map((e) => e.id))
-          .eq('status', 'completed');
-        if (error) throw error;
-        const pagados = data ?? [];
-        setVentas({
-          entradas: pagados.reduce((sum: number, t: any) => sum + (t.cantidad ?? 1), 0),
-          monto: pagados.reduce((sum: number, t: any) => sum + (t.monto ?? 0), 0),
-        });
-      } catch {
-        setVentas({ entradas: 0, monto: 0 });
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idsEventos]);
-
   const handleSignOut = () => {
     confirmar(
       { title: 'Cerrar sesión', message: '¿Seguro que quieres cerrar sesión?', confirmText: 'Cerrar sesión', destructive: true },
@@ -257,17 +227,18 @@ export default function PerfilMusicoScreen() {
         </View>
       )}
 
-      <View style={styles.card}>
-        <Text style={styles.titulo}>Resumen</Text>
-        <View style={styles.resumenFila}>
-          <Text style={styles.resumenLabel}>Eventos publicados</Text>
-          <Text style={styles.resumenValor}>{misEventos.length}</Text>
-        </View>
-        <View style={styles.resumenFila}>
-          <Text style={styles.resumenLabel}>Entradas vendidas</Text>
-          <Text style={styles.resumenValor}>{ventas.entradas} · ${ventas.monto.toLocaleString()}</Text>
-        </View>
-      </View>
+      {/* Spec 204 — un perfil de muestra no tiene fila real: sin números. */}
+      {!esMock && (
+        <NumerosPanel
+          tipo="musician"
+          tenantId={perfil.id}
+          pais={perfil.pais ?? PAIS_POR_DEFECTO}
+          eventos={misEventos}
+          onVerSolicitudes={() => (navigation as any).navigate('Solicitudes')}
+          onVerContactos={() => (navigation as any).navigate('Contactos', { tipo: 'musician' })}
+          onVerVentas={() => (navigation as any).navigate('VentasMusico')}
+        />
+      )}
 
       {/* Spec 154 — Pro informativo; un perfil de muestra no tiene fila real. */}
       {!esMock && (
@@ -410,13 +381,6 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
   },
   completitudBarra: { height: '100%', backgroundColor: c.accent },
   completitudTexto: { fontSize: fontSize.xs, color: c.muted, marginTop: spacing.xs },
-  resumenFila: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.xs,
-  },
-  resumenLabel: { fontSize: fontSize.md, color: c.secondary },
-  resumenValor: { fontSize: fontSize.md, fontWeight: 'bold', color: c.primary },
   botonPrimario: {
     backgroundColor: c.accent,
     padding: 14,
