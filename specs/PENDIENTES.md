@@ -1109,6 +1109,16 @@ Se cerró con `tsc` y `node`: no se probó en un teléfono ni contra la base.
 Deuda: borrar `buscarArtistas`, `crearArtista` y `ArtistaBreve` (`@deprecated`) cuando el spec 198
 esté aplicado y nadie los use.
 
+## Números del panel en la app 🟢 spec 195 aplicado (lógica), falta verificar contra la base (28-nov-2026)
+
+Se cerró con `tsc` y `tsx`: no se probó contra la base ni en un teléfono. Las pantallas son el spec 204.
+
+1. **V (195-a):** con la sesión de un local con eventos de colaboración (creados por una banda en
+   su local), las ventas de esos eventos sí aparecen (`tickets_select_event_team`).
+
+Deuda: `totalesPorMoneda` (`src/lib/panel.ts`) es copia de `formatearTotales`
+(`src/hooks/useAdminPagos.ts`); moverlas a un solo módulo sin imports de Supabase.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs

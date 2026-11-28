@@ -1,6 +1,6 @@
 # Spec 195 — Los números del panel de local y de músico en la app
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `npx tsc --noEmit` limpio; greps de los criterios 2 y 4 conformes; los casos del criterio 3 pasan con `npx tsx` en `America/Santiago`, `UTC` y `Pacific/Auckland`. `usePanel` solo por lectura y `tsc`. Sin probar contra la base ni en un dispositivo (V 195-a en `PENDIENTES.md`).
 > Capa: LÓGICA. `src/lib/panel.ts` (nuevo), `src/hooks/usePanel.ts` (nuevo).
 > Depende de: — (usa `useSolicitudes` del spec 131 y `useContactosCrm` del spec 149, ya aplicados, sin cambiarlos).
 > Alimenta: spec 204 (FRONTEND).
