@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Linking, ScrollView, Image, ActivityIndicator, Alert,
+  View, Text, TouchableOpacity, StyleSheet, Linking, ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { usePerfilMusico } from '../hooks/useMusicos';
@@ -12,6 +12,8 @@ import ModalSolicitud from '../components/ModalSolicitud';
 import BotonSeguir from '../components/BotonSeguir';
 import OptInWhatsApp from '../components/OptInWhatsApp';
 import Muro from '../components/Muro';
+import PortadaEncuadrada from '../components/PortadaEncuadrada';
+import { PUNTO_CENTRO } from '../lib/portada';
 import { useEsAdmin } from '../hooks/useEsAdmin';
 import { useTelefonoPropio } from '../hooks/useOptInWhatsApp';
 import { MENSAJES_SOLICITUD } from '../constants/solicitudes';
@@ -131,7 +133,10 @@ export default function VerMusicoScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {imagen && <Image source={{ uri: imagen }} style={styles.imagen} resizeMode="cover" />}
+      {/* Spec 201 — el punto es de la foto: si la ficha cae al avatar, va centrado. */}
+      {imagen && (
+        <PortadaEncuadrada uri={imagen} punto={musico.foto ? musico.portada : PUNTO_CENTRO} style={styles.imagen} />
+      )}
       <View style={styles.card}>
         {/* Spec 124 — seguir, a la derecha del nombre (no aparece en el perfil propio). */}
         <View style={styles.filaNombre}>

@@ -14,6 +14,9 @@ import { useTema } from '../context/TemaContext';
 import GeneroPicker from '../components/GeneroPicker';
 import PaisPicker from '../components/PaisPicker';
 import CampoImagen from '../components/CampoImagen';
+import AjustarPortada from '../components/AjustarPortada';
+import { PUNTO_CENTRO } from '../lib/portada';
+import { leerPuntoPortadaLocal, guardarPuntoPortadaLocal } from '../lib/portadaDatos';
 import GestionDirecciones from '../components/GestionDirecciones';
 import UbicacionLocal from '../components/UbicacionLocal';
 import { puntoDeVenue } from '../lib/ubicacion';
@@ -53,6 +56,10 @@ export default function EditarLocalScreen() {
   const [image, setImage] = useState('');
   const [avatar, setAvatar] = useState('');
   const [guardando, setGuardando] = useState(false);
+  // Spec 201 — el punto de la portada se lee y se guarda aparte del formulario.
+  const [puntoPortada, setPuntoPortada] = useState(PUNTO_CENTRO);
+  const [ajustando, setAjustando] = useState(false);
+  const [portadaGuardada, setPortadaGuardada] = useState(false);
 
   // Precarga si el usuario ya tiene un local — de lo contrario el formulario
   // queda en blanco y el guardado crea uno nuevo.
@@ -75,6 +82,22 @@ export default function EditarLocalScreen() {
     setSitioWeb(miVenue.sitioWeb ?? '');
     setImage(miVenue.image ?? '');
     setAvatar(miVenue.avatar ?? '');
+  }, [miVenue?.id]);
+
+  useEffect(() => {
+    setPuntoPortada(PUNTO_CENTRO);
+    setPortadaGuardada(false);
+    if (!miVenue) return;
+    let vigente = true;
+    leerPuntoPortadaLocal(miVenue.id)
+      .then((punto) => {
+        if (vigente) setPuntoPortada(punto);
+      })
+      // Sin el punto, el botón igual se ofrece desde el centro.
+      .catch((error) => console.warn('[portada] no se pudo leer el punto del local', error));
+    return () => {
+      vigente = false;
+    };
   }, [miVenue?.id]);
 
   const handleGuardar = async () => {
@@ -213,6 +236,35 @@ export default function EditarLocalScreen() {
           onCambiar={setImage}
           ayuda="Es lo primero que ve un músico en tu ficha."
         />
+        {/* Spec 201 — con la foto sin guardar no se ajusta: el trigger de W-344 vuelve el
+            punto al centro cuando cambia la foto. */}
+        {miVenue && !!image && (image === miVenue.image ? (
+          <>
+            <TouchableOpacity
+              style={styles.botonPortada}
+              onPress={() => {
+                setPortadaGuardada(false);
+                setAjustando(true);
+              }}
+            >
+              <Text style={styles.textoBotonPortada}>Ajustar portada</Text>
+            </TouchableOpacity>
+            {portadaGuardada && <Text style={styles.portadaGuardada}>Portada guardada</Text>}
+            <AjustarPortada
+              visible={ajustando}
+              uri={image}
+              puntoInicial={puntoPortada}
+              proporcion={390 / 250} // la franja de la ficha web en el celular (W-344)
+              onGuardar={async (punto) => {
+                setPuntoPortada(await guardarPuntoPortadaLocal(miVenue.id, punto));
+                setPortadaGuardada(true);
+              }}
+              onCerrar={() => setAjustando(false)}
+            />
+          </>
+        ) : (
+          <Text style={styles.avisoPortada}>Guarda la foto nueva para ajustar su encuadre.</Text>
+        ))}
       </View>
 
       <View style={styles.card}>
@@ -402,6 +454,16 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.lg,
   },
+  botonPortada: {
+    backgroundColor: c.accentLight,
+    padding: 12,
+    borderRadius: borderRadius.sm,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  textoBotonPortada: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  portadaGuardada: { fontSize: fontSize.sm, color: c.success, marginTop: spacing.xs },
+  avisoPortada: { fontSize: fontSize.sm, color: c.muted, marginTop: spacing.sm },
   botonDesactivado: { opacity: 0.6 },
   textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
 });
