@@ -1,6 +1,6 @@
 # Spec 191 — Ubicación del local con pin: búsqueda, margen y guardado (lógica)
 
-> Estado: propuesto (27-nov-2026)
+> Estado: aplicado (28-nov-2026) — `npx tsc --noEmit` sin errores fuera de `supabase/functions`; `src/lib/ubicacion.ts` sin `import` y los casos del criterio 3 probados con `npx tsx` (13/13); criterio 4 revisado leyendo el código. Sin probar contra la web, la base ni un dispositivo.
 > Capa: LÓGICA. `src/lib/ubicacion.ts` (nuevo), `src/lib/geocodificar.ts` (nuevo), `src/context/VenuesContext.tsx`, `src/hooks/useDireccionesVenue.ts`.
 > Depende de: nada nuevo. Las columnas `venues.lat`/`lng` y `venue_addresses.lat`/`lng` ya existen (W-062), y `GET /api/geocodificar` ya está en producción en la web (W-339).
 > Alimenta: spec 200 (FRONTEND).

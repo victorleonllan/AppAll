@@ -1082,6 +1082,33 @@ Se cerró con `tsc` y `npx tsx`: no se probó en un teléfono ni contra la base.
 3. **V (192-c):** cambiar la foto desde `EditarPerfilBandaScreen` deja el punto en `50, 50`
    (trigger de W-344 sobre el `upsert`).
 
+## Ubicación del local con pin 🟢 spec 191 aplicado (lógica), falta verificar en runtime (28-nov-2026)
+
+Se cerró con `tsc` y `tsx`: no se probó contra la web, la base ni un teléfono. La pantalla es el spec 200.
+
+1. **V (191-a):** con sesión, `buscarUbicacion` contra la web de producción devuelve un punto para
+   una dirección real y `coincide: false` para «calle 124 #1040, Peñalolén».
+2. **V (191-b):** crear un local nuevo con pin desde la app (spec 200): después de `crearDireccion`,
+   `venues.lat`/`lng` y la fila activa de `venue_addresses` tienen el mismo pin.
+3. **V (191-c):** `guardarUbicacionLocal` con una cuenta que no es dueña del local devuelve «Solo el
+   dueño del local puede mover su ubicación».
+
+## La banda como cuenta de músico en la app 🟢 spec 188 aplicado, falta verificar en dispositivo (28-nov-2026)
+
+Se cerró con `tsc` y `node`: no se probó en un teléfono ni contra la base.
+
+1. **V (188-a):** fan que sigue a una banda con cuenta (p. ej. Felio Saud) ve en su feed un evento
+   donde es `musico_id` y otro donde es banda adicional.
+2. **V (188-b):** comprar una entrada de un evento con `musico_id`, sin local y con Pro: el opt-in
+   sale a nombre de la banda.
+3. **V (188-c):** Admin → CRM: los eventos activos de una banda con cuenta cuentan aquellos donde
+   es principal o adicional.
+4. **V (188-d):** músico con un evento creado por un local donde es banda: aparece en «Ventas» con
+   sus entradas.
+
+Deuda: borrar `buscarArtistas`, `crearArtista` y `ArtistaBreve` (`@deprecated`) cuando el spec 198
+esté aplicado y nadie los use.
+
 ## Cosas menores, anotadas para no perderlas
 
 - Un deploy de Vercel quedó en estado **Error** (2026-08-06, ~23h antes del deploy actual). Nunca se revisaron sus logs
