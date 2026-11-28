@@ -757,7 +757,9 @@ export default function DetalleEventoScreen() {
       {permisos.puedeEditar && (
         <View style={styles.card}>
           <Text style={styles.tituloGestion}>Gestión del evento</Text>
-          <Text style={styles.rolActual}>Tu rol: {permisos.rol}</Text>
+          <Text style={styles.rolActual}>
+            {permisos.rol ? `Tu rol: ${permisos.rol}` : 'Editas como admin de Sonópolis'}
+          </Text>
           <View style={styles.filaGestion}>
             {/* Spec 034 — cualquier rol del equipo edita, igual que puedeEditar ya
                 gatilla toda esta card; no hace falta otro chequeo de permiso acá. */}

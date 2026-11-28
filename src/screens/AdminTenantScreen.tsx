@@ -251,6 +251,22 @@ export default function AdminTenantScreen() {
   const verEvento = (eventoId: string) =>
     (navigation as any).navigate('Cartelera', { screen: 'DetalleEvento', params: { eventoId } });
 
+  // Spec 206 — el formulario del dueño, abierto por el admin, y su ficha pública.
+  const editarPerfil = () => {
+    if (tipo === 'venue') {
+      navigation.navigate('AdminEditarLocal', { localId: id, nombre: tenant.nombre });
+    } else {
+      navigation.navigate('AdminEditarPerfilBanda', { cuentaId: id, nombre: tenant.nombre });
+    }
+  };
+  const verFicha = () =>
+    (navigation as any).navigate(
+      'Locales',
+      tipo === 'venue'
+        ? { screen: 'DetalleLocal', params: { venueId: id } }
+        : { screen: 'VerMusico', params: { musicoId: id } },
+    );
+
   // Un elemento y no un componente: uno creado en cada render remontaría el encabezado
   // y el TextInput del monto perdería el foco a cada tecla.
   const encabezado = (
@@ -272,6 +288,15 @@ export default function AdminTenantScreen() {
             <Text style={styles.negrita}>Vista de admin:</Text> así ve {tenant.nombre} su CRM. Desde aquí no se envía nada.
           </Text>
         </View>
+      </View>
+
+      <View style={styles.entradas}>
+        <TouchableOpacity style={styles.botonEntrada} onPress={editarPerfil}>
+          <Text style={styles.botonEntradaTexto}>Editar perfil</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.botonEntrada} onPress={verFicha}>
+          <Text style={styles.botonEntradaTexto}>Ver ficha pública</Text>
+        </TouchableOpacity>
       </View>
 
       <CodigoSuscripcionPro
@@ -401,6 +426,15 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
     padding: spacing.lg,
   },
   cabecera: { gap: spacing.sm },
+  entradas: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
+  botonEntrada: {
+    borderWidth: 1,
+    borderColor: c.accent,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  botonEntradaTexto: { fontSize: fontSize.sm, fontWeight: '600', color: c.accent },
   filaNombre: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
   nombre: { fontSize: fontSize.xl, fontWeight: 'bold', color: c.primary },
   texto: { fontSize: fontSize.sm, color: c.primary },
