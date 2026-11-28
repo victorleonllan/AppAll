@@ -10,6 +10,9 @@ import { TipoProyecto } from '../types';
 import { mapProfileFromDB, mapProfileToDB, TIPO_PROYECTO_LABEL, TIPOS_PROYECTO } from '../lib/profiles';
 import GeneroPicker from '../components/GeneroPicker';
 import CampoImagen from '../components/CampoImagen';
+import AjustarPortada from '../components/AjustarPortada';
+import { PUNTO_CENTRO, puntoDeFila } from '../lib/portada';
+import { guardarPuntoPortadaMusico } from '../lib/portadaDatos';
 import { etiquetaPais, nombrePais } from '../constants/paises';
 import { spacing, borderRadius, fontSize, Paleta } from '../theme';
 import { useEstilos } from '../hooks/useEstilos';
@@ -45,6 +48,11 @@ export default function EditarPerfilBandaScreen() {
   const [pais, setPais] = useState('');
   const [avatar, setAvatar] = useState('');
   const [paises, setPaises] = useState<string[]>([]);
+  // Spec 201 — el punto de la portada se guarda aparte del formulario.
+  const [fotoGuardada, setFotoGuardada] = useState('');
+  const [puntoPortada, setPuntoPortada] = useState(PUNTO_CENTRO);
+  const [ajustando, setAjustando] = useState(false);
+  const [portadaGuardada, setPortadaGuardada] = useState(false);
 
   const cargarPerfil = useCallback(async () => {
     if (!user) return;
@@ -91,6 +99,8 @@ export default function EditarPerfilBandaScreen() {
       setTiktok(p.tiktok ?? '');
       setSitioWeb(p.sitioWeb ?? '');
       setFoto(p.foto ?? '');
+      setFotoGuardada(p.foto ?? '');
+      setPuntoPortada(puntoDeFila(data));
       setPais(p.pais ?? '');
       setAvatar(p.avatar ?? '');
     } catch (err: any) {
@@ -257,6 +267,35 @@ export default function EditarPerfilBandaScreen() {
           onCambiar={setFoto}
           ayuda="La foto grande de tu ficha pública — banda, escenario, lo que quieras mostrar en tamaño completo."
         />
+        {/* Spec 201 — con la foto sin guardar no se ajusta: el trigger de W-344 vuelve el
+            punto al centro cuando cambia la foto. */}
+        {!!foto && (foto === fotoGuardada ? (
+          <>
+            <TouchableOpacity
+              style={styles.botonPortada}
+              onPress={() => {
+                setPortadaGuardada(false);
+                setAjustando(true);
+              }}
+            >
+              <Text style={styles.textoBotonPortada}>Ajustar portada</Text>
+            </TouchableOpacity>
+            {portadaGuardada && <Text style={styles.portadaGuardada}>Portada guardada</Text>}
+            <AjustarPortada
+              visible={ajustando}
+              uri={foto}
+              puntoInicial={puntoPortada}
+              proporcion={4 / 3} // el marco de VerMusicoScreen
+              onGuardar={async (punto) => {
+                setPuntoPortada(await guardarPuntoPortadaMusico(user.id, punto));
+                setPortadaGuardada(true);
+              }}
+              onCerrar={() => setAjustando(false)}
+            />
+          </>
+        ) : (
+          <Text style={styles.avisoPortada}>Guarda la foto nueva para ajustar su encuadre.</Text>
+        ))}
       </View>
 
       <View style={styles.card}>
@@ -421,6 +460,16 @@ const crearEstilos = (c: Paleta) => StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.sm,
   },
+  botonPortada: {
+    backgroundColor: c.accentLight,
+    padding: 12,
+    borderRadius: borderRadius.sm,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  textoBotonPortada: { color: c.accent, fontWeight: 'bold', fontSize: fontSize.sm },
+  portadaGuardada: { fontSize: fontSize.sm, color: c.success, marginTop: spacing.xs },
+  avisoPortada: { fontSize: fontSize.sm, color: c.muted, marginTop: spacing.sm },
   botonDesactivado: { opacity: 0.6 },
   textoBoton: { color: c.onAccent, fontWeight: 'bold', fontSize: fontSize.md },
 });
